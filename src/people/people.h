@@ -13,8 +13,8 @@ extern uint32_t k[64];
 extern uint32_t s[64];
 
 enum gender {
-    Male,
-    Female
+    MALE,
+    FEMALE
 };
 
 typedef struct Password{
@@ -22,7 +22,7 @@ typedef struct Password{
 } Password;
 
 Password hashPassword(char pw[]);
-Password readHashedPassword(char pw_hex[]);
+Password readHashedPassword(char pw_hex[]);;
 int isPasswordSame(Password p1, Password p2);
 
 typedef struct People {
