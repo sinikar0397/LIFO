@@ -1,5 +1,5 @@
 # LIFO
-making LIFO algorithm - Love Is Found Optimally.
+Love Is Found Optimally
 사랑할 상대를 찾기 위한 최적한 알고리즘 개발을 목표로 하는 서울과학고 자료구조 프로젝트입니다.
 
 ## 1. DFS (Dating Fit Survey)
