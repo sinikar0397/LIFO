@@ -6,9 +6,11 @@
 #define MAX_PW_LEN 20
 #define MAX_TYPE_LEN 20
 #define MAX_PATH_LEN 50
-#define PRIME1 1e9+7
-#define PRIME2 1e9+9
-#define EXPON  80503
+
+#define LEFTROTATE(x, c) (((x) << (c)) | ((x) >> (32 - (c))))
+
+extern uint32_t k[64];
+extern uint32_t s[64];
 
 enum gender {
     Male,
@@ -16,10 +18,11 @@ enum gender {
 };
 
 typedef struct Password{
-    long long key1, key2;
+    uint8_t digest[16];
 } Password;
 
-Password hashPassword(char pw[])
+Password hashPassword(char pw[]);
+Password readHashedPassword(char pw_hex[]);
 int isPasswordSame(Password p1, Password p2);
 
 typedef struct People {
@@ -32,10 +35,11 @@ typedef struct People {
     int age;
 } People;
 
-People* createPeople(char name[], char id[], Password Pw, char type[], char love_type[], enum gender gen, int age);
+People* createPeople(char name[], char id[], char pw[], char type[], char love_type[], enum gender gen, int age);
 void changePeopleName(      People* P, char name[]);
 void changePeopleId(        People* P, char id[]);
 void changePeoplePw(        People* P, char pw[]);
+void changePeopleHashedPw(  People* P, Password pw);
 void changePeopleType(      People* P, char type[]);
 void changePeopleLoveType(  People* P, char love_type[]);
 void changePeopleGen(       People* P, enum gender gen);
@@ -46,5 +50,6 @@ People* readPeople(char path[]);
 void    savePeople(People* P, char path[]);
 
 void printPeople(People* P);
+void deletePeople(People* P);
 
 #endif //PEOPLE_H

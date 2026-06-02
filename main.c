@@ -1,46 +1,104 @@
 #include "./src/headers.h"
 #include "./src/people/people.h"
 
-int main(void) {
-    char path[] = "./database/peoples/JuHwan.json";
+void printDigest(Password pw){
+    for(int i=0;i<16;i++){
+        printf("%02x", pw.digest[i]);
+    }
+    printf("\n");
+}
+
+int main(void){
+
+    printf("===== Password Test =====\n");
+
+    Password pw1 = hashPassword("1234");
+    Password pw2 = hashPassword("1234");
+    Password pw3 = hashPassword("abcd");
+
+    printf("pw1 : ");
+    printDigest(pw1);
+
+    printf("pw2 : ");
+    printDigest(pw2);
+
+    printf("pw3 : ");
+    printDigest(pw3);
+
+    printf("pw1 == pw2 : %s\n",
+           isPasswordSame(pw1, pw2) ? "TRUE" : "FALSE");
+
+    printf("pw1 == pw3 : %s\n",
+           isPasswordSame(pw1, pw3) ? "TRUE" : "FALSE");
+
+
+    printf("\n===== CreatePeople Test =====\n");
 
     People* p1 = createPeople(
-        "JuHwan",
+        "Alice",
+        "alice01",
+        "1234",
         "INTJ",
-        Male,
-        18
+        "ENFP",
+        Female,
+        21
     );
 
-    if (p1 == NULL) {
+    if(p1 == NULL){
         printf("createPeople failed\n");
         return 1;
     }
 
-    printf("Saving...\n");
-    savePeople(p1, path);
+    printPeople(p1);
 
-    printf("\n=== Original ===\n");
-    printf("name : %s\n", p1->name);
-    printf("type : %s\n", p1->type);
-    printf("gen  : %d\n", p1->gen);
-    printf("age  : %d\n", p1->age);
 
-    People* p2 = readPeople(path);
+    printf("\n===== ChangePeople Test =====\n");
 
-    if (p2 == NULL) {
+    changePeopleName(p1, "Bob");
+    changePeopleId(p1, "bob01");
+    changePeoplePw(p1, "5678");
+    changePeopleType(p1, "ENTP");
+    changePeopleLoveType(p1, "ISFJ");
+    changePeopleGen(p1, Male);
+    changePeopleAge(p1, 25);
+
+    printPeople(p1);
+
+
+    printf("\n===== Save Test =====\n");
+
+    savePeople(p1, "./database/peoples/person.json");
+
+    printf("Saved to person.json\n");
+
+
+    printf("\n===== Read Test =====\n");
+
+    People* p2 = readPeople("./database/peoples/person.json");
+
+    if(p2 == NULL){
         printf("readPeople failed\n");
-        free(p1);
+        deletePeople(p1);
         return 1;
     }
 
-    printf("\n=== Loaded ===\n");
-    printf("name : %s\n", p2->name);
-    printf("type : %s\n", p2->type);
-    printf("gen  : %d\n", p2->gen);
-    printf("age  : %d\n", p2->age);
+    printPeople(p2);
 
-    free(p1);
-    free(p2);
+
+    printf("\n===== Compare Loaded Password =====\n");
+
+    if(isPasswordSame(p1->pw, p2->pw))
+        printf("Password Match\n");
+    else
+        printf("Password Mismatch\n");
+
+
+    printf("\n===== Cleanup =====\n");
+
+    deletePeople(p1);
+    deletePeople(p2);
+
+    printf("All tests completed.\n");
 
     return 0;
 }
