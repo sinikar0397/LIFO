@@ -1,2 +1,16 @@
 # LIFO
 making LIFO algorithm - Love Is Found Optimally.
+사랑할 상대를 찾기 위한 최적한 알고리즘 개발을 목표로 하는 서울과학고 자료구조 프로젝트입니다.
+
+## 1. DFS (Dating Fit Survey)
+
+DFS는 일종의 연애 성격 유형 검사로, 자신의 성격 유형과 자신의 이상형의 성격 유형을 파악하는 검사입니다.
+두 사람 A, B의 예상 호감도는 `(A의 이상형과 B의 유사도) + (B의 이상형과 A의 유사도)`로 정의됩니다.
+
+## 2. BFS (Best Fit Stable-Matching)
+
+BFS는 현재 연애 상대를 찾고자 하는 사람들 간에 매칭을 진행하며, 두 사람 간의 예상 호감도를 기반으로 안정 매칭을 진행합니다. Gale-Shapley Algorithm을 사용하여 구현합니다.
+
+## 3. MST (Memory Sharing Thread)
+
+MST는 연애를 진행 중인 사람들끼리 서로 감정을 공유하는 부분입니다. 서로에게 질문을 남기고 답변할 수 있으며, 이외에도 기념일 캘린더, 버킷리스트 등의 기능이 제한됩니다.
