@@ -6,20 +6,20 @@
 #define MAX_PW_LEN 20
 #define MAX_TYPE_LEN 20
 #define MAX_PATH_LEN 50
-#define PRIME1 1e9+7
-#define PRIME2 1e9+9
+#define MOD1 1000000007
+#define MOD2 1000000009
 #define EXPON  80503
 
 enum gender {
-    Male,
-    Female
+    MALE,
+    FEMALE
 };
 
 typedef struct Password{
     long long key1, key2;
 } Password;
 
-Password hashPassword(char pw[])
+Password hashPassword(char pw[]);
 int isPasswordSame(Password p1, Password p2);
 
 typedef struct People {
