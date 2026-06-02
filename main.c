@@ -1,5 +1,5 @@
-#include "headers.h"
-#include "people.h"
+#include "./src/headers.h"
+#include "./src/people/people.h"
 
 int main(void) {
     char path[] = "./database/peoples/JuHwan.json";

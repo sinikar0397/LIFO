@@ -1,7 +1,18 @@
 #include "headers.h"
 #include "people.h"
 
-People* createPeople(char name[], char type[], enum gender gen, int age){
+
+Password hashPassword(char pw[]){
+    //todo 
+}
+
+int isPasswordSame(Password p1, Password p2){
+    //todo
+}
+
+
+
+People* createPeople(char name[], char id[], char pw[], char type[], char love_type[], enum gender gen, int age){
     People* newPeople = (People*)malloc(sizeof(People));
     if (newPeople == NULL){
         printf("[ERROR] file : people.c, function : createPeople.     Can't malloc structure.\n");
@@ -9,9 +20,14 @@ People* createPeople(char name[], char type[], enum gender gen, int age){
     }
 
     strncpy(newPeople->name, name, MAX_NAME_LEN - 1);
+    strncpy(newPeople->id  , id  , MAX_ID_LEN   - 1);
+    pw = hashPassword(char pw[]);
     strncpy(newPeople->type, type, MAX_TYPE_LEN - 1);
+    strncpy(newPeople->love_type, love_type, MAX_TYPE_LEN - 1);
     newPeople->name[MAX_NAME_LEN - 1] = '\0';
+    newPeople->id[  MAX_ID_LEN   - 1] = '\0';
     newPeople->type[MAX_TYPE_LEN - 1] = '\0';
+    newPeople->love_type[MAX_TYPE_LEN - 1] = '\0';
     newPeople->gen  = gen;
     newPeople->age  = age;
     return newPeople;
@@ -25,6 +41,15 @@ void changePeopleName(People* P, char name[]){
 void changePeopleType(People* P, char type[]){
     strncpy(P->type, type, MAX_TYPE_LEN - 1);
     P->type[MAX_TYPE_LEN - 1] = '\0';
+}
+
+void changePeopleId(People* P, char id[]){
+    stncpy(P->id, id, MAX_ID_LEN - 1);
+    P->id[MAX_ID_LEN - 1] = '\0';
+}
+
+void changePeoplePw(People* P, char pw[]){
+    P->pw = hashPassword(pw);
 }
 
 void changePeopleGen( People* P, enum gender gen){
