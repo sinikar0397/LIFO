@@ -27,6 +27,12 @@ uint32_t s[64] = {
     6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21
 };
 
+void printPassword(Password pw){
+    for(int i=0;i<16;i++){
+        printf("%02x", pw.digest[i]);
+    }
+    printf("\n");
+}
 
 Password hashPassword(char pw[]){
     uint32_t h0 = 0x67452301;
@@ -97,7 +103,7 @@ Password hashPassword(char pw[]){
 
     memcpy(newPw.digest, &h0, 4);
     memcpy(newPw.digest + 4, &h1, 4);
-    memcpy(newPw.digest + 9, &h2, 4);
+    memcpy(newPw.digest + 8, &h2, 4);
     memcpy(newPw.digest + 12, &h3, 4);
 
     free(msg);
@@ -178,33 +184,31 @@ void changePeopleAge( People* P, int age){
     P->age = age;
 }
 
-char* readFile(char path[]){
+char* readFile(const char path[], int offset){
     FILE *fp = fopen(path, "r");
     if (fp == NULL){
         printf("[ERROR] file : people.c, function : readFile.     Can't read file. Probably Wrong Path\n");
         return NULL;
     }
-    fseek(fp, 0, SEEK_END);
-    long size = ftell(fp);
-    rewind(fp);
-
-    char* buffer = (char*)malloc(size + 1);
-    fread(buffer, 1, size, fp);
-    buffer[size] = '\0';
-
+    
+    char* buffer = (char*)malloc(512);
+    fseek(fp, offset, SEEK_SET);
+    fgets(buffer, 512, fp);
     fclose(fp);
     return buffer;
 }
 
-People* readPeople(char path[]){
-    char* text = readFile(path);
+People* readPeople(const char path[], int offset){
+    char* text = readFile(path, offset);
     if (text == NULL){
         printf("[ERROR] file : people.c, function : readPeople.     Can't read text from readFile. Probably Error hold on readFile.\n");
         return NULL;
     }
 
     cJSON* root = cJSON_Parse(text);
+
     if (root == NULL){
+        printf("%s\n", text);
         printf("[ERROR] file : people.c, function : readPeople.     Can't parse text from text.\n");
         free(text);
         return NULL;
@@ -235,37 +239,42 @@ People* readPeople(char path[]){
     return resultPeople;
 }
 
-void savePeople(People* P, char path[]){
-    cJSON *root = cJSON_CreateObject();
+int savePeople(People* P, const char path[]){
+    cJSON* root = cJSON_CreateObject();
 
     cJSON_AddStringToObject(root, "name", P->name);
-    cJSON_AddStringToObject(root, "id"  , P->id  );
+    cJSON_AddStringToObject(root, "id", P->id);
 
     char pw_hex[33];
-    for(int i=0;i<16;i++)
-        sprintf(&pw_hex[i*2], "%02x", P->pw.digest[i]);
-    pw_hex[32]='\0';
+    for(int i = 0; i < 16; i++)
+        sprintf(&pw_hex[i * 2], "%02x", P->pw.digest[i]);
+
+    pw_hex[32] = '\0';
+
     cJSON_AddStringToObject(root, "pw", pw_hex);
     cJSON_AddStringToObject(root, "type", P->type);
     cJSON_AddStringToObject(root, "love_type", P->love_type);
-    cJSON_AddNumberToObject(root, "gen" , P->gen );
-    cJSON_AddNumberToObject(root, "age" , P->age );
+    cJSON_AddNumberToObject(root, "gen", P->gen);
+    cJSON_AddNumberToObject(root, "age", P->age);
 
-    char* json_string = cJSON_Print(root);
-    
-    FILE *fp = fopen(path, "w");
-    if (fp == NULL){
-        printf("[ERROR] file : people.c, function : savePeople.    Can't access file to path.\n");
+    char* json_string = cJSON_PrintUnformatted(root);
+
+    FILE* fp = fopen(path, "a");
+
+    if(fp == NULL){
+        printf("[ERROR] Can't open file.\n");
         free(json_string);
         cJSON_Delete(root);
-        return;
+        return -1;
     }
-
-    fprintf(fp, "%s", json_string);
+    
+    fseek(fp, 0, SEEK_END);
+    int offset = ftell(fp);
+    fprintf(fp, "%s\n", json_string);
     fclose(fp);
-
     free(json_string);
     cJSON_Delete(root);
+    return offset;
 }
 
 void printPeople(People* P){
@@ -287,7 +296,7 @@ void printPeople(People* P){
     printf("Love Type : %s\n", P->love_type);
 
     printf("Gender    : %s\n",
-           P->gen == Male ? "Male" : "Female");
+           P->gen == MALE ? "Male" : "Female");
 
     printf("Age       : %d\n", P->age);
 }

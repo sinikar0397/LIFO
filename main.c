@@ -1,104 +1,106 @@
 #include "./src/headers.h"
 #include "./src/people/people.h"
+#include "./src/people/login.h"
 
-void printDigest(Password pw){
-    for(int i=0;i<16;i++){
-        printf("%02x", pw.digest[i]);
-    }
-    printf("\n");
-}
 
 int main(void){
 
-    printf("===== Password Test =====\n");
+    printf("========================================\n");
+    printf(" Login System Test\n");
+    printf("========================================\n");
 
-    Password pw1 = hashPassword("1234");
-    Password pw2 = hashPassword("1234");
-    Password pw3 = hashPassword("abcd");
+    initializeLogin();
 
-    printf("pw1 : ");
-    printDigest(pw1);
+    while(1){
 
-    printf("pw2 : ");
-    printDigest(pw2);
+        int cmd;
 
-    printf("pw3 : ");
-    printDigest(pw3);
+        printf("\n");
+        printf("1. 회원가입\n");
+        printf("2. 로그인\n");
+        printf("3. ID 존재 여부 확인\n");
+        printf("4. 계정 정보 조회\n");
+        printf("5. 종료\n");
+        printf("입력 : ");
 
-    printf("pw1 == pw2 : %s\n",
-           isPasswordSame(pw1, pw2) ? "TRUE" : "FALSE");
+        scanf("%d", &cmd);
 
-    printf("pw1 == pw3 : %s\n",
-           isPasswordSame(pw1, pw3) ? "TRUE" : "FALSE");
+        switch(cmd){
 
+            case 1:{
+                printf("\n[회원가입]\n");
 
-    printf("\n===== CreatePeople Test =====\n");
+                People* p = signInAccount();
 
-    People* p1 = createPeople(
-        "Alice",
-        "alice01",
-        "1234",
-        "INTJ",
-        "ENFP",
-        Female,
-        21
-    );
+                printf("\n저장된 계정 정보\n");
+                printPeople(p);
 
-    if(p1 == NULL){
-        printf("createPeople failed\n");
-        return 1;
+                deletePeople(p);
+
+                break;
+            }
+
+            case 2:{
+                printf("\n[로그인]\n");
+
+                People* p = logInAccount();
+
+                if(p != NULL){
+                    printf("\n로그인 성공\n");
+                    deletePeople(p);
+                }
+
+                break;
+            }
+
+            case 3:{
+                char id[MAX_ID_LEN];
+
+                printf("검색할 ID : ");
+                scanf("%s", id);
+
+                if(existID(id))
+                    printf("존재하는 ID입니다.\n");
+                else
+                    printf("존재하지 않는 ID입니다.\n");
+
+                break;
+            }
+
+            case 4:{
+                char id[MAX_ID_LEN];
+
+                printf("조회할 ID : ");
+                scanf("%s", id);
+
+                if(!existID(id)){
+                    printf("존재하지 않는 ID입니다.\n");
+                    break;
+                }
+
+                People* p = getAccount(id);
+
+                if(p == NULL){
+                    printf("계정 로드 실패\n");
+                    break;
+                }
+
+                printPeople(p);
+
+                deletePeople(p);
+
+                break;
+            }
+
+            case 5:{
+                printf("프로그램 종료\n");
+                return 0;
+            }
+
+            default:
+                printf("잘못된 입력입니다.\n");
+        }
     }
-
-    printPeople(p1);
-
-
-    printf("\n===== ChangePeople Test =====\n");
-
-    changePeopleName(p1, "Bob");
-    changePeopleId(p1, "bob01");
-    changePeoplePw(p1, "5678");
-    changePeopleType(p1, "ENTP");
-    changePeopleLoveType(p1, "ISFJ");
-    changePeopleGen(p1, Male);
-    changePeopleAge(p1, 25);
-
-    printPeople(p1);
-
-
-    printf("\n===== Save Test =====\n");
-
-    savePeople(p1, "./database/peoples/person.json");
-
-    printf("Saved to person.json\n");
-
-
-    printf("\n===== Read Test =====\n");
-
-    People* p2 = readPeople("./database/peoples/person.json");
-
-    if(p2 == NULL){
-        printf("readPeople failed\n");
-        deletePeople(p1);
-        return 1;
-    }
-
-    printPeople(p2);
-
-
-    printf("\n===== Compare Loaded Password =====\n");
-
-    if(isPasswordSame(p1->pw, p2->pw))
-        printf("Password Match\n");
-    else
-        printf("Password Mismatch\n");
-
-
-    printf("\n===== Cleanup =====\n");
-
-    deletePeople(p1);
-    deletePeople(p2);
-
-    printf("All tests completed.\n");
 
     return 0;
 }
