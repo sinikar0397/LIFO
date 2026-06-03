@@ -6,13 +6,13 @@ const char* DATA_PATH_HASH = "./database/peoples/hashTable.dat";
 
 IdHash HashTable[HASH_SIZE];
 
-void createEmptyHashFile(){
+void login_create_empty_hashtable(){
     FILE* fp = fopen(DATA_PATH_HASH, "wb");
 
     if(fp == NULL)
         return;
 
-    IdHash empty = emptyHash();
+    IdHash empty = login_create_empty_hash();
 
     for(int i=0;i<HASH_SIZE;i++)
         fwrite(&empty, sizeof(IdHash), 1, fp);
@@ -20,10 +20,10 @@ void createEmptyHashFile(){
     fclose(fp);
 }
 
-void saveHashTable(){
+void login_save_hashtable(){
     FILE* fp = fopen(DATA_PATH_HASH, "wb");
     if(fp == NULL){
-        printf("[ERROR] file : login.c, function : saveHashTable.       Can't open hash file.\n");
+        printf("[ERROR] file : login.c, function : login_save_hashtable.       Can't open hash file.\n");
         return;
     }
     fwrite(
@@ -35,7 +35,7 @@ void saveHashTable(){
     fclose(fp);
 }
 
-void updateHashSlot(int idx){
+void login_update_hashtable(int idx){
     FILE* fp = fopen(DATA_PATH_HASH, "rb+");
     if(fp == NULL)
         return;
@@ -55,7 +55,7 @@ void updateHashSlot(int idx){
     fclose(fp);
 }
 
-int loadHashTable(){
+int login_load_hashtable(){
     FILE* fp = fopen(DATA_PATH_HASH, "rb");
 
     if(fp == NULL)
@@ -73,17 +73,17 @@ int loadHashTable(){
     return count == HASH_SIZE;
 }
 
-void initializeLogin(){
-    if(loadHashTable())
+void login_init(){
+    if(login_load_hashtable())
         return;
 
     for(int i=0;i<HASH_SIZE;i++)
-        HashTable[i] = emptyHash();
+        HashTable[i] = login_create_empty_hash();
 
-    createEmptyHashFile();
+    login_create_empty_hashtable();
 }
 
-IdHash emptyHash(){
+IdHash login_create_empty_hash(){
     IdHash result;
     result.hash1 = -1;
     result.hash2 = -1;
@@ -91,15 +91,15 @@ IdHash emptyHash(){
     return result;
 }
 
-int isEmptyHash(IdHash hash){
+int login_is_hash_empty(IdHash hash){
     return (hash.hash1 == -1 && hash.hash2 ==-1);
 }
 
-int isSameHash(IdHash hash1, IdHash hash2){
+int login_is_hash_same(IdHash hash1, IdHash hash2){
     return (hash1.hash1 == hash2.hash1 && hash1.hash2 == hash2.hash2);
 }
 
-ll hashStr(char id[], ll base, ll expon){
+ll login_hash_string(char id[], ll base, ll expon){
     ll res = 0;
     for (char* ptr = id; *ptr != '\0'; ptr++){
         res = (res * expon + *ptr) % base;
@@ -107,65 +107,65 @@ ll hashStr(char id[], ll base, ll expon){
     return res;
 }
 
-IdHash hashID(char id[]){
+IdHash login_hash_ID(char id[]){
     IdHash result_hash;
-    result_hash.hash1 = hashStr(id, PRIME_ENCODING1, EXPON);
-    result_hash.hash2 = hashStr(id, PRIME_ENCODING2, EXPON);
+    result_hash.hash1 = login_hash_string(id, PRIME_ENCODING1, EXPON);
+    result_hash.hash2 = login_hash_string(id, PRIME_ENCODING2, EXPON);
     return result_hash;
 }
 
-int getOffset(char id[]){
-    IdHash hashed_id = hashID(id);
-    ll h1 = hashStr(id, PRIME_HASHING1, EXPON);
-    ll h2 = hashStr(id, PRIME_HASHING2, EXPON);
+int login_get_account_offset(char id[]){
+    IdHash hashed_id = login_hash_ID(id);
+    ll h1 = login_hash_string(id, PRIME_HASHING1, EXPON);
+    ll h2 = login_hash_string(id, PRIME_HASHING2, EXPON);
 
     int idx = h1;
     int cnt = 0;
     while (cnt++ <= HASH_SIZE){
-        if (isEmptyHash(HashTable[idx]))
+        if (login_is_hash_empty(HashTable[idx]))
             return -1;
-        if (isSameHash(HashTable[idx], hashed_id))
+        if (login_is_hash_same(HashTable[idx], hashed_id))
             return HashTable[idx].offset;
         idx = (idx + h2) % HASH_SIZE;
     }
-    printf("[ERROR] file : login.c, function : getOffset.     HashTable is full(almost, probably.). Check The Hash Table.\n");
+    printf("[ERROR] file : login.c, function : login_get_account_offset.     HashTable is full(almost, probably.). Check The Hash Table.\n");
     return -1;
 }
 
-int existID(char id[]){
-    return getOffset(id) != -1;
+int login_does_ID_exist(char id[]){
+    return login_get_account_offset(id) != -1;
 }
 
-People* getAccount(char id[]){
-    int offset = getOffset(id);
-    return readPeople(DATA_PATH_PEOPLE, offset);
+People* login_get_account(char id[]){
+    int offset = login_get_account_offset(id);
+    return people_read_people(DATA_PATH_PEOPLE, offset);
 }
 
-void addHash(IdHash hash, char id[]){
-    ll h1 = hashStr(id, PRIME_HASHING1, EXPON);
-    ll h2 = hashStr(id, PRIME_HASHING2, EXPON);
+void login_add_hash_to_hashtable(IdHash hash, char id[]){
+    ll h1 = login_hash_string(id, PRIME_HASHING1, EXPON);
+    ll h2 = login_hash_string(id, PRIME_HASHING2, EXPON);
 
     int idx = h1;
     int cnt = 0;
     while (cnt++ <= HASH_SIZE){
-        if (isEmptyHash(HashTable[idx])){
+        if (login_is_hash_empty(HashTable[idx])){
             HashTable[idx] = hash;
-            updateHashSlot(idx);
+            login_update_hashtable(idx);
             return;
         }
         idx = (idx + h2) % HASH_SIZE;
     }
-    printf("[ERROR] file : login.c, function : addHash.     Saving failed. HashTable is full(almost, probably.). Check The Hash Table.\n");
+    printf("[ERROR] file : login.c, function : login_add_hash_to_hashtable.     Saving failed. HashTable is full(almost, probably.). Check The Hash Table.\n");
 }
 
-void addAccount(People* P){
-    int offset = savePeople(P, DATA_PATH_PEOPLE);
-    IdHash hash = hashID(P->id);
+void login_add_people_tp_hashtable(People* P){
+    int offset = people_save_people(P, DATA_PATH_PEOPLE);
+    IdHash hash = login_hash_ID(P->id);
     hash.offset = offset;
-    addHash(hash, P->id);
+    login_add_hash_to_hashtable(hash, P->id);
 }
 
-People* signInAccount(){
+People* login_sign_in_account(){
     char name[MAX_NAME_LEN];
     char id[MAX_ID_LEN];
     char pw[MAX_PW_LEN];
@@ -177,7 +177,7 @@ People* signInAccount(){
 
     printf("ID를 입력해주십시오(띄어쓰기 없이 입력하십시오.) : ");
     scanf("%s", id);
-    while (existID(id)){
+    while (login_does_ID_exist(id)){
         printf("이미 존재하는 ID입니다. 다른 ID를 입력해주십시오 : ");
         scanf("%s", id);
     }
@@ -199,14 +199,14 @@ People* signInAccount(){
     printf("나이를 입력해주십시오 : ");
     scanf("%d", &age);
 
-    People* resultPeople = createPeople(
+    People* resultPeople = people_create_people(
         name, id, pw, type, love_type, gen, age
     );
-    addAccount(resultPeople);
+    login_add_people_tp_hashtable(resultPeople);
     return resultPeople;
 }
 
-People* logInAccount(){
+People* login_log_in_account(){
     char id[MAX_ID_LEN];
     char pw[MAX_PW_LEN];
     Password HashedPassword;
@@ -215,24 +215,21 @@ People* logInAccount(){
     while (1){
         printf("ID를 입력해주십시오(띄어쓰기 없이 입력하십시오.) : ");
         scanf("%s", id);
-        while (!existID(id)){
+        while (!login_does_ID_exist(id)){
             printf("존재하지 않는 ID입니다. 다시 입력해주십시오 : ");
             scanf("%s", id);
         }
-        answerAccount = getAccount(id);
+        answerAccount = login_get_account(id);
 
         printf("비밀번호를 입력해주십시오(띄어쓰기 없이 입력하십시오.) : ");
         scanf("%s", pw);
-        HashedPassword = hashPassword(pw);
-        if (isPasswordSame(HashedPassword, answerAccount->pw)){
+        HashedPassword = people_hash_password(pw);
+        if (people_is_same_password(HashedPassword, answerAccount->pw)){
             break;    
         }
-        printPassword(HashedPassword);
-        printPassword(answerAccount->pw);
-        printf("%d\n", isPasswordSame(HashedPassword, answerAccount->pw));
         printf("비밀번호가 일치하지 않습니다. 다시 입력하여주십시오.\n");
     }
     printf("로그인 되었습니다!\n현재 사용자 :\n");
-    printPeople(answerAccount);
+    people_print_people(answerAccount);
     return answerAccount;
 }

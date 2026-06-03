@@ -9,7 +9,7 @@ int main(void){
     printf(" Login System Test\n");
     printf("========================================\n");
 
-    initializeLogin();
+    login_init();
 
     while(1){
 
@@ -30,12 +30,12 @@ int main(void){
             case 1:{
                 printf("\n[회원가입]\n");
 
-                People* p = signInAccount();
+                People* p = login_sign_in_account();
 
                 printf("\n저장된 계정 정보\n");
-                printPeople(p);
+                people_print_people(p);
 
-                deletePeople(p);
+                people_delete_people(p);
 
                 break;
             }
@@ -43,11 +43,11 @@ int main(void){
             case 2:{
                 printf("\n[로그인]\n");
 
-                People* p = logInAccount();
+                People* p = login_log_in_account();
 
                 if(p != NULL){
                     printf("\n로그인 성공\n");
-                    deletePeople(p);
+                    people_delete_people(p);
                 }
 
                 break;
@@ -59,7 +59,7 @@ int main(void){
                 printf("검색할 ID : ");
                 scanf("%s", id);
 
-                if(existID(id))
+                if(login_does_ID_exist(id))
                     printf("존재하는 ID입니다.\n");
                 else
                     printf("존재하지 않는 ID입니다.\n");
@@ -73,21 +73,21 @@ int main(void){
                 printf("조회할 ID : ");
                 scanf("%s", id);
 
-                if(!existID(id)){
+                if(!login_does_ID_exist(id)){
                     printf("존재하지 않는 ID입니다.\n");
                     break;
                 }
 
-                People* p = getAccount(id);
+                People* p = login_get_account(id);
 
                 if(p == NULL){
                     printf("계정 로드 실패\n");
                     break;
                 }
 
-                printPeople(p);
+                people_print_people(p);
 
-                deletePeople(p);
+                people_delete_people(p);
 
                 break;
             }

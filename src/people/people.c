@@ -27,14 +27,14 @@ uint32_t s[64] = {
     6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21
 };
 
-void printPassword(Password pw){
+void people_print_password(Password pw){
     for(int i=0;i<16;i++){
         printf("%02x", pw.digest[i]);
     }
     printf("\n");
 }
 
-Password hashPassword(char pw[]){
+Password people_hash_password(char pw[]){
     uint32_t h0 = 0x67452301;
     uint32_t h1 = 0xEFCDAB89;
     uint32_t h2 = 0x98BADCFE;
@@ -110,7 +110,7 @@ Password hashPassword(char pw[]){
     return newPw;
 }
 
-Password readHashedPassword(char pw_hex[]){
+Password people_read_password_from_hex(char pw_hex[]){
     Password pw;
     for (int i = 0 ; i < 16 ; i++){
         sscanf(&pw_hex[i*2],
@@ -120,7 +120,7 @@ Password readHashedPassword(char pw_hex[]){
     return pw;
 }
 
-int isPasswordSame(Password p1, Password p2){
+int people_is_same_password(Password p1, Password p2){
     return memcmp(
         p1.digest,
         p2.digest,
@@ -128,16 +128,16 @@ int isPasswordSame(Password p1, Password p2){
     ) == 0;
 }
 
-People* createPeople(char name[], char id[], char pw[], char type[], char love_type[], enum gender gen, int age){
+People* people_create_people(char name[], char id[], char pw[], char type[], char love_type[], enum gender gen, int age){
     People* newPeople = (People*)malloc(sizeof(People));
     if (newPeople == NULL){
-        printf("[ERROR] file : people.c, function : createPeople.     Can't malloc structure.\n");
+        printf("[ERROR] file : people.c, function : people_create_people.     Can't malloc structure.\n");
         return NULL;
     }
 
     strncpy(newPeople->name, name, MAX_NAME_LEN - 1);
     strncpy(newPeople->id  , id  , MAX_ID_LEN   - 1);
-    newPeople->pw = hashPassword(pw);
+    newPeople->pw = people_hash_password(pw);
     strncpy(newPeople->type, type, MAX_TYPE_LEN - 1);
     strncpy(newPeople->love_type, love_type, MAX_TYPE_LEN - 1);
     newPeople->name[MAX_NAME_LEN - 1] = '\0';
@@ -149,45 +149,45 @@ People* createPeople(char name[], char id[], char pw[], char type[], char love_t
     return newPeople;
 }
 
-void changePeopleName(People* P, char name[]){
+void people_set_people_name(People* P, char name[]){
     strncpy(P->name, name, MAX_NAME_LEN - 1);
     P->name[MAX_NAME_LEN - 1] = '\0';
 }
 
-void changePeopleType(People* P, char type[]){
+void people_set_people_type(People* P, char type[]){
     strncpy(P->type, type, MAX_TYPE_LEN - 1);
     P->type[MAX_TYPE_LEN - 1] = '\0';
 }
 
-void changePeopleLoveType(  People* P, char love_type[]){
+void people_set_people_love_type(  People* P, char love_type[]){
     strncpy(P->love_type, love_type, MAX_TYPE_LEN - 1);
     P->love_type[MAX_TYPE_LEN - 1] = '\0';
 }
 
-void changePeopleId(People* P, char id[]){
+void people_set_people_id(People* P, char id[]){
     strncpy(P->id, id, MAX_ID_LEN - 1);
     P->id[MAX_ID_LEN - 1] = '\0';
 }
 
-void changePeoplePw(People* P, char pw[]){
-    P->pw = hashPassword(pw);
+void people_set_people_pw(People* P, char pw[]){
+    P->pw = people_hash_password(pw);
 }
 
-void changePeopleHashedPw(  People* P, Password pw){
+void people_set_people_pw_hashed(  People* P, Password pw){
     P->pw = pw;
 }
 
-void changePeopleGen( People* P, enum gender gen){
+void people_set_people_gen( People* P, enum gender gen){
     P->gen = gen;
 }
-void changePeopleAge( People* P, int age){
+void people_set_people_age( People* P, int age){
     P->age = age;
 }
 
-char* readFile(const char path[], int offset){
+char* people_read_text_from_file(const char path[], int offset){
     FILE *fp = fopen(path, "r");
     if (fp == NULL){
-        printf("[ERROR] file : people.c, function : readFile.     Can't read file. Probably Wrong Path\n");
+        printf("[ERROR] file : people.c, function : people_read_text_from_file.     Can't read file. Probably Wrong Path\n");
         return NULL;
     }
     
@@ -198,10 +198,10 @@ char* readFile(const char path[], int offset){
     return buffer;
 }
 
-People* readPeople(const char path[], int offset){
-    char* text = readFile(path, offset);
+People* people_read_people(const char path[], int offset){
+    char* text = people_read_text_from_file(path, offset);
     if (text == NULL){
-        printf("[ERROR] file : people.c, function : readPeople.     Can't read text from readFile. Probably Error hold on readFile.\n");
+        printf("[ERROR] file : people.c, function : people_read_people.     Can't read text from people_read_text_from_file. Probably Error hold on people_read_text_from_file.\n");
         return NULL;
     }
 
@@ -209,7 +209,7 @@ People* readPeople(const char path[], int offset){
 
     if (root == NULL){
         printf("%s\n", text);
-        printf("[ERROR] file : people.c, function : readPeople.     Can't parse text from text.\n");
+        printf("[ERROR] file : people.c, function : people_read_people.     Can't parse text from text.\n");
         free(text);
         return NULL;
     }
@@ -224,14 +224,14 @@ People* readPeople(const char path[], int offset){
     strcpy(type,        cJSON_GetObjectItem(root, "type"     )->valuestring);
     strcpy(love_type,   cJSON_GetObjectItem(root, "love_type")->valuestring);
     char* pw_hex = cJSON_GetObjectItem(root, "pw")->valuestring;
-    pw = readHashedPassword(pw_hex);
+    pw = people_read_password_from_hex(pw_hex);
 
 
     enum gender gen  = cJSON_GetObjectItem(root, "gen" )->valueint;
     int         age  = cJSON_GetObjectItem(root, "age" )->valueint;
 
-    People* resultPeople = createPeople(name, id, "\0", type, love_type, gen, age);
-    changePeopleHashedPw(resultPeople, pw);
+    People* resultPeople = people_create_people(name, id, "\0", type, love_type, gen, age);
+    people_set_people_pw_hashed(resultPeople, pw);
     
     cJSON_Delete(root);
     free(text);
@@ -239,7 +239,7 @@ People* readPeople(const char path[], int offset){
     return resultPeople;
 }
 
-int savePeople(People* P, const char path[]){
+int people_save_people(People* P, const char path[]){
     cJSON* root = cJSON_CreateObject();
 
     cJSON_AddStringToObject(root, "name", P->name);
@@ -277,7 +277,7 @@ int savePeople(People* P, const char path[]){
     return offset;
 }
 
-void printPeople(People* P){
+void people_print_people(People* P){
     if(P == NULL){
         printf("NULL People\n");
         return;
@@ -296,11 +296,11 @@ void printPeople(People* P){
     printf("Love Type : %s\n", P->love_type);
 
     printf("Gender    : %s\n",
-           P->gen == MALE ? "Male" : "Female");
+           P->gen == GENDER_MALE ? "Male" : "Female");
 
     printf("Age       : %d\n", P->age);
 }
 
-void deletePeople(People* P){
+void people_delete_people(People* P){
     free(P);
 }

@@ -19,33 +19,34 @@ typedef struct IdHash{
     int offset;
 } IdHash;
 
-void saveHashTable();
-void updateHashSlot(int idx);
-int loadHashTAble();
-void initializeLogin();
+void login_create_empty_hashtable();
+void login_save_hashtable();
+void login_update_hashtable(int idx);
+int login_load_hashtable();
+void login_init();
 
-IdHash emptyHash();
-int isEmptyHash(IdHash hash);
-int isSameHash(IdHash hash1, IdHash hash2);
+IdHash login_create_empty_hash();
+int login_is_hash_empty(IdHash hash);
+int login_is_hash_same(IdHash hash1, IdHash hash2);
 
-ll hashStr(char id[], ll base, ll expon);
-IdHash hashID(char id[]);
+ll login_hash_string(char id[], ll base, ll expon);
+IdHash login_hash_ID(char id[]);
 
-int getOffset(char id[]);
-int existID(char id[]);
-People* getAccount(char id[]);
+int login_get_account_offset(char id[]);
+int login_does_ID_exist(char id[]);
+People* login_get_account(char id[]);
 
-void addHash(IdHash hash, char id[]);
-void addAccount(People* P);
+void login_add_hash_to_hashtable(IdHash hash, char id[]);
+void login_add_people_tp_hashtable(People* P);
 // 백에서 돌릴 함수
 // hashTable에 추가해주는 함수
 
-People* signInAccount();
+People* login_sign_in_account();
 // 얘는 정보 입력받고 계정(Person) 생성하는 함수
 // addAcount 호출할거임
 // 사실 얘를 직접 쓸 지는 모르겠음
 // 일단 테스트 목적으로 추가해둠
 
-People* logInAccount();
+People* login_log_in_account();
 
 #endif //LOGIN_H
