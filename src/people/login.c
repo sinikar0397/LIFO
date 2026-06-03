@@ -138,6 +138,10 @@ int login_does_ID_exist(char id[]){
 
 People* login_get_account(char id[]){
     int offset = login_get_account_offset(id);
+    if (offset == -1){
+        printf("[WARNING] file : login.c, function : login_get_accunt. No matching id found");
+        return NULL;
+    }
     return people_read_people(DATA_PATH_PEOPLE, offset);
 }
 
@@ -158,7 +162,7 @@ void login_add_hash_to_hashtable(IdHash hash, char id[]){
     printf("[ERROR] file : login.c, function : login_add_hash_to_hashtable.     Saving failed. HashTable is full(almost, probably.). Check The Hash Table.\n");
 }
 
-void login_add_people_tp_hashtable(People* P){
+void login_add_people_to_hashtable(People* P){
     int offset = people_save_people(P, DATA_PATH_PEOPLE);
     IdHash hash = login_hash_ID(P->id);
     hash.offset = offset;
@@ -202,7 +206,7 @@ People* login_sign_in_account(){
     People* resultPeople = people_create_people(
         name, id, pw, type, love_type, gen, age
     );
-    login_add_people_tp_hashtable(resultPeople);
+    login_add_people_to_hashtable(resultPeople);
     return resultPeople;
 }
 
