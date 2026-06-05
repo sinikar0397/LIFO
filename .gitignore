@@ -1,0 +1,15 @@
+
+
+# 편집기 임시 파일
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# 디버그 정보
+*.pdb
+
+# OS 찌꺼기 파일
+.DS_Store        # Mac
+Thumbs.db        # Windows
