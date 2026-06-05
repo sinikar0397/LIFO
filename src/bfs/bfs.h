@@ -1,7 +1,7 @@
 #ifndef MATCHING_H
 #define MATCHING_H
 
-#include "people.h"
+#include "../people/people.h"
 #define MAX_PEOPLE 5000
 
 typedef enum MatchStatus {

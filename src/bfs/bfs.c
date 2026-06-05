@@ -1,4 +1,4 @@
-#include "headers.h"
+#include "../headers.h"
 #include "bfs.h"
 
 typedef struct Queue {
