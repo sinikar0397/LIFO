@@ -1,15 +1,15 @@
 #ifndef MATCHING_H
 #define MATCHING_H
-
 #include "../people/people.h"
+
 #define MAX_PEOPLE 5000
 
 typedef enum MatchStatus {
 	AVAILABLE, // 매칭 가능
 	PROPOSED,  // 추천된 상태, 아직 양쪽 수락 전
 	MATCHED,   // 최종 매칭 완료
-	PAUSED,	   // 추천 일시 중단
-	DELETED	   // 탈퇴 또는 삭제
+	PAUSED,    // 추천 일시 중단
+	DELETED    // 탈퇴 또는 삭제
 } MatchStatus;
 
 typedef struct MatchingInfo {
@@ -17,8 +17,8 @@ typedef struct MatchingInfo {
 	MatchStatus status;
 	int preference[MAX_PEOPLE];
 	int match_idx;
-	int prefsize;
-	int nextProposal;
+	int pref_size;
+	int next_proposal;
 } MatchingInfo;
 
 typedef struct Pair {
@@ -40,14 +40,18 @@ void initMatchingInfos(MatchingInfo infos[], People *people[], int n);
 
 void changeStatus(MatchingInfo infos[], int idx, MatchStatus status);
 
-/* Candidate filtering */
 /* User insertion / deletion */
 
-void addUser(MatchingInfo infos[], int *n, People *newPerson);
-void removeUser(MatchingInfo infos[], int userIdx);
+void addUser(MatchingInfo infos[], int *n, People *new_person);
+void removeUser(MatchingInfo infos[], int user_idx);
 
-int stableMatching(MatchingInfo infos[], int n, int proposers[],
-				   int proposerCnt, int rankTable[][MAX_PEOPLE], Pair result[]);
+
+/* Candidate filtering */
+
+int collectUser(MatchingInfo infos[], int n, enum gender gen, int result[]);
+void makePrefList(MatchingInfo infos[], int user_idx, int candidates[], int cand_size);
+void makePrefLists(MatchingInfo infos[], int n);
+int stableMatching(MatchingInfo infos[], int n, int proposers[], int proposer_cnt, int rank_table[][MAX_PEOPLE], Pair result[]);
 
 /* Proposal and match confirmation */
 

@@ -128,7 +128,7 @@ int people_is_same_password(Password p1, Password p2){
     ) == 0;
 }
 
-People* people_create_people(char name[], char id[], char pw[], char type[], char love_type[], enum gender gen, int age){
+People* people_create_people(char name[], char id[], char pw[], char type[], char love_type[], enum Gender gen, int age){
     People* newPeople = (People*)malloc(sizeof(People));
     if (newPeople == NULL){
         printf("[ERROR] file : people.c, function : people_create_people.     Can't malloc structure.\n");
@@ -177,7 +177,7 @@ void people_set_people_pw_hashed(  People* P, Password pw){
     P->pw = pw;
 }
 
-void people_set_people_gen( People* P, enum gender gen){
+void people_set_people_gen( People* P, enum Gender gen){
     P->gen = gen;
 }
 void people_set_people_age( People* P, int age){
@@ -227,7 +227,7 @@ People* people_read_people(const char path[], int offset){
     pw = people_read_password_from_hex(pw_hex);
 
 
-    enum gender gen  = cJSON_GetObjectItem(root, "gen" )->valueint;
+    enum Gender gen  = cJSON_GetObjectItem(root, "gen" )->valueint;
     int         age  = cJSON_GetObjectItem(root, "age" )->valueint;
 
     People* resultPeople = people_create_people(name, id, "\0", type, love_type, gen, age);

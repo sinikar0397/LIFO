@@ -21,7 +21,7 @@ extern uint32_t s[64];
 
 GENDER_MALE, GENDER_FEMALE밖에 없음
 */
-enum gender { GENDER_MALE, GENDER_FEMALE };
+enum Gender { GENDER_MALE, GENDER_FEMALE };
 
 /*
 @brief
