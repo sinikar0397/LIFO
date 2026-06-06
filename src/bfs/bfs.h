@@ -85,21 +85,21 @@ void addUser(MatchingInfo infos[], int *n, People *new_person);
  */
 void removeUser(MatchingInfo infos[], int user_idx);
 
-
 /* Candidate filtering */
 
 /*
  * 전체 사용자 중 gen 성별, AVAILABLE 상태인 사용자만 모으는 함수
  * 반환값은 조건 만족한 사용자 수
  */
-int collectUser(MatchingInfo infos[], int n, enum gender gen, int result[]);
+int collectUser(MatchingInfo infos[], int n, enum Gender gen, int result[]);
 
 /*
  * user_idx 사용자의 선호도 리스트 생성
- * candidates에 대해 compatibility 계산 
+ * candidates에 대해 compatibility 계산
  * 점수가 높은 순서대로 infos[user_idx].preference에 저장
  */
-void makePrefList(MatchingInfo infos[], int user_idx, int candidates[], int cand_size);
+void makePrefList(MatchingInfo infos[], int user_idx, int candidates[],
+				  int cand_size);
 
 /*
  * 모든 AVAILABLE 사용자에 대해 선호도 리스트 생성
@@ -114,19 +114,17 @@ void makePrefLists(MatchingInfo infos[], int n);
  */
 void createProposal(MatchingInfo infos[], int u, int v);
 
-/* 
+/*
  * u와 v의 추천을 최종 수락 처리
  * 두 사용자 상태를 MATCHED로 변경
  */
 void confirmMatch(MatchingInfo infos[], int u, int v);
-
 
 /*
  * u와 v의 추천을 거절 처리
  * match_idx 초기화, DELETED가 아니면 AVAILABLE로 되돌림
  */
 void rejectMatch(MatchingInfo infos[], int u, int v);
-
 
 /* Main Algorithm */
 
@@ -143,6 +141,8 @@ void rejectMatch(MatchingInfo infos[], int u, int v);
  * return       : 생성된 추천 쌍의 개수
  * 생성된 쌍은 createProposal을 통해 PROPOSED 상태로 변경
  */
-int stableMatching(MatchingInfo infos[], int n, int proposers[], int proposer_cnt, int rank_table[][MAX_PEOPLE], Pair result[]);
+int stableMatching(MatchingInfo infos[], int n, int proposers[],
+				   int proposer_cnt, int rank_table[][MAX_PEOPLE],
+				   Pair result[]);
 
 #endif // MATCHING_H
