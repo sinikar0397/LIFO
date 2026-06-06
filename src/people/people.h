@@ -47,7 +47,7 @@ typedef struct People {
 	Password pw;
 	char type[MAX_TYPE_LEN];
 	char love_type[MAX_TYPE_LEN];
-	enum gender gen;
+	enum Gender gen;
 	int age;
 } People;
 
@@ -89,7 +89,7 @@ People에 대한 생성자
 비밀번호의 경우, 암호화하지 않은 단순 문자열을 입력하면 됨
 */
 People *people_create_people(char name[], char id[], char pw[], char type[],
-							 char love_type[], enum gender gen, int age);
+							 char love_type[], enum Gender gen, int age);
 
 /*
 @brief
@@ -135,7 +135,7 @@ void people_set_people_love_type(People *P, char love_type[]);
 @brief
 People의 성별에 대한 setter
 */
-void people_set_people_gen(People *P, enum gender gen);
+void people_set_people_gen(People *P, enum Gender gen);
 
 /*
 @brief
