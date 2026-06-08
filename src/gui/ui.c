@@ -44,6 +44,13 @@ int gui_initUi(SDL_Ui *ui) {
 	ui->font_bbig = TTF_OpenFont("gulsi.ttf", FONT_SIZE_BBIG);
 	ui->font_bbsig = TTF_OpenFont("gulsi.ttf", FONT_SIZE_BBSIG);
 
+	ui->quit = false;
+	ui->next_state = LOGIN;
+	ui->is_mouse_down = false;
+	ui->is_mouse_up = false;
+	ui->is_mouse_move = false;
+	strcpy(ui->input_buf, " ");
+
 	return (1);
 }
 
@@ -137,6 +144,37 @@ Object gui_initObject(SDL_Ui *ui, ObjectTypeEnum objtype, int x, int y,
 		obj.dstrect = rect;
 
 		SDL_FreeSurface(surface);
+		return obj;
+	} else if (objtype == BOX) {
+		obj.textcolor = param.box.color;
+		SDL_Surface *surface =
+			SDL_CreateRGBSurface(0, param.box.w, param.box.h, 32, 0x00FF0000,
+								 0x0000FF00, 0x000000FF, 0xFF000000);
+		Uint32 color =
+			SDL_MapRGBA(surface->format, obj.textcolor.r, obj.textcolor.g,
+						obj.textcolor.b, obj.textcolor.a);
+		SDL_FillRect(surface, NULL, color);
+
+		obj.texture = SDL_CreateTextureFromSurface(ui->renderer, surface);
+		SDL_FreeSurface(surface);
+
+		SDL_Rect rect = {x, y, param.box.w, param.box.h};
+		switch (anchor) {
+		case TOPLEFT:
+			break;
+		case MIDTOP:
+			rect.x -= rect.w / 2;
+			break;
+		case CENTER:
+			rect.x -= rect.w / 2;
+			rect.y -= rect.h / 2;
+			break;
+		case MIDBOTTOM:
+			rect.x -= rect.w / 2;
+			rect.y -= rect.h;
+			break;
+		}
+		obj.dstrect = rect;
 		return obj;
 	}
 

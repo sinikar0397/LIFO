@@ -1,5 +1,5 @@
-#ifndef SDL_h
-#define SDL_h
+#ifndef UI_h
+#define UI_h
 
 #include "../headers.h"
 #include <SDL2/SDL.h>
@@ -7,17 +7,14 @@
 #include <SDL_ttf.h>
 #include <stdbool.h>
 
-#define STANDARD_FONT "gulsi.ttf"
-#define WINDOW_WIDTH (768)	// 1536
-#define WINDOW_HEIGHT (432) // 864
+#define WINDOW_WIDTH (1280) // 1536
+#define WINDOW_HEIGHT (720) // 864
 #define FONT_SIZE_SSMALL (8)
 #define FONT_SIZE_SMALL (12)
 #define FONT_SIZE_NORMAL (24)
 #define FONT_SIZE_BIG (36)
 #define FONT_SIZE_BBIG (108)
 #define FONT_SIZE_BBSIG (90)
-#define CENTER_X (768)
-#define CENTER_Y (432)
 #define TEXTLENMAX (256)
 #define COLOR_WHITE ((SDL_Color){255, 255, 255, 255})
 #define COLOR_BLACK ((SDL_Color){0, 0, 0, 255})
@@ -25,10 +22,18 @@
 #define COLOR_YELLOW ((SDL_Color){255, 214, 75, 255})
 #define COLOR_GREEN ((SDL_Color){122, 255, 23, 255})
 #define COLOR_BLUE ((SDL_Color){184, 248, 251, 255})
-#define COLOR_PURPLE ((SDL_Color){163, 116, 219, 255})
+#define COLOR_WHITEPINK ((SDL_Color){255, 240, 244, 255})
+#define COLOR_SOFTPINK ((SDL_Color){251, 218, 221, 255})
+#define COLOR_PINK ((SDL_Color){244, 192, 209, 255})
+#define COLOR_DURTYPINK ((SDL_Color){201, 116, 138, 255})
+#define COLOR_SUPERPINK ((SDL_Color){212, 83, 126, 255})
+#define COLOR_WHITEVIOLET ((SDL_Color){237, 232, 255, 255})
+#define COLOR_SOFTVIOLET ((SDL_Color){179, 157, 219, 255})
+#define COLOR_VIOLET ((SDL_Color){126, 87, 194, 255})
 
 typedef enum _AnchorEnum { TOPLEFT, CENTER, MIDTOP, MIDBOTTOM } AnchorEnum;
-typedef enum _ObjectTypeEnum { IMAGE, TEXT } ObjectTypeEnum;
+typedef enum _ObjectTypeEnum { IMAGE, TEXT, BOX } ObjectTypeEnum;
+typedef enum _MainStateEnum { LOGIN, DFS, BFS, MST } MainStateEnum;
 
 typedef struct _SDL_Ui {
 	SDL_Window *window;
@@ -39,6 +44,13 @@ typedef struct _SDL_Ui {
 	TTF_Font *font_big;
 	TTF_Font *font_bbsig;
 	TTF_Font *font_bbig;
+	MainStateEnum next_state;
+	int mx, my;
+	bool quit;
+	bool is_mouse_up;
+	bool is_mouse_down;
+	bool is_mouse_move;
+	char input_buf[TEXTLENMAX];
 } SDL_Ui;
 
 typedef struct _Object {
@@ -59,42 +71,6 @@ typedef struct _ObjectGroup {
 	Object *objarr;
 } ObjGroup; // 이거 쓸지는 몰?루
 
-typedef struct _ImageBox {
-	SDL_Ui *p_sdl_ui;
-	SDL_Texture *texture;
-	SDL_Rect dstrect;
-	AnchorEnum anchor;
-	char filename[30];
-} ImageBox;
-
-typedef struct _StaticTextBox {
-	SDL_Ui *p_sdl_ui;
-	TTF_Font *font;
-	SDL_Color textcolor;
-	char text[256];
-	SDL_Texture *texture;
-	SDL_Rect dstrect;
-	AnchorEnum anchor;
-} StaticTextBox;
-
-typedef struct _TextBox {
-	SDL_Ui *p_sdl_ui;
-	TTF_Font *font;
-	SDL_Color textcolor;
-	char text[256];
-	SDL_Texture *texture;
-	SDL_Rect dstrect;
-	AnchorEnum anchor;
-} TextBox;
-
-typedef struct _InputBox {
-	SDL_Ui *p_sdl_ui;
-	SDL_Color boxcolor;
-	SDL_Texture *texture;
-	SDL_Rect dstrect;
-	bool focused;
-} InputBox;
-
 typedef struct _ImageParam {
 	const char filename[64];
 	int w, h;
@@ -106,9 +82,15 @@ typedef struct _TextParam {
 	SDL_Color color;
 } TextParam;
 
+typedef struct _BoxParam {
+	int w, h;
+	SDL_Color color;
+} BoxParam;
+
 typedef union _ObjectParam {
 	ImageParam image;
 	TextParam text;
+	BoxParam box;
 } ObjectParam;
 
 int gui_initUi(SDL_Ui *ui);
@@ -130,4 +112,4 @@ int gui_isInObject(Object *obj, int x, int y);
 
 void gui_utf8Backspace(char *s);
 
-#endif // SDL_H
+#endif // UI_H
