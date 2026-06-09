@@ -13,6 +13,7 @@ int main(int argc, char **argv) {
 	ui_asdf.renderer = renderer;
 	SDL_Ui *ui = &ui_asdf;
 	People *p;
+	login_init();
 	gui_initUi(ui);
 
 	while (!ui->quit) {

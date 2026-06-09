@@ -309,6 +309,43 @@ int gui_isInObject(Object *obj, int x, int y) {
 			y >= obj->dstrect.y && y <= obj->dstrect.y + obj->dstrect.h);
 }
 
+void gui_fillRoundedRect(SDL_Renderer *renderer, SDL_Rect rect, int radius,
+						 SDL_Color color) {
+	if (radius < 0)
+		radius = 0;
+	if (radius * 2 > rect.w)
+		radius = rect.w / 2;
+	if (radius * 2 > rect.h)
+		radius = rect.h / 2;
+
+	SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+
+	// 가운데 + 좌우 직사각형으로 몸통을 채움
+	SDL_Rect mid = {rect.x + radius, rect.y, rect.w - 2 * radius, rect.h};
+	SDL_RenderFillRect(renderer, &mid);
+	SDL_Rect left = {rect.x, rect.y + radius, radius, rect.h - 2 * radius};
+	SDL_RenderFillRect(renderer, &left);
+	SDL_Rect right = {rect.x + rect.w - radius, rect.y + radius, radius,
+					  rect.h - 2 * radius};
+	SDL_RenderFillRect(renderer, &right);
+
+	// 네 모서리를 원의 1/4씩 점으로 채움
+	for (int dy = 0; dy <= radius; dy++) {
+		for (int dx = 0; dx <= radius; dx++) {
+			if (dx * dx + dy * dy <= radius * radius) {
+				SDL_RenderDrawPoint(renderer, rect.x + radius - dx,
+									rect.y + radius - dy); // 좌상
+				SDL_RenderDrawPoint(renderer, rect.x + rect.w - radius - 1 + dx,
+									rect.y + radius - dy); // 우상
+				SDL_RenderDrawPoint(renderer, rect.x + radius - dx,
+									rect.y + rect.h - radius - 1 + dy); // 좌하
+				SDL_RenderDrawPoint(renderer, rect.x + rect.w - radius - 1 + dx,
+									rect.y + rect.h - radius - 1 + dy); // 우하
+			}
+		}
+	}
+}
+
 void gui_utf8Backspace(char *s) {
 	int len = strlen(s);
 	if (len == 0)

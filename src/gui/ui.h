@@ -112,4 +112,10 @@ int gui_isInObject(Object *obj, int x, int y);
 
 void gui_utf8Backspace(char *s);
 
+// @brief 둥근 모서리 사각형을 채워서 그림 (renderer에 직접 렌더)
+//
+// 카드/버튼/입력창 배경에 사용. radius가 너무 크면 자동으로 줄여줌.
+void gui_fillRoundedRect(SDL_Renderer *renderer, SDL_Rect rect, int radius,
+						 SDL_Color color);
+
 #endif // UI_H
