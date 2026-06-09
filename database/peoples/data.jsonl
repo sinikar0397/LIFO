@@ -6,3 +6,8 @@
 {"name":"음율","id":"YUL","pw":"e56b984eeae95cf91f9a212171259923","type":"SECRET","love_type":"SECRET","gen":1,"age":19}
 {"name":"담담","id":"DAM","pw":"018e0bc0ce46263fc0ada0c997c372e3","type":"INFP","love_type":"INTJ","gen":1,"age":19}
 {"name":"Dummydata","id":"Test(Pw:TEST01)","pw":"4cf57630af6b8c41210c462005004cfd","type":"dummy","love_type":"dummy","gen":1,"age":19}
+{"name":"dummy01","id":"test01","pw":"6e7545121641853233fa593ba20d34b1","type":"ISTJ","love_type":"ENFP","gen":0,"age":20}
+{"name":"dummy02","id":"test02","pw":"77e89dfd7cb482beff65835b6a08e4af","type":"ENTJ","love_type":"ISFJ","gen":0,"age":25}
+{"name":"dummy03","id":"test03","pw":"100b6541d20a0af729e2912bfe66c76f","type":"ENFP","love_type":"INTP","gen":1,"age":30}
+{"name":"dummy04","id":"test04","pw":"34966d22a5b8b8fe3fe2079b7468ad77","type":"ESFPA","love_type":"INTJB","gen":0,"age":21}
+{"name":"dummy05","id":"test05","pw":"4a9ef2de4912b12692346393dcf90e12","type":"ISTP","love_type":"ENF","gen":1,"age":17}
