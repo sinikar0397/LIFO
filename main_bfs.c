@@ -1,4 +1,5 @@
 #include "./src/bfs/bfs.h"
+#include "./src/dfs/dfs.h"
 #include "./src/headers.h"
 #include "./src/people/people.h"
 
@@ -30,28 +31,6 @@ static const char *statusToString(MatchStatus status) {
 	default:
 		return "UNKNOWN";
 	}
-}
-
-int compat(People *a, People *b) {
-	if (a == NULL || b == NULL) {
-		return 0;
-	}
-
-	int score = 0;
-
-	if (strcmp(a->love_type, b->type) == 0) {
-		score += 100;
-	}
-	if (strcmp(b->love_type, a->type) == 0) {
-		score += 100;
-	}
-
-	int age_diff = abs(a->age - b->age);
-	if (age_diff <= 10) {
-		score += 10 - age_diff;
-	}
-
-	return score;
 }
 
 static FILE *openPeopleDataFile(const char **path) {
