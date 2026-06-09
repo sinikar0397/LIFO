@@ -126,11 +126,11 @@ static void printUsers(MatchingInfo infos[], int n) {
 			continue;
 		}
 
-		char match_name[MAX_NAME_LEN] = "-";
+		char match_id[MAX_ID_LEN] = "-";
 		if (infos[i].match_idx >= 0 && infos[i].match_idx < n &&
 			infos[infos[i].match_idx].person != NULL) {
-			strncpy(match_name, infos[infos[i].match_idx].person->name, MAX_NAME_LEN - 1);
-			match_name[MAX_NAME_LEN - 1] = '\0';
+			strncpy(match_id, infos[infos[i].match_idx].person->id, MAX_ID_LEN - 1);
+			match_id[MAX_ID_LEN - 1] = '\0';
 		}
 
 		printf("%-4d %-12s %-12s %-8s %-10s %-10s %-5d %-10s %-12s\n",
@@ -142,7 +142,7 @@ static void printUsers(MatchingInfo infos[], int n) {
 			   p->love_type,
 			   p->age,
 			   statusToString(infos[i].status),
-			   match_name);
+			   match_id);
 	}
 }
 
