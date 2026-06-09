@@ -52,6 +52,12 @@ typedef struct Candidate {
 	int score;
 } Candidate;
 
+/*
+ * 두 사용자 사이의 예상 호감도 점수를 계산한다.
+ * DFS 모듈의 실제 호감도 계산 함수가 완성되면 같은 시그니처로 연결하면 된다.
+ */
+int compat(People *a, People *b);
+
 /* MatchingInfo initialization */
 
 /*
