@@ -13,3 +13,8 @@
 # OS 찌꺼기 파일
 .DS_Store        # Mac
 Thumbs.db        # Windows
+
+build/
+*.exe
+*.o
+*.obj

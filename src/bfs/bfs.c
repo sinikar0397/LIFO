@@ -4,6 +4,8 @@
 // compat(People *a, People *b) 함수 있어야 함!!
 // dfs에서 구현 후 헤더로 불러와야 됨
 
+
+// 큐 구현
 typedef struct Queue {
 	int total_size;
 	int data[MAX_PEOPLE+5];
@@ -48,6 +50,7 @@ int popQueue(Queue *q) {
 	q->front = (q->front + 1) % q->total_size;
 	return x;
 }
+
 
 void initMatchingInfo(MatchingInfo *info, People *person) {
 	if (info == NULL) return;
