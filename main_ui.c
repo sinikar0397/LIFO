@@ -23,6 +23,7 @@ int main(int argc, char **argv) {
 			p = showLogin(ui);
 			break;
 		case DFS:
+			ui->quit = true;
 			break;
 		case BFS:
 			break;

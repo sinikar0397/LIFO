@@ -10,8 +10,8 @@
 #define WINDOW_WIDTH (1280) // 1536
 #define WINDOW_HEIGHT (720) // 864
 #define FONT_SIZE_SSMALL (8)
-#define FONT_SIZE_SMALL (12)
-#define FONT_SIZE_NORMAL (24)
+#define FONT_SIZE_SMALL (18)
+#define FONT_SIZE_NORMAL (26)
 #define FONT_SIZE_BIG (36)
 #define FONT_SIZE_BBIG (108)
 #define FONT_SIZE_BBSIG (90)
@@ -19,6 +19,7 @@
 #define COLOR_WHITE ((SDL_Color){255, 255, 255, 255})
 #define COLOR_BLACK ((SDL_Color){0, 0, 0, 255})
 #define COLOR_GRAY ((SDL_Color){97, 97, 97, 255})
+#define COLOR_WHITEGRAY ((SDL_Color){166, 166, 166, 255})
 #define COLOR_YELLOW ((SDL_Color){255, 214, 75, 255})
 #define COLOR_GREEN ((SDL_Color){122, 255, 23, 255})
 #define COLOR_BLUE ((SDL_Color){184, 248, 251, 255})
@@ -50,7 +51,6 @@ typedef struct _SDL_Ui {
 	bool is_mouse_up;
 	bool is_mouse_down;
 	bool is_mouse_move;
-	char input_buf[TEXTLENMAX];
 } SDL_Ui;
 
 typedef struct _Object {
@@ -62,6 +62,7 @@ typedef struct _Object {
 	TTF_Font *font;
 	SDL_Color textcolor;
 	char text[TEXTLENMAX];
+	int radius; // BOX 타입에서 둥근 모서리 반지름 (0이면 일반 사각형)
 	int status1;
 	int status2;
 	int status3;
@@ -85,6 +86,7 @@ typedef struct _TextParam {
 typedef struct _BoxParam {
 	int w, h;
 	SDL_Color color;
+	int radius; // 0이면 일반 사각형, 양수이면 둥근 모서리 사각형
 } BoxParam;
 
 typedef union _ObjectParam {
@@ -111,11 +113,5 @@ void gui_setColorText(Object *obj, SDL_Color color);
 int gui_isInObject(Object *obj, int x, int y);
 
 void gui_utf8Backspace(char *s);
-
-// @brief 둥근 모서리 사각형을 채워서 그림 (renderer에 직접 렌더)
-//
-// 카드/버튼/입력창 배경에 사용. radius가 너무 크면 자동으로 줄여줌.
-void gui_fillRoundedRect(SDL_Renderer *renderer, SDL_Rect rect, int radius,
-						 SDL_Color color);
 
 #endif // UI_H

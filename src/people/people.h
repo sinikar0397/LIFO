@@ -5,8 +5,8 @@
 #include <stdint.h>
 
 #define MAX_NAME_LEN 20
-#define MAX_ID_LEN 20
-#define MAX_PW_LEN 20
+#define MAX_ID_LEN 40
+#define MAX_PW_LEN 40
 #define MAX_TYPE_LEN 20
 #define MAX_PATH_LEN 50
 

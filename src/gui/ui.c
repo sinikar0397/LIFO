@@ -1,5 +1,42 @@
 #include "ui.h"
 
+static void gui_fillRoundedRect(SDL_Renderer *renderer, SDL_Rect rect,
+								int radius, SDL_Color color) {
+	if (radius < 0)
+		radius = 0;
+	if (radius * 2 > rect.w)
+		radius = rect.w / 2;
+	if (radius * 2 > rect.h)
+		radius = rect.h / 2;
+
+	SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+
+	// 가운데 + 좌우 직사각형으로 몸통을 채움
+	SDL_Rect mid = {rect.x + radius, rect.y, rect.w - 2 * radius, rect.h};
+	SDL_RenderFillRect(renderer, &mid);
+	SDL_Rect left = {rect.x, rect.y + radius, radius, rect.h - 2 * radius};
+	SDL_RenderFillRect(renderer, &left);
+	SDL_Rect right = {rect.x + rect.w - radius, rect.y + radius, radius,
+					  rect.h - 2 * radius};
+	SDL_RenderFillRect(renderer, &right);
+
+	// 네 모서리를 원의 1/4씩 점으로 채움
+	for (int dy = 0; dy <= radius; dy++) {
+		for (int dx = 0; dx <= radius; dx++) {
+			if (dx * dx + dy * dy <= radius * radius) {
+				SDL_RenderDrawPoint(renderer, rect.x + radius - dx,
+									rect.y + radius - dy); // 좌상
+				SDL_RenderDrawPoint(renderer, rect.x + rect.w - radius - 1 + dx,
+									rect.y + radius - dy); // 우상
+				SDL_RenderDrawPoint(renderer, rect.x + radius - dx,
+									rect.y + rect.h - radius - 1 + dy); // 좌하
+				SDL_RenderDrawPoint(renderer, rect.x + rect.w - radius - 1 + dx,
+									rect.y + rect.h - radius - 1 + dy); // 우하
+			}
+		}
+	}
+}
+
 int gui_initUi(SDL_Ui *ui) {
 	if (SDL_Init(SDL_INIT_EVENTS) != 0) {
 		fprintf(stderr, "%s\n", (SDL_GetError()));
@@ -36,6 +73,8 @@ int gui_initUi(SDL_Ui *ui) {
 		return (0);
 	}
 
+	SDL_StartTextInput();
+
 	// Create a font
 	ui->font_ssmall = TTF_OpenFont("gulsi.ttf", FONT_SIZE_SSMALL);
 	ui->font_small = TTF_OpenFont("gulsi.ttf", FONT_SIZE_SMALL);
@@ -49,14 +88,13 @@ int gui_initUi(SDL_Ui *ui) {
 	ui->is_mouse_down = false;
 	ui->is_mouse_up = false;
 	ui->is_mouse_move = false;
-	strcpy(ui->input_buf, " ");
-
 	return (1);
 }
 
 void gui_closeUi(SDL_Ui *ui) {
 	SDL_DestroyRenderer(ui->renderer);
 	SDL_DestroyWindow(ui->window);
+	SDL_StopTextInput();
 
 	TTF_Quit();
 	IMG_Quit();
@@ -147,16 +185,7 @@ Object gui_initObject(SDL_Ui *ui, ObjectTypeEnum objtype, int x, int y,
 		return obj;
 	} else if (objtype == BOX) {
 		obj.textcolor = param.box.color;
-		SDL_Surface *surface =
-			SDL_CreateRGBSurface(0, param.box.w, param.box.h, 32, 0x00FF0000,
-								 0x0000FF00, 0x000000FF, 0xFF000000);
-		Uint32 color =
-			SDL_MapRGBA(surface->format, obj.textcolor.r, obj.textcolor.g,
-						obj.textcolor.b, obj.textcolor.a);
-		SDL_FillRect(surface, NULL, color);
-
-		obj.texture = SDL_CreateTextureFromSurface(ui->renderer, surface);
-		SDL_FreeSurface(surface);
+		obj.radius = param.box.radius;
 
 		SDL_Rect rect = {x, y, param.box.w, param.box.h};
 		switch (anchor) {
@@ -175,6 +204,22 @@ Object gui_initObject(SDL_Ui *ui, ObjectTypeEnum objtype, int x, int y,
 			break;
 		}
 		obj.dstrect = rect;
+
+		if (param.box.radius > 0) {
+			// 둥근 모서리: 텍스처 없이 dstrect와 radius만 저장,
+			// gui_presentObject에서 직접 렌더링
+			obj.texture = NULL;
+		} else {
+			SDL_Surface *surface = SDL_CreateRGBSurface(
+				0, param.box.w, param.box.h, 32, 0x00FF0000, 0x0000FF00,
+				0x000000FF, 0xFF000000);
+			Uint32 color =
+				SDL_MapRGBA(surface->format, obj.textcolor.r, obj.textcolor.g,
+							obj.textcolor.b, obj.textcolor.a);
+			SDL_FillRect(surface, NULL, color);
+			obj.texture = SDL_CreateTextureFromSurface(ui->renderer, surface);
+			SDL_FreeSurface(surface);
+		}
 		return obj;
 	}
 
@@ -213,6 +258,11 @@ SDL_Rect gui_initRect(int x, int y, int w, int h, AnchorEnum anchor) {
 }
 
 void gui_presentObject(Object *obj) {
+	if (obj->objtype == BOX && obj->radius > 0) {
+		gui_fillRoundedRect(obj->ui->renderer, obj->dstrect, obj->radius,
+							obj->textcolor);
+		return;
+	}
 	SDL_RenderCopy(obj->ui->renderer, obj->texture, NULL, &obj->dstrect);
 }
 
@@ -307,43 +357,6 @@ void gui_setColorText(Object *obj, SDL_Color color) {
 int gui_isInObject(Object *obj, int x, int y) {
 	return (x >= obj->dstrect.x && x <= obj->dstrect.x + obj->dstrect.w &&
 			y >= obj->dstrect.y && y <= obj->dstrect.y + obj->dstrect.h);
-}
-
-void gui_fillRoundedRect(SDL_Renderer *renderer, SDL_Rect rect, int radius,
-						 SDL_Color color) {
-	if (radius < 0)
-		radius = 0;
-	if (radius * 2 > rect.w)
-		radius = rect.w / 2;
-	if (radius * 2 > rect.h)
-		radius = rect.h / 2;
-
-	SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-
-	// 가운데 + 좌우 직사각형으로 몸통을 채움
-	SDL_Rect mid = {rect.x + radius, rect.y, rect.w - 2 * radius, rect.h};
-	SDL_RenderFillRect(renderer, &mid);
-	SDL_Rect left = {rect.x, rect.y + radius, radius, rect.h - 2 * radius};
-	SDL_RenderFillRect(renderer, &left);
-	SDL_Rect right = {rect.x + rect.w - radius, rect.y + radius, radius,
-					  rect.h - 2 * radius};
-	SDL_RenderFillRect(renderer, &right);
-
-	// 네 모서리를 원의 1/4씩 점으로 채움
-	for (int dy = 0; dy <= radius; dy++) {
-		for (int dx = 0; dx <= radius; dx++) {
-			if (dx * dx + dy * dy <= radius * radius) {
-				SDL_RenderDrawPoint(renderer, rect.x + radius - dx,
-									rect.y + radius - dy); // 좌상
-				SDL_RenderDrawPoint(renderer, rect.x + rect.w - radius - 1 + dx,
-									rect.y + radius - dy); // 우상
-				SDL_RenderDrawPoint(renderer, rect.x + radius - dx,
-									rect.y + rect.h - radius - 1 + dy); // 좌하
-				SDL_RenderDrawPoint(renderer, rect.x + rect.w - radius - 1 + dx,
-									rect.y + rect.h - radius - 1 + dy); // 우하
-			}
-		}
-	}
 }
 
 void gui_utf8Backspace(char *s) {
