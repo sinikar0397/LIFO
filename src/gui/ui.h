@@ -9,7 +9,7 @@
 
 #define WINDOW_WIDTH (1280) // 1536
 #define WINDOW_HEIGHT (720) // 864
-#define FONT_SIZE_SSMALL (8)
+#define FONT_SIZE_SSMALL (10)
 #define FONT_SIZE_SMALL (18)
 #define FONT_SIZE_NORMAL (26)
 #define FONT_SIZE_BIG (36)

@@ -1,0 +1,159 @@
+{
+	"title":	"주도·표현 성향",
+	"root":	0,
+	"n_nodes":	17,
+	"nodes":	[{
+			"is_leaf":	0,
+			"question":	"관계에서 더 자연스러운 내 모습은?",
+			"n_opt":	2,
+			"opt_text":	["내가 먼저 데이트·대화·문제 해결을 제안한다", "상대의 제안과 분위기를 존중하며 맞춘다"],
+			"child":	[1, 2],
+			"code":	"",
+			"name":	"",
+			"user_added":	0
+		}, {
+			"is_leaf":	0,
+			"question":	"애정을 표현하거나 갈등을 다룰 때 더 가까운 방식은?",
+			"n_opt":	2,
+			"opt_text":	["사실·기준·계획을 정리해서 관계를 이끈다", "감정 확인·위로·케어로 관계를 이끈다"],
+			"child":	[3, 4],
+			"code":	"",
+			"name":	"",
+			"user_added":	0
+		}, {
+			"is_leaf":	0,
+			"question":	"상대를 따라갈 때 더 가까운 방식은?",
+			"n_opt":	2,
+			"opt_text":	["논리적으로 납득되면 수용한다", "정서적으로 기대고 친밀감을 확인한다"],
+			"child":	[5, 6],
+			"code":	"",
+			"name":	"",
+			"user_added":	0
+		}, {
+			"is_leaf":	0,
+			"question":	"문제가 생겼을 때 내 행동은?",
+			"n_opt":	2,
+			"opt_text":	["바로 마주 보고 이야기해서 푼다 (정면 돌파)", "잠시 거리를 두고 감정을 가라앉힌 뒤 다룬다 (회피·조정)"],
+			"child":	[7, 8],
+			"code":	"",
+			"name":	"",
+			"user_added":	0
+		}, {
+			"is_leaf":	0,
+			"question":	"문제가 생겼을 때 내 행동은?",
+			"n_opt":	2,
+			"opt_text":	["바로 마주 보고 이야기해서 푼다 (정면 돌파)", "잠시 거리를 두고 감정을 가라앉힌 뒤 다룬다 (회피·조정)"],
+			"child":	[9, 10],
+			"code":	"",
+			"name":	"",
+			"user_added":	0
+		}, {
+			"is_leaf":	0,
+			"question":	"문제가 생겼을 때 내 행동은?",
+			"n_opt":	2,
+			"opt_text":	["바로 마주 보고 이야기해서 푼다 (정면 돌파)", "잠시 거리를 두고 감정을 가라앉힌 뒤 다룬다 (회피·조정)"],
+			"child":	[11, 12],
+			"code":	"",
+			"name":	"",
+			"user_added":	0
+		}, {
+			"is_leaf":	0,
+			"question":	"문제가 생겼을 때 내 행동은?",
+			"n_opt":	2,
+			"opt_text":	["바로 마주 보고 이야기해서 푼다 (정면 돌파)", "잠시 거리를 두고 감정을 가라앉힌 뒤 다룬다 (회피·조정)"],
+			"child":	[13, 14],
+			"code":	"",
+			"name":	"",
+			"user_added":	0
+		}, {
+			"is_leaf":	1,
+			"question":	"",
+			"n_opt":	0,
+			"opt_text":	[],
+			"child":	[],
+			"code":	"DTF",
+			"name":	"이성 리드 정면 돌파형",
+			"user_added":	0
+		}, {
+			"is_leaf":	1,
+			"question":	"",
+			"n_opt":	0,
+			"opt_text":	[],
+			"child":	[],
+			"code":	"DTC",
+			"name":	"이성 리드 회피 조정형",
+			"user_added":	0
+		}, {
+			"is_leaf":	1,
+			"question":	"",
+			"n_opt":	0,
+			"opt_text":	[],
+			"child":	[],
+			"code":	"DEF",
+			"name":	"감성 케어 정면 돌파형",
+			"user_added":	0
+		}, {
+			"is_leaf":	1,
+			"question":	"",
+			"n_opt":	0,
+			"opt_text":	[],
+			"child":	[],
+			"code":	"DEC",
+			"name":	"감성 케어 회피 안정형",
+			"user_added":	0
+		}, {
+			"is_leaf":	1,
+			"question":	"",
+			"n_opt":	0,
+			"opt_text":	[],
+			"child":	[],
+			"code":	"STF",
+			"name":	"이성 수용 정면 돌파형",
+			"user_added":	0
+		}, {
+			"is_leaf":	0,
+			"question":	"예쁜 게 좋아 귀여운게 좋아 ",
+			"n_opt":	2,
+			"opt_text":	["예쁜거 ", "귀여운거 "],
+			"child":	[15, 16],
+			"code":	"STC",
+			"name":	"이성 수용 회피 관찰형",
+			"user_added":	1
+		}, {
+			"is_leaf":	1,
+			"question":	"",
+			"n_opt":	0,
+			"opt_text":	[],
+			"child":	[],
+			"code":	"SEF",
+			"name":	"감성 의존 정면 돌파형",
+			"user_added":	0
+		}, {
+			"is_leaf":	1,
+			"question":	"",
+			"n_opt":	0,
+			"opt_text":	[],
+			"child":	[],
+			"code":	"SEC",
+			"name":	"감성 의존 회피 보호형",
+			"user_added":	0
+		}, {
+			"is_leaf":	1,
+			"question":	"",
+			"n_opt":	0,
+			"opt_text":	[],
+			"child":	[],
+			"code":	"STC1",
+			"name":	"이성 수용 회피 관찰형 · 예쁜거 ",
+			"user_added":	1
+		}, {
+			"is_leaf":	1,
+			"question":	"",
+			"n_opt":	0,
+			"opt_text":	[],
+			"child":	[],
+			"code":	"STC2",
+			"name":	"이성 수용 회피 관찰형 · 귀여운거 ",
+			"user_added":	1
+		}]
+}
