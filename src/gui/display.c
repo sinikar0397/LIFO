@@ -865,9 +865,9 @@ void showHome(SDL_Ui *ui, People *me) {
 		(ObjectParam){.text = {"LIFO", ui->font_big, COLOR_SUPERPINK}});
 
 	// 네비게이션 항목 (0:홈 이 현재 화면)
-	enum { NAV_HOME, NAV_MATCH, NAV_SURVEY, NAV_RECORD, NAV_PROFILE, NAV_CNT };
-	char *nav_labels[NAV_CNT] = {"홈", "매칭", "설문", "기록", "프로필"};
-	int nav_y[NAV_CNT] = {150, 212, 274, 336, 398};
+	enum { NAV_HOME, NAV_MATCH, NAV_SURVEY, NAV_PROFILE, NAV_CNT };
+	char *nav_labels[NAV_CNT] = {"홈", "매칭", "설문", "프로필"};
+	int nav_y[NAV_CNT] = {150, 212, 274, 336};
 	Object nav_box[NAV_CNT];
 	Object nav_txt[NAV_CNT];
 	for (int i = 0; i < NAV_CNT; i++) {
@@ -887,10 +887,10 @@ void showHome(SDL_Ui *ui, People *me) {
 		gui_initObject(ui, TEXT, MAIN_X, 36, TOPLEFT,
 					   (ObjectParam){.text = {" ", ui->font_big, COLOR_BLACK}});
 	gui_setText(&t_greet, greet);
-	Object t_greetsub = gui_initObject(
-		ui, TEXT, MAIN_X + 2, 92, TOPLEFT,
-		(ObjectParam){.text = {"오늘도 좋은 인연 찾아볼까?", ui->font_small,
-							   COLOR_GRAY}});
+	Object t_greetsub =
+		gui_initObject(ui, TEXT, MAIN_X + 2, 92, TOPLEFT,
+					   (ObjectParam){.text = {"오늘도 좋은 인연 찾아볼까?",
+											  ui->font_small, COLOR_GRAY}});
 
 	// ── 내 정보 카드 ──
 	Object profile_card =
@@ -921,9 +921,9 @@ void showHome(SDL_Ui *ui, People *me) {
 	char info2[64];
 	snprintf(info2, sizeof(info2), "%d세 · %s", me->age,
 			 me->gen == GENDER_MALE ? "남성" : "여성");
-	Object t_info2 =
-		gui_initObject(ui, TEXT, MAIN_X + 150, 268, TOPLEFT,
-					   (ObjectParam){.text = {" ", ui->font_small, COLOR_GRAY}});
+	Object t_info2 = gui_initObject(
+		ui, TEXT, MAIN_X + 150, 268, TOPLEFT,
+		(ObjectParam){.text = {" ", ui->font_small, COLOR_GRAY}});
 	gui_setText(&t_info2, info2);
 
 	// ── 우측 통계 카드 2개 ──
@@ -951,9 +951,10 @@ void showHome(SDL_Ui *ui, People *me) {
 	Object cta = gui_initObject(
 		ui, BOX, MAIN_X, 350, TOPLEFT,
 		(ObjectParam){.box = {RIGHT - MAIN_X, 92, COLOR_SUPERPINK, 18}});
-	Object t_cta = gui_initObject(
-		ui, TEXT, MAIN_X + 30, 368, TOPLEFT,
-		(ObjectParam){.text = {"매칭 찾으러 가기", ui->font_normal, COLOR_WHITE}});
+	Object t_cta =
+		gui_initObject(ui, TEXT, MAIN_X + 30, 368, TOPLEFT,
+					   (ObjectParam){.text = {"매칭 찾으러 가기",
+											  ui->font_normal, COLOR_WHITE}});
 	Object t_ctasub = gui_initObject(
 		ui, TEXT, MAIN_X + 30, 408, TOPLEFT,
 		(ObjectParam){.text = {"유사도 높은 후보를 찾아드려요", ui->font_small,
@@ -972,12 +973,14 @@ void showHome(SDL_Ui *ui, People *me) {
 	Object survey_fill =
 		gui_initObject(ui, BOX, MAIN_X + 2, 464, TOPLEFT,
 					   (ObjectParam){.box = {card_w - 4, 92, COLOR_WHITE, 14}});
-	Object t_survey = gui_initObject(
-		ui, TEXT, MAIN_X + 28, 484, TOPLEFT,
-		(ObjectParam){.text = {"설문 다시 풀기", ui->font_normal, COLOR_DURTYPINK}});
-	Object t_surveysub = gui_initObject(
-		ui, TEXT, MAIN_X + 28, 524, TOPLEFT,
-		(ObjectParam){.text = {"성격 유형 재진단", ui->font_small, COLOR_GRAY}});
+	Object t_survey =
+		gui_initObject(ui, TEXT, MAIN_X + 28, 484, TOPLEFT,
+					   (ObjectParam){.text = {"설문 다시 풀기", ui->font_normal,
+											  COLOR_DURTYPINK}});
+	Object t_surveysub =
+		gui_initObject(ui, TEXT, MAIN_X + 28, 524, TOPLEFT,
+					   (ObjectParam){.text = {"성격 유형 재진단",
+											  ui->font_small, COLOR_GRAY}});
 
 	Object record_border =
 		gui_initObject(ui, BOX, card2_x, 462, TOPLEFT,
@@ -985,16 +988,17 @@ void showHome(SDL_Ui *ui, People *me) {
 	Object record_fill =
 		gui_initObject(ui, BOX, card2_x + 2, 464, TOPLEFT,
 					   (ObjectParam){.box = {card_w - 4, 92, COLOR_WHITE, 14}});
-	Object t_record = gui_initObject(
-		ui, TEXT, card2_x + 26, 484, TOPLEFT,
-		(ObjectParam){.text = {"오늘의 기록", ui->font_normal, COLOR_DURTYPINK}});
+	Object t_record =
+		gui_initObject(ui, TEXT, card2_x + 26, 484, TOPLEFT,
+					   (ObjectParam){.text = {"오늘의 기록", ui->font_normal,
+											  COLOR_DURTYPINK}});
 	Object t_recordsub = gui_initObject(
 		ui, TEXT, card2_x + 26, 524, TOPLEFT,
 		(ObjectParam){.text = {"아직 작성 전", ui->font_small, COLOR_GRAY}});
 
-	Object t_status =
-		gui_initObject(ui, TEXT, MAIN_X, 588, TOPLEFT,
-					   (ObjectParam){.text = {" ", ui->font_small, COLOR_GRAY}});
+	Object t_status = gui_initObject(
+		ui, TEXT, MAIN_X, 588, TOPLEFT,
+		(ObjectParam){.text = {" ", ui->font_small, COLOR_GRAY}});
 
 	while (!ui->quit) {
 		SDL_Event event;
@@ -1036,11 +1040,6 @@ void showHome(SDL_Ui *ui, People *me) {
 				// ui->next_state = DFS;
 				strcpy(status, "설문 화면은 준비 중이에요. (곧 추가됩니다)");
 				status_color = COLOR_SUPERPINK;
-			} else if (gui_isInObject(&record_border, ui->mx, ui->my) ||
-					   gui_isInObject(&nav_box[NAV_RECORD], ui->mx, ui->my)) {
-				// ui->next_state = MST;
-				strcpy(status, "기록 화면은 준비 중이에요. (곧 추가됩니다)");
-				status_color = COLOR_SUPERPINK;
 			} else if (gui_isInObject(&nav_box[NAV_PROFILE], ui->mx, ui->my)) {
 				strcpy(status, "프로필 화면은 준비 중이에요. (곧 추가됩니다)");
 				status_color = COLOR_SUPERPINK;
@@ -1052,8 +1051,7 @@ void showHome(SDL_Ui *ui, People *me) {
 			int active = (i == NAV_HOME);
 			int hover = gui_isInObject(&nav_box[i], ui->mx, ui->my);
 			nav_box[i].textcolor = active ? COLOR_PINK : COLOR_SOFTPINK;
-			SDL_Color want =
-				(active || hover) ? COLOR_WHITE : COLOR_DURTYPINK;
+			SDL_Color want = (active || hover) ? COLOR_WHITE : COLOR_DURTYPINK;
 			if (want.r != nav_txt[i].textcolor.r ||
 				want.g != nav_txt[i].textcolor.g ||
 				want.b != nav_txt[i].textcolor.b) {
@@ -1065,12 +1063,12 @@ void showHome(SDL_Ui *ui, People *me) {
 		cta.textcolor = gui_isInObject(&cta, ui->mx, ui->my) ? COLOR_DURTYPINK
 															 : COLOR_SUPERPINK;
 		// 액션 카드 hover (채움색)
-		survey_fill.textcolor =
-			gui_isInObject(&survey_border, ui->mx, ui->my) ? COLOR_WHITEPINK
-														   : COLOR_WHITE;
-		record_fill.textcolor =
-			gui_isInObject(&record_border, ui->mx, ui->my) ? COLOR_WHITEPINK
-														   : COLOR_WHITE;
+		survey_fill.textcolor = gui_isInObject(&survey_border, ui->mx, ui->my)
+									? COLOR_WHITEPINK
+									: COLOR_WHITE;
+		record_fill.textcolor = gui_isInObject(&record_border, ui->mx, ui->my)
+									? COLOR_WHITEPINK
+									: COLOR_WHITE;
 
 		// 상태 텍스트
 		gui_setColorText(&t_status, status_color);
