@@ -34,6 +34,22 @@ typedef struct Password {
 } Password;
 
 /*
+ * 매칭 상태를 나타내는 enum
+ * AVAILABLE : 매칭 알고리즘에 참여 가능한 상태
+ * PROPOSED  : 추천 쌍으로 선정되었지만 아직 양쪽 수락 전
+ * MATCHED   : 양쪽이 수락하여 최종 매칭된 상태
+ * PAUSED    : 매칭 추천을 일시 중단한 상태
+ * DELETED   : 탈퇴 또는 삭제된 사용자
+ */
+typedef enum MatchStatus {
+	AVAILABLE,
+	PROPOSED,
+	MATCHED,
+	PAUSED,
+	DELETED
+} MatchStatus;
+
+/*
 @brief
 사람(계정)을 저장하는 객체
 
@@ -49,6 +65,7 @@ typedef struct People {
 	char love_type[MAX_TYPE_LEN];
 	enum Gender gen;
 	int age;
+	MatchStatus status;
 } People;
 
 /*
@@ -110,6 +127,12 @@ People의 비밀번호에 대한 setter
 암호화하지 않은 평문(단순 문자열)을 입력하면 됨
 */
 void people_set_people_pw(People *P, char pw[]);
+
+/*
+@brief
+People의 status에 대한 setter
+*/
+void people_set_people_status(People* P, MatchStatus status);
 
 /*
 @brief
