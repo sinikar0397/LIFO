@@ -12,7 +12,6 @@
  */
 typedef struct MatchingInfo {
 	People *person;
-	MatchStatus status;
 	int preference[MAX_PEOPLE];
 	int match_idx;
 	int pref_size;
