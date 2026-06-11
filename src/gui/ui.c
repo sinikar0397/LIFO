@@ -1,40 +1,102 @@
 #include "ui.h"
+#include <SDL.h>
+#include <math.h>
+
+static void gui_drawAAPoint(SDL_Renderer *renderer, int x, int y,
+                            SDL_Color color, double alpha) {
+    if (alpha <= 0.0) return;
+    if (alpha > 1.0) alpha = 1.0;
+
+    SDL_SetRenderDrawColor(
+        renderer,
+        color.r,
+        color.g,
+        color.b,
+        (Uint8)(color.a * alpha)
+    );
+
+    SDL_RenderDrawPoint(renderer, x, y);
+}
 
 static void gui_fillRoundedRect(SDL_Renderer *renderer, SDL_Rect rect,
-								int radius, SDL_Color color) {
-	if (radius < 0)
-		radius = 0;
-	if (radius * 2 > rect.w)
-		radius = rect.w / 2;
-	if (radius * 2 > rect.h)
-		radius = rect.h / 2;
+                                  int radius, SDL_Color color) {
+    if (radius < 0)
+        radius = 0;
+    if (radius * 2 > rect.w)
+        radius = rect.w / 2;
+    if (radius * 2 > rect.h)
+        radius = rect.h / 2;
 
-	SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+    SDL_BlendMode oldBlendMode;
+    SDL_GetRenderDrawBlendMode(renderer, &oldBlendMode);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
-	// 가운데 + 좌우 직사각형으로 몸통을 채움
-	SDL_Rect mid = {rect.x + radius, rect.y, rect.w - 2 * radius, rect.h};
-	SDL_RenderFillRect(renderer, &mid);
-	SDL_Rect left = {rect.x, rect.y + radius, radius, rect.h - 2 * radius};
-	SDL_RenderFillRect(renderer, &left);
-	SDL_Rect right = {rect.x + rect.w - radius, rect.y + radius, radius,
-					  rect.h - 2 * radius};
-	SDL_RenderFillRect(renderer, &right);
+    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
 
-	// 네 모서리를 원의 1/4씩 점으로 채움
-	for (int dy = 0; dy <= radius; dy++) {
-		for (int dx = 0; dx <= radius; dx++) {
-			if (dx * dx + dy * dy <= radius * radius) {
-				SDL_RenderDrawPoint(renderer, rect.x + radius - dx,
-									rect.y + radius - dy); // 좌상
-				SDL_RenderDrawPoint(renderer, rect.x + rect.w - radius - 1 + dx,
-									rect.y + radius - dy); // 우상
-				SDL_RenderDrawPoint(renderer, rect.x + radius - dx,
-									rect.y + rect.h - radius - 1 + dy); // 좌하
-				SDL_RenderDrawPoint(renderer, rect.x + rect.w - radius - 1 + dx,
-									rect.y + rect.h - radius - 1 + dy); // 우하
-			}
-		}
-	}
+    // 중앙 몸통
+    SDL_Rect mid = {
+        rect.x + radius,
+        rect.y,
+        rect.w - 2 * radius,
+        rect.h
+    };
+    SDL_RenderFillRect(renderer, &mid);
+
+    SDL_Rect left = {
+        rect.x,
+        rect.y + radius,
+        radius,
+        rect.h - 2 * radius
+    };
+    SDL_RenderFillRect(renderer, &left);
+
+    SDL_Rect right = {
+        rect.x + rect.w - radius,
+        rect.y + radius,
+        radius,
+        rect.h - 2 * radius
+    };
+    SDL_RenderFillRect(renderer, &right);
+
+    // 네 모서리 anti-aliasing 원
+    double r = (double)radius;
+
+    for (int dy = 0; dy <= radius; dy++) {
+        for (int dx = 0; dx <= radius; dx++) {
+            double dist = sqrt((double)dx * dx + (double)dy * dy);
+
+            /*
+                dist < r - 0.5  : 완전히 내부
+                dist > r + 0.5  : 완전히 외부
+                그 사이        : alpha를 부드럽게 감소
+            */
+            double alpha = r + 0.5 - dist;
+
+            if (alpha <= 0.0)
+                continue;
+            if (alpha > 1.0)
+                alpha = 1.0;
+
+            int x1 = rect.x + radius - dx;
+            int y1 = rect.y + radius - dy;
+
+            int x2 = rect.x + rect.w - radius - 1 + dx;
+            int y2 = rect.y + radius - dy;
+
+            int x3 = rect.x + radius - dx;
+            int y3 = rect.y + rect.h - radius - 1 + dy;
+
+            int x4 = rect.x + rect.w - radius - 1 + dx;
+            int y4 = rect.y + rect.h - radius - 1 + dy;
+
+            gui_drawAAPoint(renderer, x1, y1, color, alpha); // 좌상
+            gui_drawAAPoint(renderer, x2, y2, color, alpha); // 우상
+            gui_drawAAPoint(renderer, x3, y3, color, alpha); // 좌하
+            gui_drawAAPoint(renderer, x4, y4, color, alpha); // 우하
+        }
+    }
+
+    SDL_SetRenderDrawBlendMode(renderer, oldBlendMode);
 }
 
 int gui_initUi(SDL_Ui *ui) {
