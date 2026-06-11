@@ -70,13 +70,42 @@ typedef struct DfsTree {
 	DfsTreeNode nodes[DFS_TREE_MAX_NODES];
 	int n_nodes;
 	int root;							// 루트 노드 index
+	char save_path[64];					// 이 트리를 저장/로드할 파일 경로
 } DfsTree;
 
-// "내 성향" 진단 기본 트리를 만든다.
-void dfs_build_self_tree(DfsTree *tree);
-// "내 이상형" 진단 기본 트리를 만든다. (구조/코드는 같고 질문 표현만 다름)
+// 한 설문(성향/이상형)은 대주제별 트리 여러 개로 구성된다.
+#define DFS_MAX_TREES 4
+
+typedef struct DfsSurvey {
+	char name[48];				   // 설문 이름 ("내 연애 성향" 등)
+	DfsTree trees[DFS_MAX_TREES];  // 대주제별 트리
+	int n_trees;
+} DfsSurvey;
+
+// 대주제 트리들 (성향/이상형 각각)
+void dfs_build_self_tree(DfsTree *tree);		// 주도·표현 성향
 void dfs_build_ideal_tree(DfsTree *tree);
-// 루트에서 잎까지의 최대 질문 수(스텝 수 계산용).
+void dfs_build_attach_self_tree(DfsTree *tree); // 애착 안정성
+void dfs_build_attach_ideal_tree(DfsTree *tree);
+
+// "내 성향" / "내 이상형" 설문(대주제 트리 묶음)을 만든다.
+void dfs_build_self_survey(DfsSurvey *survey);
+void dfs_build_ideal_survey(DfsSurvey *survey);
+
+// 루트에서 잎까지의 최대 질문 수.
 int dfs_tree_max_depth(const DfsTree *tree);
+
+// 코드로 잎 노드 index를 찾는다. 없으면 -1.
+int dfs_find_leaf_by_code(const DfsTree *tree, const char code[]);
+
+// 잎(leaf_idx)을 분기 노드로 확장한다. 새 하위 유형 2개를 잎으로 추가하며,
+// 하위 유형명은 "부모유형명 · 선택지", 코드는 "부모코드1"/"부모코드2"로 자동 생성.
+// 성공 시 1 (공간 부족/잘못된 노드면 0).
+int dfs_extend_leaf(DfsTree *tree, int leaf_idx, const char question[],
+					const char opt0[], const char opt1[]);
+
+// 트리를 JSON 파일로 저장/로드. 로드는 파일이 있으면 1(트리 덮어씀), 없으면 0.
+int dfs_save_tree(const DfsTree *tree, const char path[]);
+int dfs_load_tree(DfsTree *tree, const char path[]);
 
 #endif // DFS_H
