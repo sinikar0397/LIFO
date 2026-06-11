@@ -1,5 +1,6 @@
 #include "../headers.h"
 #include "bfs.h"
+#include "../dfs/dfs.h"
 
 // compat(People *a, People *b) 함수 있어야 함!!
 // dfs에서 구현 후 헤더로 불러와야 됨
@@ -55,7 +56,6 @@ int popQueue(Queue *q) {
 void initMatchingInfo(MatchingInfo *info, People *person) {
 	if (info == NULL) return;
 	info->person = person;
-	info->status = AVAILABLE;
 	info->match_idx = -1;
 	info->pref_size = 0;
 	info->next_proposal = 0;
@@ -74,7 +74,7 @@ void initMatchingInfos(MatchingInfo infos[], People *people[], int n) {
 
 void changeStatus(MatchingInfo infos[], int idx, MatchStatus status) {
 	if (infos == NULL || idx < 0) return;
-	infos[idx].status = status;
+	infos[idx].person->status = status;
 }
 
 void addUser(MatchingInfo infos[], int *n, People *new_person) {
@@ -93,13 +93,13 @@ void removeUser(MatchingInfo infos[], int user_idx) {
 	int partner_idx = infos[user_idx].match_idx;
 	if (partner_idx != -1) {
 		infos[partner_idx].match_idx = -1;
-		if (infos[partner_idx].status != DELETED) {
-			infos[partner_idx].status = PAUSED;
+		if (infos[partner_idx].person->status != DELETED) {
+			infos[partner_idx].person->status = PAUSED;
 		}
 	}
 
 	infos[user_idx].match_idx = -1;
-	infos[user_idx].status = DELETED;
+	infos[user_idx].person->status = DELETED;
 	infos[user_idx].pref_size = 0;
 	infos[user_idx].next_proposal = 0;
 }
@@ -110,7 +110,7 @@ int collectUser(MatchingInfo infos[], int n, enum Gender gen, int result[]) {
 	int cnt = 0;
 	for (int i = 0; i < n; i++) {
 		if (infos[i].person == NULL) continue;
-		if (infos[i].status != AVAILABLE) continue;
+		if (infos[i].person->status != AVAILABLE) continue;
 		if (infos[i].person->gen != gen) continue;
 		result[cnt++] = i;
 	}
@@ -138,7 +138,7 @@ void makePrefList(MatchingInfo infos[], int user_idx, int candidates[], int cand
 
 		if (cand_idx < 0 || cand_idx >= MAX_PEOPLE) continue;
 		if (infos[cand_idx].person == NULL) continue;
-		if (infos[cand_idx].status != AVAILABLE) continue;
+		if (infos[cand_idx].person->status != AVAILABLE) continue;
 
 		tmp[tmp_size].idx = cand_idx;
 		tmp[tmp_size].score = compat(infos[user_idx].person, infos[cand_idx].person);
@@ -183,8 +183,8 @@ void createProposal(MatchingInfo infos[], int u, int v) {
 
 	infos[u].match_idx = v;
 	infos[v].match_idx = u;
-	infos[u].status = PROPOSED;
-	infos[v].status = PROPOSED;
+	infos[u].person->status = PROPOSED;
+	infos[v].person->status = PROPOSED;
 }
 
 void confirmMatch(MatchingInfo infos[], int u, int v) {
@@ -192,8 +192,8 @@ void confirmMatch(MatchingInfo infos[], int u, int v) {
 
 	infos[u].match_idx = v;
 	infos[v].match_idx = u;
-	infos[u].status = MATCHED;
-	infos[v].status = MATCHED;
+	infos[u].person->status = MATCHED;
+	infos[v].person->status = MATCHED;
 }
 
 void rejectMatch(MatchingInfo infos[], int u, int v) {
@@ -202,11 +202,11 @@ void rejectMatch(MatchingInfo infos[], int u, int v) {
 	infos[u].match_idx = -1;
 	infos[v].match_idx = -1;
 
-	if (infos[u].status != DELETED) {
-		infos[u].status = AVAILABLE;
+	if (infos[u].person->status != DELETED) {
+		infos[u].person->status = AVAILABLE;
 	}
-	if (infos[v].status != DELETED) {
-		infos[v].status = AVAILABLE;
+	if (infos[v].person->status != DELETED) {
+		infos[v].person->status = AVAILABLE;
 	}
 }
 
@@ -216,7 +216,7 @@ int stableMatching(MatchingInfo infos[], int n, int proposers[], int proposer_cn
 
 	// AVAILABLE 사용자 상태 초기화
 	for (int i = 0; i < n; i++) {
-		if (infos[i].status == AVAILABLE) {
+		if (infos[i].person->status == AVAILABLE) {
 			infos[i].match_idx = -1;
 			infos[i].next_proposal = 0;
 		}
@@ -235,7 +235,7 @@ int stableMatching(MatchingInfo infos[], int n, int proposers[], int proposer_cn
 	// rank table 생성
 	// rank_table[i][j]: i가 j를 몇 번째로 선호하는가?
 	for (int i = 0; i < n; i++) {
-		if (infos[i].status != AVAILABLE) {
+		if (infos[i].person->status != AVAILABLE) {
 			continue;
 		}
 
@@ -257,7 +257,7 @@ int stableMatching(MatchingInfo infos[], int n, int proposers[], int proposer_cn
 
 		if (proposer_idx < 0 || proposer_idx >= n) continue;
 		if (infos[proposer_idx].person == NULL) continue;
-		if (infos[proposer_idx].status != AVAILABLE) continue;
+		if (infos[proposer_idx].person->status != AVAILABLE) continue;
 
 		pushQueue(q, proposer_idx);
 	}
@@ -266,14 +266,14 @@ int stableMatching(MatchingInfo infos[], int n, int proposers[], int proposer_cn
 	while (!isQueueEmpty(q)) {
 		int proposer_idx = popQueue(q);
 		if (proposer_idx < 0 || proposer_idx >= n) continue;
-		if (infos[proposer_idx].status != AVAILABLE) continue;
+		if (infos[proposer_idx].person->status != AVAILABLE) continue;
 		if (infos[proposer_idx].match_idx != -1) continue;
 
 		while (infos[proposer_idx].next_proposal < infos[proposer_idx].pref_size) {
 			int receiver_idx = infos[proposer_idx].preference[infos[proposer_idx].next_proposal];
 			infos[proposer_idx].next_proposal++;
 			if (receiver_idx < 0 || receiver_idx >= n) continue;
-			if (infos[receiver_idx].status != AVAILABLE) continue;
+			if (infos[receiver_idx].person->status != AVAILABLE) continue;
 
 			if (infos[receiver_idx].match_idx == -1) {
 				infos[proposer_idx].match_idx = receiver_idx;
