@@ -2,7 +2,7 @@
 
 enum Focus { FOCUS_NONE, FOCUS_ID, FOCUS_PW };
 
-int count_chars(const char *pw_buf) {
+int display_countChars(const char *pw_buf) {
 	int count = 0;
 	int i = 0;
 
@@ -32,7 +32,7 @@ int count_chars(const char *pw_buf) {
 	return count;
 }
 
-People *showLogin(SDL_Ui *ui) {
+People *display_showLogin(SDL_Ui *ui) {
 	People *logged_in = NULL;
 	char id_buf[MAX_ID_LEN] = "";
 	char pw_buf[MAX_PW_LEN] = "";
@@ -92,7 +92,7 @@ People *showLogin(SDL_Ui *ui) {
 
 	Object t_logo = gui_initObject(
 		ui, TEXT, 56, 76, TOPLEFT,
-		(ObjectParam){.text = {"LIFO", ui->font_bbsig, COLOR_SUPERPINK}});
+		(ObjectParam){.text = {"LIFO", ui->font_bbig, COLOR_SUPERPINK}});
 	Object t_tagline = gui_initObject(
 		ui, TEXT, 60, 206, TOPLEFT,
 		(ObjectParam){.text = {"Love Is Found Optimally", ui->font_normal,
@@ -216,9 +216,6 @@ People *showLogin(SDL_Ui *ui) {
 					People *acc = login_get_account(id_buf);
 					Password h = people_hash_password(pw_buf);
 					if (acc && people_is_same_password(h, acc->pw)) {
-						snprintf(status, sizeof(status), "환영합니다, %s님!",
-								 acc->name);
-						status_color = COLOR_GREEN;
 						if (logged_in) {
 							people_delete_people(logged_in);
 						}
@@ -246,23 +243,7 @@ People *showLogin(SDL_Ui *ui) {
 				}
 			} else if (gui_isInObject(&signup_btn_border, ui->mx, ui->my)) {
 				focus = FOCUS_NONE;
-				People *new_acc = showSignup(ui);
-				// if (new_acc) {
-				// 	// 회원가입 성공 → 바로 로그인 처리
-				// 	snprintf(status, sizeof(status), "환영합니다, %s님!",
-				// 			 new_acc->name);
-				// 	status_color = COLOR_GREEN;
-				// 	if (logged_in) {
-				// 		people_delete_people(logged_in);
-				// 	}
-				// 	logged_in = new_acc;
-				// 	ui->next_state = DFS;
-				// } else {
-				// 	// 회원가입 취소 또는 실패
-				// 	strcpy(status, " ");
-				// 	status_color = COLOR_GRAY;
-				// }
-				// // 로그인 화면 복귀 후 렌더 상태 초기화
+				People *new_acc = display_showSignup(ui);
 				ui->is_mouse_down = false;
 				ui->is_mouse_up = false;
 				ui->is_mouse_move = false;
@@ -311,7 +292,7 @@ People *showLogin(SDL_Ui *ui) {
 			strcpy(disp_pw, "비밀번호");
 			gui_setColorText(&t_pwval, COLOR_WHITEGRAY);
 		} else {
-			for (int i = 0; i < count_chars(pw_buf); i++)
+			for (int i = 0; i < display_countChars(pw_buf); i++)
 				strcat(disp_pw, "*");
 			if (focus == FOCUS_PW) {
 				strcat(disp_pw, "_");
@@ -380,7 +361,7 @@ People *showLogin(SDL_Ui *ui) {
 	return logged_in;
 }
 
-People *showSignup(SDL_Ui *ui) {
+People *display_showSignup(SDL_Ui *ui) {
 	enum SignupFocus { SF_NONE, SF_ID, SF_PW, SF_NAME, SF_AGE } focus = SF_NONE;
 
 	char id_buf[MAX_ID_LEN] = "";
@@ -474,7 +455,7 @@ People *showSignup(SDL_Ui *ui) {
 	// ── 왼쪽 패널 텍스트 ──
 	Object t_logo = gui_initObject(
 		ui, TEXT, 56, 76, TOPLEFT,
-		(ObjectParam){.text = {"LIFO", ui->font_bbsig, COLOR_SUPERPINK}});
+		(ObjectParam){.text = {"LIFO", ui->font_bbig, COLOR_SUPERPINK}});
 	Object t_tagline = gui_initObject(
 		ui, TEXT, 60, 206, TOPLEFT,
 		(ObjectParam){.text = {"Love Is Found Optimally", ui->font_normal,
@@ -725,9 +706,11 @@ People *showSignup(SDL_Ui *ui) {
 			} else {
 				snprintf(disp, sizeof(disp), "%s%s", id_buf,
 						 focus == SF_ID ? "_" : "");
+				gui_setColorText(&t_idval, COLOR_GRAY);
 			}
-			if (disp[0] == '\0')
+			if (disp[0] == '\0') {
 				strcpy(disp, " ");
+			}
 			gui_setText(&t_idval, disp);
 		}
 		// PW
@@ -737,14 +720,17 @@ People *showSignup(SDL_Ui *ui) {
 				strcpy(disp, "비밀번호");
 				gui_setColorText(&t_pwval, COLOR_WHITEGRAY);
 			} else {
-				for (int i = 0; i < count_chars(pw_buf); i++)
+				for (int i = 0; i < display_countChars(pw_buf); i++) {
 					strcat(disp, "*");
-				if (focus == SF_PW)
+				}
+				if (focus == SF_PW) {
 					strcat(disp, "_");
+				}
 				gui_setColorText(&t_pwval, COLOR_GRAY);
 			}
-			if (disp[0] == '\0')
+			if (disp[0] == '\0') {
 				strcpy(disp, " ");
+			}
 			gui_setText(&t_pwval, disp);
 		}
 		// 이름
@@ -839,146 +825,118 @@ People *showSignup(SDL_Ui *ui) {
 	return NULL;
 }
 
-// 로그인 후 보여주는 메인(홈) 화면.
-// 왼쪽 사이드바 네비 + 내 정보 카드 + 통계 카드 + 매칭/설문/기록 액션으로 구성.
-// 종료(창 닫기)할 때까지 자체 루프를 돈다.
-void showHome(SDL_Ui *ui, People *me) {
+void display_showHome(SDL_Ui *ui, People *me) {
 	if (me == NULL) {
 		ui->quit = true;
 		return;
 	}
-	ui->next_state = HOME;
 
-	const int SIDEBAR_W = 260; // 사이드바 너비
-	const int MAIN_X = 300;	   // 본문 시작 x
-	const int RIGHT = 1240;	   // 본문 오른쪽 끝 x
-
-	char status[160] = " ";
-	SDL_Color status_color = COLOR_GRAY;
+	const int SIDEBAR_W = 250; // 사이드바 너비
+	const int LEFT = 280;	   // 본문 시작 x
+	const int RIGHT = 1250;	   // 본문 오른쪽 끝 x 1250 - 280 = 970
 
 	// ── 사이드바 ──
 	Object sidebar = gui_initObject(
 		ui, BOX, 0, 0, TOPLEFT,
 		(ObjectParam){.box = {SIDEBAR_W, WINDOW_HEIGHT, COLOR_WHITEPINK, 0}});
 	Object t_logo = gui_initObject(
-		ui, TEXT, 40, 44, TOPLEFT,
-		(ObjectParam){.text = {"LIFO", ui->font_big, COLOR_SUPERPINK}});
+		ui, TEXT, 110, 44, MIDTOP,
+		(ObjectParam){.text = {"LIFO", ui->font_bbsig, COLOR_SUPERPINK}});
 
 	// 네비게이션 항목 (0:홈 이 현재 화면)
 	enum { NAV_HOME, NAV_MATCH, NAV_SURVEY, NAV_PROFILE, NAV_CNT };
 	char *nav_labels[NAV_CNT] = {"홈", "매칭", "설문", "프로필"};
-	int nav_y[NAV_CNT] = {150, 212, 274, 336};
-	Object nav_box[NAV_CNT];
-	Object nav_txt[NAV_CNT];
+	int nav_y[NAV_CNT] = {150, 150 + 65, 150 + 65 * 2, 150 + 65 * 3};
+	Object nav_box[NAV_CNT + 1];
+	Object nav_txt[NAV_CNT + 1];
 	for (int i = 0; i < NAV_CNT; i++) {
-		nav_box[i] =
-			gui_initObject(ui, BOX, 30, nav_y[i], TOPLEFT,
-						   (ObjectParam){.box = {200, 52, COLOR_PINK, 14}});
+		nav_box[i] = gui_initObject(
+			ui, BOX, 125, nav_y[i], MIDTOP,
+			(ObjectParam){.box = {SIDEBAR_W - 80, 51, COLOR_PINK, 14}});
 		nav_txt[i] = gui_initObject(
-			ui, TEXT, 70, nav_y[i] + 13, TOPLEFT,
+			ui, TEXT, 72, nav_y[i] + 51 / 2, CENTER,
 			(ObjectParam){.text = {" ", ui->font_normal, COLOR_DURTYPINK}});
 		gui_setText(&nav_txt[i], nav_labels[i]);
 	}
+	nav_box[NAV_CNT] = gui_initObject(
+		ui, BOX, 125, WINDOW_HEIGHT - 30, MIDBOTTOM,
+		(ObjectParam){.box = {SIDEBAR_W - 80, 51, COLOR_PINK, 14}});
+	nav_txt[NAV_CNT] = gui_initObject(
+		ui, TEXT, 72, WINDOW_HEIGHT - 30 - 51 / 2, CENTER,
+		(ObjectParam){.text = {"설정", ui->font_normal, COLOR_DURTYPINK}});
 
 	// ── 상단 인사말 ──
 	char greet[64];
-	snprintf(greet, sizeof(greet), "안녕, %s", me->name);
+	snprintf(greet, sizeof(greet), "안녕하세요, %s 님!", me->name);
 	Object t_greet =
-		gui_initObject(ui, TEXT, MAIN_X, 36, TOPLEFT,
+		gui_initObject(ui, TEXT, LEFT, 36, TOPLEFT,
 					   (ObjectParam){.text = {" ", ui->font_big, COLOR_BLACK}});
 	gui_setText(&t_greet, greet);
-	Object t_greetsub =
-		gui_initObject(ui, TEXT, MAIN_X + 2, 92, TOPLEFT,
-					   (ObjectParam){.text = {"오늘도 좋은 인연 찾아볼까?",
-											  ui->font_small, COLOR_GRAY}});
 
 	// ── 내 정보 카드 ──
 	Object profile_card =
-		gui_initObject(ui, BOX, MAIN_X, 150, TOPLEFT,
-					   (ObjectParam){.box = {690, 180, COLOR_WHITEPINK, 22}});
+		gui_initObject(ui, BOX, LEFT, 150, TOPLEFT,
+					   (ObjectParam){.box = {970, 180, COLOR_WHITEPINK, 22}});
 	Object avatar =
-		gui_initObject(ui, BOX, MAIN_X + 30, 185, TOPLEFT,
-					   (ObjectParam){.box = {90, 90, COLOR_PINK, 22}});
+		gui_initObject(ui, BOX, LEFT + 75, 150 + profile_card.dstrect.h / 2,
+					   CENTER, (ObjectParam){.box = {90, 90, COLOR_PINK, 22}});
 
 	Object t_name = gui_initObject(
-		ui, TEXT, MAIN_X + 150, 188, TOPLEFT,
+		ui, TEXT, LEFT + 150, 190, TOPLEFT,
 		(ObjectParam){.text = {" ", ui->font_normal, COLOR_DURTYPINK}});
 	gui_setText(&t_name, me->name);
 
 	char info1[160];
-	if (strlen(me->type) > 0 && strlen(me->love_type) > 0)
+	if (strlen(me->type) > 0 && strlen(me->love_type) > 0) {
 		snprintf(info1, sizeof(info1), "내 유형 %s · 이상형 %s",
 				 dfs_type_name(me->type), dfs_type_name(me->love_type));
-	else if (strlen(me->type) > 0)
+	} else if (strlen(me->type) > 0) {
 		snprintf(info1, sizeof(info1), "내 유형 %s", dfs_type_name(me->type));
-	else
-		strcpy(info1, "아직 유형 미설정 · 설문을 풀어보세요");
+	} else {
+		strcpy(info1, "아직 유형 미설정 · 연애 유형 검사를 시작하세요");
+	}
 	Object t_info1 = gui_initObject(
-		ui, TEXT, MAIN_X + 150, 235, TOPLEFT,
+		ui, TEXT, LEFT + 150, 240, TOPLEFT,
 		(ObjectParam){.text = {" ", ui->font_small, COLOR_DURTYPINK}});
 	gui_setText(&t_info1, info1);
 
-	char info2[64];
-	snprintf(info2, sizeof(info2), "%d세 · %s", me->age,
+	snprintf(info1, sizeof(info1), "%d세 · %s", me->age,
 			 me->gen == GENDER_MALE ? "남성" : "여성");
 	Object t_info2 = gui_initObject(
-		ui, TEXT, MAIN_X + 150, 268, TOPLEFT,
+		ui, TEXT, LEFT + 150, 275, TOPLEFT,
 		(ObjectParam){.text = {" ", ui->font_small, COLOR_GRAY}});
-	gui_setText(&t_info2, info2);
+	gui_setText(&t_info2, info1);
 
-	// ── 우측 통계 카드 2개 ──
-	Object stat1_card =
-		gui_initObject(ui, BOX, 1005, 150, TOPLEFT,
-					   (ObjectParam){.box = {235, 82, COLOR_WHITEPINK, 18}});
-	Object t_stat1_label = gui_initObject(
-		ui, TEXT, 1025, 166, TOPLEFT,
-		(ObjectParam){.text = {"새 매칭", ui->font_small, COLOR_GRAY}});
-	Object t_stat1_val = gui_initObject(
-		ui, TEXT, 1025, 190, TOPLEFT,
-		(ObjectParam){.text = {"-", ui->font_big, COLOR_DURTYPINK}});
-
-	Object stat2_card =
-		gui_initObject(ui, BOX, 1005, 248, TOPLEFT,
-					   (ObjectParam){.box = {235, 82, COLOR_WHITEPINK, 18}});
-	Object t_stat2_label = gui_initObject(
-		ui, TEXT, 1025, 264, TOPLEFT,
-		(ObjectParam){.text = {"기록 일수", ui->font_small, COLOR_GRAY}});
-	Object t_stat2_val = gui_initObject(
-		ui, TEXT, 1025, 288, TOPLEFT,
-		(ObjectParam){.text = {"0", ui->font_big, COLOR_DURTYPINK}});
-
-	// ── 메인 CTA: 매칭 찾으러 가기 ──
 	Object cta = gui_initObject(
-		ui, BOX, MAIN_X, 350, TOPLEFT,
-		(ObjectParam){.box = {RIGHT - MAIN_X, 92, COLOR_SUPERPINK, 18}});
-	Object t_cta =
-		gui_initObject(ui, TEXT, MAIN_X + 30, 368, TOPLEFT,
-					   (ObjectParam){.text = {"매칭 찾으러 가기",
-											  ui->font_normal, COLOR_WHITE}});
+		ui, BOX, LEFT, 350, TOPLEFT,
+		(ObjectParam){.box = {RIGHT - LEFT, 92, COLOR_SUPERPINK, 18}});
+	Object t_cta = gui_initObject(
+		ui, TEXT, LEFT + 30, 368, TOPLEFT,
+		(ObjectParam){.text = {"매칭 시작하기", ui->font_normal, COLOR_WHITE}});
 	Object t_ctasub = gui_initObject(
-		ui, TEXT, MAIN_X + 30, 408, TOPLEFT,
-		(ObjectParam){.text = {"유사도 높은 후보를 찾아드려요", ui->font_small,
+		ui, TEXT, LEFT + 30, 408, TOPLEFT,
+		(ObjectParam){.text = {"최적의 이상형을 찾아보세요", ui->font_small,
 							   COLOR_WHITEPINK}});
-	Object t_ctaarrow =
-		gui_initObject(ui, TEXT, RIGHT - 50, 372, TOPLEFT,
-					   (ObjectParam){.text = {"→", ui->font_big, COLOR_WHITE}});
+	Object t_ctaarrow = gui_initObject(
+		ui, TEXT, RIGHT - 80, cta.dstrect.y + cta.dstrect.h / 2, CENTER,
+		(ObjectParam){.text = {"→", ui->font_big, COLOR_WHITE}});
 
 	// ── 하단 액션 카드 2개: 설문 다시 풀기 / 오늘의 기록 ──
-	int card_w = (RIGHT - MAIN_X - 20) / 2; // 두 카드 사이 간격 20
-	int card2_x = MAIN_X + card_w + 20;
+	int card_w = (RIGHT - LEFT - 20) / 2; // 두 카드 사이 간격 20
+	int card2_x = LEFT + card_w + 20;
 
 	Object survey_border =
-		gui_initObject(ui, BOX, MAIN_X, 462, TOPLEFT,
+		gui_initObject(ui, BOX, LEFT, 462, TOPLEFT,
 					   (ObjectParam){.box = {card_w, 96, COLOR_SOFTPINK, 16}});
 	Object survey_fill =
-		gui_initObject(ui, BOX, MAIN_X + 2, 464, TOPLEFT,
+		gui_initObject(ui, BOX, LEFT + 2, 464, TOPLEFT,
 					   (ObjectParam){.box = {card_w - 4, 92, COLOR_WHITE, 14}});
-	Object t_survey =
-		gui_initObject(ui, TEXT, MAIN_X + 28, 484, TOPLEFT,
-					   (ObjectParam){.text = {"설문 다시 풀기", ui->font_normal,
-											  COLOR_DURTYPINK}});
+	Object t_survey = gui_initObject(
+		ui, TEXT, LEFT + 28, 484, TOPLEFT,
+		(ObjectParam){.text = {"연애 성격 유형 검사 시작하기", ui->font_normal,
+							   COLOR_DURTYPINK}});
 	Object t_surveysub =
-		gui_initObject(ui, TEXT, MAIN_X + 28, 524, TOPLEFT,
+		gui_initObject(ui, TEXT, LEFT + 28, 522, TOPLEFT,
 					   (ObjectParam){.text = {"성격 유형 재진단",
 											  ui->font_small, COLOR_GRAY}});
 
@@ -988,17 +946,13 @@ void showHome(SDL_Ui *ui, People *me) {
 	Object record_fill =
 		gui_initObject(ui, BOX, card2_x + 2, 464, TOPLEFT,
 					   (ObjectParam){.box = {card_w - 4, 92, COLOR_WHITE, 14}});
-	Object t_record =
-		gui_initObject(ui, TEXT, card2_x + 26, 484, TOPLEFT,
-					   (ObjectParam){.text = {"오늘의 기록", ui->font_normal,
-											  COLOR_DURTYPINK}});
+	Object t_record = gui_initObject(
+		ui, TEXT, card2_x + 28, 484, TOPLEFT,
+		(ObjectParam){.text = {"개발자에게 매점 사주기", ui->font_normal,
+							   COLOR_DURTYPINK}});
 	Object t_recordsub = gui_initObject(
-		ui, TEXT, card2_x + 26, 524, TOPLEFT,
-		(ObjectParam){.text = {"아직 작성 전", ui->font_small, COLOR_GRAY}});
-
-	Object t_status = gui_initObject(
-		ui, TEXT, MAIN_X, 588, TOPLEFT,
-		(ObjectParam){.text = {" ", ui->font_small, COLOR_GRAY}});
+		ui, TEXT, card2_x + 26, 522, TOPLEFT,
+		(ObjectParam){.text = {"nyamnyam", ui->font_small, COLOR_GRAY}});
 
 	while (!ui->quit) {
 		SDL_Event event;
@@ -1027,34 +981,30 @@ void showHome(SDL_Ui *ui, People *me) {
 		}
 
 		if (ui->is_mouse_down) {
-			// 매칭(네비 또는 CTA) → BFS, 설문 → DFS, 기록 → MST.
-			// 해당 화면들은 아직 미구현이라 안내 문구만 표시한다.
-			// (구현되면 아래 주석을 ui->next_state = ...; 로 바꾸면 된다.)
 			if (gui_isInObject(&cta, ui->mx, ui->my) ||
 				gui_isInObject(&nav_box[NAV_MATCH], ui->mx, ui->my)) {
 				// ui->next_state = BFS;
-				strcpy(status, "매칭 화면은 준비 중이에요. (곧 추가됩니다)");
-				status_color = COLOR_SUPERPINK;
+				// break;
 			} else if (gui_isInObject(&survey_border, ui->mx, ui->my) ||
 					   gui_isInObject(&nav_box[NAV_SURVEY], ui->mx, ui->my)) {
-				// DFS = Dating Fit Survey → 설문 화면으로 이동
 				ui->next_state = DFS;
+				break;
 			} else if (gui_isInObject(&record_border, ui->mx, ui->my)) {
-				// '오늘의 기록' 카드 (기록 화면 미구현)
 				// ui->next_state = MST;
-				strcpy(status, "기록 화면은 준비 중이에요. (곧 추가됩니다)");
-				status_color = COLOR_SUPERPINK;
+				//  break;
 			} else if (gui_isInObject(&nav_box[NAV_PROFILE], ui->mx, ui->my)) {
-				strcpy(status, "프로필 화면은 준비 중이에요. (곧 추가됩니다)");
-				status_color = COLOR_SUPERPINK;
+				// ui->next_state = PROFILE;
+				//  break;
+			} else if (gui_isInObject(&nav_box[NAV_CNT], ui->mx, ui->my)) {
+				// ui->next_state = SETTING;
+				//  break;
 			}
 		}
 
-		// ── 네비 hover/active 색상 ──
-		for (int i = 0; i < NAV_CNT; i++) {
+		for (int i = 0; i <= NAV_CNT; i++) {
 			int active = (i == NAV_HOME);
 			int hover = gui_isInObject(&nav_box[i], ui->mx, ui->my);
-			nav_box[i].textcolor = active ? COLOR_PINK : COLOR_SOFTPINK;
+			nav_box[i].textcolor = active ? COLOR_PINK : COLOR_PINK; //??
 			SDL_Color want = (active || hover) ? COLOR_WHITE : COLOR_DURTYPINK;
 			if (want.r != nav_txt[i].textcolor.r ||
 				want.g != nav_txt[i].textcolor.g ||
@@ -1074,39 +1024,28 @@ void showHome(SDL_Ui *ui, People *me) {
 									? COLOR_WHITEPINK
 									: COLOR_WHITE;
 
-		// 상태 텍스트
-		gui_setColorText(&t_status, status_color);
-		gui_setText(&t_status, status[0] ? status : " ");
-
 		// ── 렌더링 ──
 		SDL_SetRenderDrawColor(ui->renderer, 255, 255, 255, 255);
 		SDL_RenderClear(ui->renderer);
 
 		gui_presentObject(&sidebar);
 		gui_presentObject(&t_logo);
-		for (int i = 0; i < NAV_CNT; i++) {
+		for (int i = 0; i <= NAV_CNT; i++) {
 			int active = (i == NAV_HOME);
 			int hover = gui_isInObject(&nav_box[i], ui->mx, ui->my);
-			if (active || hover)
+			if (active || hover) {
 				gui_presentObject(&nav_box[i]);
+			}
 			gui_presentObject(&nav_txt[i]);
 		}
 
 		gui_presentObject(&t_greet);
-		gui_presentObject(&t_greetsub);
 
 		gui_presentObject(&profile_card);
 		gui_presentObject(&avatar);
 		gui_presentObject(&t_name);
 		gui_presentObject(&t_info1);
 		gui_presentObject(&t_info2);
-
-		gui_presentObject(&stat1_card);
-		gui_presentObject(&t_stat1_label);
-		gui_presentObject(&t_stat1_val);
-		gui_presentObject(&stat2_card);
-		gui_presentObject(&t_stat2_label);
-		gui_presentObject(&t_stat2_val);
 
 		gui_presentObject(&cta);
 		gui_presentObject(&t_cta);
@@ -1122,8 +1061,6 @@ void showHome(SDL_Ui *ui, People *me) {
 		gui_presentObject(&record_fill);
 		gui_presentObject(&t_record);
 		gui_presentObject(&t_recordsub);
-
-		gui_presentObject(&t_status);
 
 		SDL_RenderPresent(ui->renderer);
 
@@ -1142,6 +1079,9 @@ void showHome(SDL_Ui *ui, People *me) {
 // 즉시 모드(immediate-mode) 렌더링 헬퍼들. TEXT는 매 프레임 텍스처를 만들고
 // 바로 파괴하므로 누수가 없고, 둥근 BOX는 텍스처를 만들지 않으므로 안전하다.
 // ───────────────────────────────────────────────
+
+// 근데 읽어보니까 코드 씹창나있어서 걍 다 다시짜는게 나을수도;; 그냥 밑에
+// 참고하는 느낌으로 위에 display_showHome()양식 맞춰서 다시 짜세요
 
 static int s_inRect(int px, int py, int x, int y, int w, int h) {
 	return px >= x && px <= x + w && py >= y && py <= y + h;
@@ -1169,9 +1109,9 @@ static void s_drawText(SDL_Ui *ui, const char *text, TTF_Font *font,
 	if (text == NULL || text[0] == '\0') {
 		return;
 	}
-	SDL_Surface *s = (wrap > 0)
-						 ? TTF_RenderUTF8_Blended_Wrapped(font, text, color, wrap)
-						 : TTF_RenderUTF8_Blended(font, text, color);
+	SDL_Surface *s =
+		(wrap > 0) ? TTF_RenderUTF8_Blended_Wrapped(font, text, color, wrap)
+				   : TTF_RenderUTF8_Blended(font, text, color);
 	if (s == NULL) {
 		return;
 	}
@@ -1376,8 +1316,8 @@ static int runTree(SDL_Ui *ui, DfsTree *tree, const char *big_title,
 		s_drawRound(ui, prev_x, by, prev_w, 56, 14, COLOR_SOFTPINK);
 		s_drawRound(ui, prev_x + 2, by + 2, prev_w - 4, 52, 12,
 					prev_hover ? COLOR_WHITEPINK : COLOR_WHITE);
-		s_drawText(ui, "← 이전", ui->font_small, COLOR_GRAY, prev_x + prev_w / 2,
-				   by + 28, CENTER, 0);
+		s_drawText(ui, "← 이전", ui->font_small, COLOR_GRAY,
+				   prev_x + prev_w / 2, by + 28, CENTER, 0);
 
 		int next_hover = s_inRect(ui->mx, ui->my, next_x, by, next_w, 56);
 		s_drawRound(ui, next_x, by, next_w, 56, 14,
@@ -1399,8 +1339,8 @@ static int runTree(SDL_Ui *ui, DfsTree *tree, const char *big_title,
 
 // 설문 하나(대주제 트리 묶음)를 순서대로 진행한다.
 // 모든 트리를 끝내면 1, 취소/창닫기면 0. 각 트리 결과를 codes/names에 채운다.
-static int runSurvey(SDL_Ui *ui, DfsSurvey *survey,
-					 char codes[][MAX_TYPE_LEN], char names[][DFS_NAME_LEN]) {
+static int runSurvey(SDL_Ui *ui, DfsSurvey *survey, char codes[][MAX_TYPE_LEN],
+					 char names[][DFS_NAME_LEN]) {
 	int i = 0;
 	while (i < survey->n_trees) {
 		char big[80];
@@ -1435,8 +1375,8 @@ static void s_drawInput(SDL_Ui *ui, int x, int y, int w, int h, int focused,
 	} else {
 		char disp[DFS_Q_LEN + 4];
 		snprintf(disp, sizeof(disp), "%s%s", buf, focused ? "_" : "");
-		s_drawText(ui, disp, ui->font_small, COLOR_GRAY, x + 16, y + 16, TOPLEFT,
-				   w - 32);
+		s_drawText(ui, disp, ui->font_small, COLOR_GRAY, x + 16, y + 16,
+				   TOPLEFT, w - 32);
 	}
 }
 
@@ -1529,9 +1469,11 @@ static int showAddQuestion(SDL_Ui *ui, DfsTree *tree, int leaf_idx,
 				} else {
 					dfs_save_tree(tree, tree->save_path);
 					int child = tree->nodes[leaf_idx].child[mine];
-					strncpy(out_code, tree->nodes[child].code, MAX_TYPE_LEN - 1);
+					strncpy(out_code, tree->nodes[child].code,
+							MAX_TYPE_LEN - 1);
 					out_code[MAX_TYPE_LEN - 1] = '\0';
-					strncpy(out_name, tree->nodes[child].name, DFS_NAME_LEN - 1);
+					strncpy(out_name, tree->nodes[child].name,
+							DFS_NAME_LEN - 1);
 					out_name[DFS_NAME_LEN - 1] = '\0';
 					return 1;
 				}
@@ -1547,8 +1489,8 @@ static int showAddQuestion(SDL_Ui *ui, DfsTree *tree, int leaf_idx,
 		SDL_RenderClear(ui->renderer);
 		s_drawSidebar(ui, 2);
 
-		s_drawText(ui, "유형 더 세분화하기", ui->font_big, COLOR_BLACK, SV_MAIN_X,
-				   36, TOPLEFT, 0);
+		s_drawText(ui, "유형 더 세분화하기", ui->font_big, COLOR_BLACK,
+				   SV_MAIN_X, 36, TOPLEFT, 0);
 		char sub[160];
 		snprintf(sub, sizeof(sub), "'%s' 유형을 새 질문으로 두 갈래로 나눕니다",
 				 pname);
@@ -1581,8 +1523,8 @@ static int showAddQuestion(SDL_Ui *ui, DfsTree *tree, int leaf_idx,
 		int sh = s_inRect(ui->mx, ui->my, SAVE_X, BTNY, SAVE_W, 56);
 		s_drawRound(ui, SAVE_X, BTNY, SAVE_W, 56, 14,
 					sh ? COLOR_DURTYPINK : COLOR_SUPERPINK);
-		s_drawText(ui, "저장", ui->font_normal, COLOR_WHITE, SAVE_X + SAVE_W / 2,
-				   BTNY + 28, CENTER, 0);
+		s_drawText(ui, "저장", ui->font_normal, COLOR_WHITE,
+				   SAVE_X + SAVE_W / 2, BTNY + 28, CENTER, 0);
 		int ch = s_inRect(ui->mx, ui->my, CANCEL_X, BTNY, CANCEL_W, 56);
 		s_drawRound(ui, CANCEL_X, BTNY, CANCEL_W, 56, 14, COLOR_SOFTPINK);
 		s_drawRound(ui, CANCEL_X + 2, BTNY + 2, CANCEL_W - 4, 52, 12,
@@ -1602,11 +1544,12 @@ static int showAddQuestion(SDL_Ui *ui, DfsTree *tree, int leaf_idx,
 }
 
 // 진단 결과(대주제별)를 모두 보여주는 마무리 화면. '홈으로' 클릭 시 반환.
-static void showSurveyResult(SDL_Ui *ui, People *me, DfsSurvey *self_s,
-							 char self_codes[][MAX_TYPE_LEN],
-							 char self_names[][DFS_NAME_LEN], DfsSurvey *ideal_s,
-							 char ideal_codes[][MAX_TYPE_LEN],
-							 char ideal_names[][DFS_NAME_LEN]) {
+static void display_showSurveyResult(SDL_Ui *ui, People *me, DfsSurvey *self_s,
+									 char self_codes[][MAX_TYPE_LEN],
+									 char self_names[][DFS_NAME_LEN],
+									 DfsSurvey *ideal_s,
+									 char ideal_codes[][MAX_TYPE_LEN],
+									 char ideal_names[][DFS_NAME_LEN]) {
 	int bx = SV_MAIN_X, bw = 200, byy = 520;
 	int ex_x = 540, ex_w = 260; // '세분화' 버튼
 	while (!ui->quit) {
@@ -1661,10 +1604,12 @@ static void showSurveyResult(SDL_Ui *ui, People *me, DfsSurvey *self_s,
 		SDL_RenderClear(ui->renderer);
 		s_drawSidebar(ui, 2);
 
-		s_drawText(ui, "진단이 완료됐어요", ui->font_big, COLOR_BLACK, SV_MAIN_X,
-				   36, TOPLEFT, 0);
-		s_drawText(ui, "대주제별 결과예요. 매칭 유사도는 이 결과들을 합쳐 계산할 예정.",
-				   ui->font_small, COLOR_GRAY, SV_MAIN_X + 2, 92, TOPLEFT, 0);
+		s_drawText(ui, "진단이 완료됐어요", ui->font_big, COLOR_BLACK,
+				   SV_MAIN_X, 36, TOPLEFT, 0);
+		s_drawText(
+			ui,
+			"대주제별 결과예요. 매칭 유사도는 이 결과들을 합쳐 계산할 예정.",
+			ui->font_small, COLOR_GRAY, SV_MAIN_X + 2, 92, TOPLEFT, 0);
 
 		char line[160];
 		// 내 성향 카드
@@ -1674,14 +1619,14 @@ static void showSurveyResult(SDL_Ui *ui, People *me, DfsSurvey *self_s,
 		for (int i = 0; i < self_s->n_trees; i++) {
 			snprintf(line, sizeof(line), "· %s : %s (%s)",
 					 self_s->trees[i].title, self_names[i], self_codes[i]);
-			s_drawText(ui, line, ui->font_small, COLOR_DURTYPINK, SV_MAIN_X + 40,
-					   216 + i * 36, TOPLEFT, 860);
+			s_drawText(ui, line, ui->font_small, COLOR_DURTYPINK,
+					   SV_MAIN_X + 40, 216 + i * 36, TOPLEFT, 860);
 		}
 
 		// 이상형 카드
 		s_drawRound(ui, SV_MAIN_X, 330, 940, 160, 20, COLOR_WHITEVIOLET);
-		s_drawText(ui, "내 이상형", ui->font_normal, COLOR_VIOLET, SV_MAIN_X + 30,
-				   352, TOPLEFT, 0);
+		s_drawText(ui, "내 이상형", ui->font_normal, COLOR_VIOLET,
+				   SV_MAIN_X + 30, 352, TOPLEFT, 0);
 		for (int i = 0; i < ideal_s->n_trees; i++) {
 			snprintf(line, sizeof(line), "· %s : %s (%s)",
 					 ideal_s->trees[i].title, ideal_names[i], ideal_codes[i]);
@@ -1711,7 +1656,7 @@ static void showSurveyResult(SDL_Ui *ui, People *me, DfsSurvey *self_s,
 	}
 }
 
-void showSurvey(SDL_Ui *ui, People *me) {
+void display_showSurvey(SDL_Ui *ui, People *me) {
 	if (me == NULL) {
 		ui->next_state = HOME;
 		return;
@@ -1750,10 +1695,10 @@ void showSurvey(SDL_Ui *ui, People *me) {
 	me->love_type[MAX_TYPE_LEN - 1] = '\0';
 
 	// 3) 결과 화면
-	showSurveyResult(ui, me, self_s, self_codes, self_names, ideal_s,
-					 ideal_codes, ideal_names);
+	display_showSurveyResult(ui, me, self_s, self_codes, self_names, ideal_s,
+							 ideal_codes, ideal_names);
 
-done:
+done: //?????????
 	free(self_s);
 	free(ideal_s);
 	ui->next_state = HOME;

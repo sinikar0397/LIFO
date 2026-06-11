@@ -14,7 +14,7 @@
 #define FONT_SIZE_NORMAL (26)
 #define FONT_SIZE_BIG (36)
 #define FONT_SIZE_BBIG (108)
-#define FONT_SIZE_BBSIG (90)
+#define FONT_SIZE_BBSIG (50)
 #define TEXTLENMAX (256)
 #define COLOR_WHITE ((SDL_Color){255, 255, 255, 255})
 #define COLOR_BLACK ((SDL_Color){0, 0, 0, 255})

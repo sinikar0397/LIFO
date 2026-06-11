@@ -5,10 +5,10 @@
 #include "../people/login.h"
 #include "ui.h"
 
-int count_chars(const char *pw_buf);
-People *showLogin(SDL_Ui *ui);
-People *showSignup(SDL_Ui *ui);
-void showHome(SDL_Ui *ui, People *me);
-void showSurvey(SDL_Ui *ui, People *me);
+int display_countChars(const char *pw_buf);
+People *display_showLogin(SDL_Ui *ui);
+People *display_showSignup(SDL_Ui *ui);
+void display_showHome(SDL_Ui *ui, People *me);
+void display_showSurvey(SDL_Ui *ui, People *me);
 
 #endif // DISPLAY_H
