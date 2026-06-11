@@ -34,7 +34,7 @@
 
 typedef enum _AnchorEnum { TOPLEFT, CENTER, MIDTOP, MIDBOTTOM } AnchorEnum;
 typedef enum _ObjectTypeEnum { IMAGE, TEXT, BOX } ObjectTypeEnum;
-typedef enum _MainStateEnum { LOGIN, DFS, BFS, MST } MainStateEnum;
+typedef enum _MainStateEnum { LOGIN, HOME, DFS, BFS, MST } MainStateEnum;
 
 typedef struct _SDL_Ui {
 	SDL_Window *window;

@@ -22,6 +22,9 @@ int main(int argc, char **argv) {
 		case LOGIN:
 			p = showLogin(ui);
 			break;
+		case HOME:
+			showHome(ui, p);
+			break;
 		case DFS:
 			ui->quit = true;
 			break;
