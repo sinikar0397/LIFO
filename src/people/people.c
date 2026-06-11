@@ -173,6 +173,10 @@ void people_set_people_pw(People* P, char pw[]){
     P->pw = people_hash_password(pw);
 }
 
+void people_set_people_status(People* P, MatchStatus status) {
+    P->status = status;
+}
+
 void people_set_people_pw_hashed(  People* P, Password pw){
     P->pw = pw;
 }
