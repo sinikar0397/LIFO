@@ -1039,13 +1039,10 @@ void showHome(SDL_Ui *ui, People *me) {
 					   gui_isInObject(&nav_box[NAV_SURVEY], ui->mx, ui->my)) {
 				// DFS = Dating Fit Survey → 설문 화면으로 이동
 				ui->next_state = DFS;
-			} else if (gui_isInObject(&record_border, ui->mx, ui->my) ||
-					   gui_isInObject(&nav_box[NAV_RECORD], ui->mx, ui->my)) {
+			} else if (gui_isInObject(&record_border, ui->mx, ui->my)) {
+				// '오늘의 기록' 카드 (기록 화면 미구현)
 				// ui->next_state = MST;
 				strcpy(status, "기록 화면은 준비 중이에요. (곧 추가됩니다)");
-				status_color = COLOR_SUPERPINK;
-				// ui->next_state = DFS;
-				strcpy(status, "설문 화면은 준비 중이에요. (곧 추가됩니다)");
 				status_color = COLOR_SUPERPINK;
 			} else if (gui_isInObject(&nav_box[NAV_PROFILE], ui->mx, ui->my)) {
 				strcpy(status, "프로필 화면은 준비 중이에요. (곧 추가됩니다)");
