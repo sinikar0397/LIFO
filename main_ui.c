@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
 			showHome(ui, p);
 			break;
 		case DFS:
-			ui->quit = true;
+			showSurvey(ui, p);
 			break;
 		case BFS:
 			break;

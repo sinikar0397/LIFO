@@ -21,7 +21,7 @@ if [ "$TARGET" = "console" ]; then
 else
     echo "[build] GUI 버전 빌드 중..."
     gcc main_ui.c src/cJSON.c src/people/login.c src/people/people.c \
-        src/gui/ui.c src/gui/display.c \
+        src/gui/ui.c src/gui/display.c src/dfs/dfs.c \
         $(pkg-config --cflags sdl2 SDL2_image SDL2_ttf) \
         $(pkg-config --libs sdl2 SDL2_image SDL2_ttf) \
         -I src -o build/main.exe

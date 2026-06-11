@@ -248,6 +248,10 @@ void dfs_print_type_description(const char type[]) {
 	printf("- 설명: %s\n", info->summary);
 }
 
+const char *dfs_type_name(const char type[]) {
+	return getNode(dfs_find_type_node(type))->name;
+}
+
 int compat(People *a, People *b) {
 	if (a == NULL || b == NULL) {
 		return 0;
@@ -255,4 +259,113 @@ int compat(People *a, People *b) {
 
 	return dfs_type_similarity(a->love_type, b->type) +
 		   dfs_type_similarity(b->love_type, a->type);
+}
+
+// ───────────────────────────────────────────────
+// 트리 엔진
+// ───────────────────────────────────────────────
+
+// 내부(분기) 노드를 채우는 헬퍼: 2지선다용.
+static void dfs_set_branch(DfsTreeNode *n, const char *q, const char *o0,
+						   int c0, const char *o1, int c1) {
+	n->is_leaf = 0;
+	n->user_added = 0;
+	n->n_opt = 2;
+	strncpy(n->question, q, DFS_Q_LEN - 1);
+	strncpy(n->opt_text[0], o0, DFS_OPT_LEN - 1);
+	n->child[0] = c0;
+	strncpy(n->opt_text[1], o1, DFS_OPT_LEN - 1);
+	n->child[1] = c1;
+}
+
+// 잎 노드를 채우는 헬퍼.
+static void dfs_set_leaf(DfsTreeNode *n, const char *code, const char *name) {
+	n->is_leaf = 1;
+	n->user_added = 0;
+	n->n_opt = 0;
+	strncpy(n->code, code, MAX_TYPE_LEN - 1);
+	strncpy(n->name, name, DFS_NAME_LEN - 1);
+}
+
+// 잎 8종(코드/이름)은 두 트리가 공유한다.
+static void dfs_fill_leaves(DfsTree *t) {
+	dfs_set_leaf(&t->nodes[7], "DTF", "이성 리드 정면 돌파형");
+	dfs_set_leaf(&t->nodes[8], "DTC", "이성 리드 회피 조정형");
+	dfs_set_leaf(&t->nodes[9], "DEF", "감성 케어 정면 돌파형");
+	dfs_set_leaf(&t->nodes[10], "DEC", "감성 케어 회피 안정형");
+	dfs_set_leaf(&t->nodes[11], "STF", "이성 수용 정면 돌파형");
+	dfs_set_leaf(&t->nodes[12], "STC", "이성 수용 회피 관찰형");
+	dfs_set_leaf(&t->nodes[13], "SEF", "감성 의존 정면 돌파형");
+	dfs_set_leaf(&t->nodes[14], "SEC", "감성 의존 회피 보호형");
+}
+
+void dfs_build_self_tree(DfsTree *t) {
+	memset(t, 0, sizeof(*t));
+	strncpy(t->title, "연애 성향", sizeof(t->title) - 1);
+	t->root = 0;
+	t->n_nodes = 15;
+
+	dfs_set_branch(&t->nodes[0], "관계에서 더 자연스러운 내 모습은?",
+				   "내가 먼저 데이트·대화·문제 해결을 제안한다", 1,
+				   "상대의 제안과 분위기를 존중하며 맞춘다", 2);
+	dfs_set_branch(&t->nodes[1], "애정을 표현하거나 갈등을 다룰 때 더 가까운 방식은?",
+				   "사실·기준·계획을 정리해서 관계를 이끈다", 3,
+				   "감정 확인·위로·케어로 관계를 이끈다", 4);
+	dfs_set_branch(&t->nodes[2], "상대를 따라갈 때 더 가까운 방식은?",
+				   "논리적으로 납득되면 수용한다", 5,
+				   "정서적으로 기대고 친밀감을 확인한다", 6);
+	const char *aq = "문제가 생겼을 때 내 행동은?";
+	const char *af = "바로 마주 보고 이야기해서 푼다 (정면 돌파)";
+	const char *ac = "잠시 거리를 두고 감정을 가라앉힌 뒤 다룬다 (회피·조정)";
+	dfs_set_branch(&t->nodes[3], aq, af, 7, ac, 8);
+	dfs_set_branch(&t->nodes[4], aq, af, 9, ac, 10);
+	dfs_set_branch(&t->nodes[5], aq, af, 11, ac, 12);
+	dfs_set_branch(&t->nodes[6], aq, af, 13, ac, 14);
+
+	dfs_fill_leaves(t);
+}
+
+void dfs_build_ideal_tree(DfsTree *t) {
+	memset(t, 0, sizeof(*t));
+	strncpy(t->title, "이상형 성향", sizeof(t->title) - 1);
+	t->root = 0;
+	t->n_nodes = 15;
+
+	dfs_set_branch(&t->nodes[0], "내가 더 끌리는 상대의 모습은?",
+				   "관계를 주도하며 방향을 제안하는 사람", 1,
+				   "내 흐름을 존중하고 맞춰주는 사람", 2);
+	dfs_set_branch(&t->nodes[1], "그 사람이 관계를 이끄는 방식은 어느 쪽이 좋아?",
+				   "논리와 계획으로 이끄는 사람", 3,
+				   "감정 확인과 케어로 이끄는 사람", 4);
+	dfs_set_branch(&t->nodes[2], "맞춰주는 방식은 어느 쪽이 좋아?",
+				   "차분히 납득하고 수용하는 사람", 5,
+				   "정서적으로 기대오며 친밀감을 표현하는 사람", 6);
+	const char *aq = "갈등 상황에서 상대가 이랬으면 좋겠어:";
+	const char *af = "바로 마주 보고 풀어가는 사람 (정면 돌파)";
+	const char *ac = "잠시 거리를 두고 추스른 뒤 다루는 사람 (회피·조정)";
+	dfs_set_branch(&t->nodes[3], aq, af, 7, ac, 8);
+	dfs_set_branch(&t->nodes[4], aq, af, 9, ac, 10);
+	dfs_set_branch(&t->nodes[5], aq, af, 11, ac, 12);
+	dfs_set_branch(&t->nodes[6], aq, af, 13, ac, 14);
+
+	dfs_fill_leaves(t);
+}
+
+static int dfs_node_depth(const DfsTree *t, int idx) {
+	const DfsTreeNode *n = &t->nodes[idx];
+	if (n->is_leaf) {
+		return 0;
+	}
+	int best = 0;
+	for (int i = 0; i < n->n_opt; i++) {
+		int d = dfs_node_depth(t, n->child[i]);
+		if (d > best) {
+			best = d;
+		}
+	}
+	return best + 1;
+}
+
+int dfs_tree_max_depth(const DfsTree *t) {
+	return dfs_node_depth(t, t->root);
 }
