@@ -29,6 +29,7 @@ int main(int argc, char **argv) {
 			display_showSurvey(ui, p);
 			break;
 		case BFS:
+			display_showBFS(ui, p);
 			break;
 		case MST:
 			break;

@@ -844,7 +844,7 @@ void display_showHome(SDL_Ui *ui, People *me) {
 		(ObjectParam){.text = {"LIFO", ui->font_bbsig, COLOR_SUPERPINK}});
 
 	// 네비게이션 항목 (0:홈 이 현재 화면)
-	enum { NAV_HOME, NAV_MATCH, NAV_SURVEY, NAV_PROFILE, NAV_CNT };
+	enum { NAV_HOME, NAV_BFS, NAV_DFS, NAV_PROFILE, NAV_CNT };
 	char *nav_labels[NAV_CNT] = {"홈", "매칭", "설문", "프로필"};
 	int nav_y[NAV_CNT] = {150, 150 + 65, 150 + 65 * 2, 150 + 65 * 3};
 	Object nav_box[NAV_CNT + 1];
@@ -955,6 +955,10 @@ void display_showHome(SDL_Ui *ui, People *me) {
 		(ObjectParam){.text = {"nyamnyam", ui->font_small, COLOR_GRAY}});
 
 	while (!ui->quit) {
+		if (ui->next_state != HOME) {
+			break;
+		}
+
 		SDL_Event event;
 		SDL_PumpEvents();
 		while (SDL_PollEvent(&event)) {
@@ -982,11 +986,11 @@ void display_showHome(SDL_Ui *ui, People *me) {
 
 		if (ui->is_mouse_down) {
 			if (gui_isInObject(&cta, ui->mx, ui->my) ||
-				gui_isInObject(&nav_box[NAV_MATCH], ui->mx, ui->my)) {
-				// ui->next_state = BFS;
-				// break;
+				gui_isInObject(&nav_box[NAV_BFS], ui->mx, ui->my)) {
+				ui->next_state = BFS;
+				break;
 			} else if (gui_isInObject(&survey_border, ui->mx, ui->my) ||
-					   gui_isInObject(&nav_box[NAV_SURVEY], ui->mx, ui->my)) {
+					   gui_isInObject(&nav_box[NAV_DFS], ui->mx, ui->my)) {
 				ui->next_state = DFS;
 				break;
 			} else if (gui_isInObject(&record_border, ui->mx, ui->my)) {
@@ -1067,8 +1071,152 @@ void display_showHome(SDL_Ui *ui, People *me) {
 		ui->is_mouse_up = false;
 		ui->is_mouse_down = false;
 		ui->is_mouse_move = false;
+	}
+}
 
-		if (ui->next_state != HOME) {
+void display_showBFS(SDL_Ui *ui, People *me) {
+	if (me == NULL) {
+		ui->quit = true;
+		return;
+	}
+
+	const int SIDEBAR_W = 250;
+	const int LEFT = 280;
+	const int RIGHT = 1250;
+
+	Object sidebar = gui_initObject(
+		ui, BOX, 0, 0, TOPLEFT,
+		(ObjectParam){.box = {SIDEBAR_W, WINDOW_HEIGHT, COLOR_WHITEPINK, 0}});
+	Object t_logo = gui_initObject(
+		ui, TEXT, 110, 44, MIDTOP,
+		(ObjectParam){.text = {"LIFO", ui->font_bbsig, COLOR_SUPERPINK}});
+
+	// 사이드바
+	enum { NAV_HOME, NAV_BFS, NAV_DFS, NAV_PROFILE, NAV_CNT };
+	char *nav_labels[NAV_CNT] = {"홈", "매칭", "설문", "프로필"};
+	int nav_y[NAV_CNT] = {150, 150 + 65, 150 + 65 * 2, 150 + 65 * 3};
+	Object nav_box[NAV_CNT + 1];
+	Object nav_txt[NAV_CNT + 1];
+	for (int i = 0; i < NAV_CNT; i++) {
+		nav_box[i] = gui_initObject(
+			ui, BOX, 125, nav_y[i], MIDTOP,
+			(ObjectParam){.box = {SIDEBAR_W - 80, 51, COLOR_PINK, 14}});
+		nav_txt[i] = gui_initObject(
+			ui, TEXT, 72, nav_y[i] + 51 / 2, CENTER,
+			(ObjectParam){.text = {" ", ui->font_normal, COLOR_DURTYPINK}});
+		gui_setText(&nav_txt[i], nav_labels[i]);
+	}
+	nav_box[NAV_CNT] = gui_initObject(
+		ui, BOX, 125, WINDOW_HEIGHT - 30, MIDBOTTOM,
+		(ObjectParam){.box = {SIDEBAR_W - 80, 51, COLOR_PINK, 14}});
+	nav_txt[NAV_CNT] = gui_initObject(
+		ui, TEXT, 72, WINDOW_HEIGHT - 30 - 51 / 2, CENTER,
+		(ObjectParam){.text = {"설정", ui->font_normal, COLOR_DURTYPINK}});
+
+	// 메인 기능 화면
+	Object t_greet =
+		gui_initObject(ui, TEXT, LEFT, 36, TOPLEFT,
+					   (ObjectParam){.text = {"Best Fit Stable-Matching",
+											  ui->font_big, COLOR_BLACK}});
+	int matchbox_w = (RIGHT - LEFT - 20) / 2;
+	int match_x2 = matchbox_w + LEFT + 20;
+	Object chuchon_border = gui_initObject(
+		ui, BOX, LEFT, 130, TOPLEFT,
+		(ObjectParam){.box = {matchbox_w, 540, COLOR_SUPERPINK, 22}});
+	Object chuchon_fill = gui_initObject(
+		ui, BOX, LEFT + 2, 130 + 2, TOPLEFT,
+		(ObjectParam){.box = {matchbox_w - 4, 540 - 4, COLOR_WHITEPINK, 22}});
+	Object jean_border = gui_initObject(
+		ui, BOX, match_x2, 130, TOPLEFT,
+		(ObjectParam){.box = {matchbox_w, 540, COLOR_SUPERPINK, 22}});
+	Object jean_fill = gui_initObject(
+		ui, BOX, match_x2 + 2, 130 + 2, TOPLEFT,
+		(ObjectParam){.box = {matchbox_w - 4, 540 - 4, COLOR_WHITEPINK, 20}});
+
+	while (!ui->quit) {
+		SDL_Event event;
+		SDL_PumpEvents();
+		while (SDL_PollEvent(&event)) {
+			switch (event.type) {
+			case SDL_QUIT:
+				ui->quit = true;
+				break;
+			case SDL_MOUSEBUTTONUP:
+				ui->is_mouse_up = true;
+				ui->mx = event.button.x;
+				ui->my = event.button.y;
+				break;
+			case SDL_MOUSEBUTTONDOWN:
+				ui->is_mouse_down = true;
+				ui->mx = event.button.x;
+				ui->my = event.button.y;
+				break;
+			case SDL_MOUSEMOTION:
+				ui->is_mouse_move = true;
+				ui->mx = event.motion.x;
+				ui->my = event.motion.y;
+				break;
+			}
+		}
+
+		if (ui->is_mouse_down) {
+			// todo if()if()DFS;
+
+			if (gui_isInObject(&nav_box[NAV_HOME], ui->mx, ui->my)) {
+				ui->next_state = HOME;
+				break;
+			} else if (gui_isInObject(&nav_box[NAV_DFS], ui->mx, ui->my)) {
+				ui->next_state = DFS;
+				break;
+			} else if (gui_isInObject(&nav_box[NAV_PROFILE], ui->mx, ui->my)) {
+				// ui->next_state = PROFILE;
+				//  break;
+			} else if (gui_isInObject(&nav_box[NAV_CNT], ui->mx, ui->my)) {
+				// ui->next_state = SETTING;
+				//  break;
+			}
+		}
+
+		for (int i = 0; i <= NAV_CNT; i++) {
+			int active = (i == NAV_BFS);
+			int hover = gui_isInObject(&nav_box[i], ui->mx, ui->my);
+			nav_box[i].textcolor = active ? COLOR_PINK : COLOR_PINK; //??
+			SDL_Color want = (active || hover) ? COLOR_WHITE : COLOR_DURTYPINK;
+			if (want.r != nav_txt[i].textcolor.r ||
+				want.g != nav_txt[i].textcolor.g ||
+				want.b != nav_txt[i].textcolor.b) {
+				gui_setColorText(&nav_txt[i], want);
+			}
+		}
+
+		SDL_SetRenderDrawColor(ui->renderer, 255, 255, 255, 255);
+		SDL_RenderClear(ui->renderer);
+
+		gui_presentObject(&sidebar);
+		gui_presentObject(&t_logo);
+		for (int i = 0; i <= NAV_CNT; i++) {
+			int active = (i == NAV_BFS);
+			int hover = gui_isInObject(&nav_box[i], ui->mx, ui->my);
+			if (active || hover) {
+				gui_presentObject(&nav_box[i]);
+			}
+			gui_presentObject(&nav_txt[i]);
+		}
+
+		gui_presentObject(&t_greet);
+		gui_presentObject(&jean_border);
+		gui_presentObject(&chuchon_border);
+
+		gui_presentObject(&jean_fill);
+		gui_presentObject(&chuchon_fill);
+
+		SDL_RenderPresent(ui->renderer);
+
+		ui->is_mouse_up = false;
+		ui->is_mouse_down = false;
+		ui->is_mouse_move = false;
+
+		if (ui->next_state != BFS) {
 			break;
 		}
 	}
@@ -1162,8 +1310,8 @@ static void s_drawSidebar(SDL_Ui *ui, int active) {
 // 트리 하나를 설문으로 진행한다.
 // 완료(잎 도달)하면 1을 반환하고 out_code/out_name을 채운다.
 // 사용자가 취소(첫 질문에서 뒤로/홈 클릭)하거나 창을 닫으면 0을 반환한다.
-static int runTree(SDL_Ui *ui, DfsTree *tree, const char *big_title,
-				   char out_code[], char out_name[]) {
+static int display_runTree(SDL_Ui *ui, DfsTree *tree, const char *big_title,
+						   char out_code[], char out_name[]) {
 	int current = tree->root;
 	int sel = -1;
 	int stack_node[DFS_TREE_MAX_NODES];
@@ -1339,13 +1487,14 @@ static int runTree(SDL_Ui *ui, DfsTree *tree, const char *big_title,
 
 // 설문 하나(대주제 트리 묶음)를 순서대로 진행한다.
 // 모든 트리를 끝내면 1, 취소/창닫기면 0. 각 트리 결과를 codes/names에 채운다.
-static int runSurvey(SDL_Ui *ui, DfsSurvey *survey, char codes[][MAX_TYPE_LEN],
-					 char names[][DFS_NAME_LEN]) {
+static int display_runSurvey(SDL_Ui *ui, DfsSurvey *survey,
+							 char codes[][MAX_TYPE_LEN],
+							 char names[][DFS_NAME_LEN]) {
 	int i = 0;
 	while (i < survey->n_trees) {
 		char big[80];
 		snprintf(big, sizeof(big), "%s 진단", survey->name);
-		int r = runTree(ui, &survey->trees[i], big, codes[i], names[i]);
+		int r = display_runTree(ui, &survey->trees[i], big, codes[i], names[i]);
 		if (ui->quit) {
 			return 0;
 		}
@@ -1383,8 +1532,8 @@ static void s_drawInput(SDL_Ui *ui, int x, int y, int w, int h, int focused,
 // 유형(잎) 세분화 입력 화면.
 // 질문 + 선택지 2개를 입력받아 트리를 확장·파일 저장하고, 본인이 고른 쪽의
 // 새 하위 유형을 out_code/out_name으로 돌려준다. 추가 성공 시 1, 취소면 0.
-static int showAddQuestion(SDL_Ui *ui, DfsTree *tree, int leaf_idx,
-						   char out_code[], char out_name[]) {
+static int display_showAddQuestion(SDL_Ui *ui, DfsTree *tree, int leaf_idx,
+								   char out_code[], char out_name[]) {
 	char q_buf[DFS_Q_LEN] = "";
 	char o0[DFS_OPT_LEN] = "";
 	char o1[DFS_OPT_LEN] = "";
@@ -1587,7 +1736,8 @@ static void display_showSurveyResult(SDL_Ui *ui, People *me, DfsSurvey *self_s,
 					dfs_find_leaf_by_code(&self_s->trees[0], self_codes[0]);
 				if (li >= 0) {
 					char nc[MAX_TYPE_LEN], nn[DFS_NAME_LEN];
-					if (showAddQuestion(ui, &self_s->trees[0], li, nc, nn)) {
+					if (display_showAddQuestion(ui, &self_s->trees[0], li, nc,
+												nn)) {
 						strncpy(self_codes[0], nc, MAX_TYPE_LEN - 1);
 						self_codes[0][MAX_TYPE_LEN - 1] = '\0';
 						strncpy(self_names[0], nn, DFS_NAME_LEN - 1);
@@ -1680,7 +1830,7 @@ void display_showSurvey(SDL_Ui *ui, People *me) {
 	char ideal_names[DFS_MAX_TREES][DFS_NAME_LEN];
 
 	// 1) 내 성향 진단 (대주제 트리들)
-	if (!runSurvey(ui, self_s, self_codes, self_names)) {
+	if (!display_runSurvey(ui, self_s, self_codes, self_names)) {
 		goto done;
 	}
 	// 현재는 대표 트리(0번) 코드만 type에 저장 — 매칭 유사도 일반화는 추후.
@@ -1688,7 +1838,7 @@ void display_showSurvey(SDL_Ui *ui, People *me) {
 	me->type[MAX_TYPE_LEN - 1] = '\0';
 
 	// 2) 내 이상형 진단
-	if (!runSurvey(ui, ideal_s, ideal_codes, ideal_names)) {
+	if (!display_runSurvey(ui, ideal_s, ideal_codes, ideal_names)) {
 		goto done; // 성향은 이미 저장됨
 	}
 	strncpy(me->love_type, ideal_codes[0], MAX_TYPE_LEN - 1);
