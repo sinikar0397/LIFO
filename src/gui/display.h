@@ -8,6 +8,8 @@
 #include "../people/login.h"
 #include "ui.h"
 
+extern char g_mst_partner_id[MAX_ID_LEN];
+
 int display_countChars(const char *pw_buf);
 People *display_showLogin(SDL_Ui *ui);
 People *display_showSignup(SDL_Ui *ui);
