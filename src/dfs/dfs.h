@@ -44,6 +44,9 @@ const char *dfs_type_name(const char type[]);
 int dfs_attach_similarity(const char ideal_type[], const char other_type[]);
 const char *dfs_attach_name(const char code[]);
 
+// 유형 코드의 설명(도감용). 공용 트리에서 찾으며, 없으면 빈 문자열.
+const char *dfs_type_desc(const char code[]);
+
 int compat(People *a, People *b);
 
 // 매칭용 공용 트리 캐시를 무효화한다(세분화로 트리 파일이 바뀐 뒤 호출).
@@ -60,6 +63,7 @@ void dfs_matching_reload(void);
 #define DFS_Q_LEN 200		   // 질문 문자열 최대 길이
 #define DFS_OPT_LEN 100		   // 선택지 문자열 최대 길이
 #define DFS_NAME_LEN 48		   // 유형명 최대 길이
+#define DFS_DESC_LEN 240	   // 유형 설명 최대 길이 (도감용)
 
 typedef struct DfsTreeNode {
 	int is_leaf;					   // 잎이면 1
@@ -69,6 +73,7 @@ typedef struct DfsTreeNode {
 	int child[DFS_MAX_OPT];			   // 선택지 i가 가리키는 자식 노드 index
 	char code[MAX_TYPE_LEN];		   // 잎: 유형 코드 (예: DTF)
 	char name[DFS_NAME_LEN];		   // 잎: 유형명
+	char desc[DFS_DESC_LEN];		   // 잎: 유형 설명 (도감/세분화 설명)
 	int user_added;					   // 사용자가 추가한 노드면 1 (Phase 3용)
 } DfsTreeNode;
 
@@ -94,6 +99,8 @@ void dfs_build_self_tree(DfsTree *tree);		// 주도·표현 성향
 void dfs_build_ideal_tree(DfsTree *tree);
 void dfs_build_attach_self_tree(DfsTree *tree); // 애착 안정성
 void dfs_build_attach_ideal_tree(DfsTree *tree);
+void dfs_build_lang_self_tree(DfsTree *tree);	// 사랑의 언어
+void dfs_build_lang_ideal_tree(DfsTree *tree);
 
 // "내 성향" / "내 이상형" 설문(대주제 트리 묶음)을 만든다.
 void dfs_build_self_survey(DfsSurvey *survey);
@@ -118,7 +125,8 @@ int dfs_find_leaf_by_code(const DfsTree *tree, const char code[]);
 //         "부모유형명 · 선택지"로 자동 생성. dfs_extend_leaf는 자동 이름 래퍼.
 int dfs_extend_leaf_named(DfsTree *tree, int leaf_idx, const char question[],
 						  const char opt0[], const char opt1[],
-						  const char name0[], const char name1[]);
+						  const char name0[], const char name1[],
+						  const char desc0[], const char desc1[]);
 int dfs_extend_leaf(DfsTree *tree, int leaf_idx, const char question[],
 					const char opt0[], const char opt1[]);
 

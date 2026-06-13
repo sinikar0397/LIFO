@@ -22,3 +22,6 @@ build/
 # 앱 실행 중 생성되는 커플 공간 데이터
 database/couples/*.json
 database/matches/*.json
+
+# 설문 트리(세분화) 런타임 데이터
+database/tree_*.json

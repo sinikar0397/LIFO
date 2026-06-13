@@ -959,6 +959,35 @@ void display_showHome(SDL_Ui *ui, People *me) {
 		ui, TEXT, card2_x + 26, 522, TOPLEFT,
 		(ObjectParam){.text = {"nyamnyam", ui->font_small, COLOR_GRAY}});
 
+	// ── 둘째 줄 카드: 트리 시각화 / 유형 도감 ──
+	Object tree_border =
+		gui_initObject(ui, BOX, LEFT, 570, TOPLEFT,
+					   (ObjectParam){.box = {card_w, 96, COLOR_SOFTVIOLET, 16}});
+	Object tree_fill =
+		gui_initObject(ui, BOX, LEFT + 2, 572, TOPLEFT,
+					   (ObjectParam){.box = {card_w - 4, 92, COLOR_WHITE, 14}});
+	Object t_tree = gui_initObject(
+		ui, TEXT, LEFT + 28, 592, TOPLEFT,
+		(ObjectParam){.text = {"트리 시각화", ui->font_normal, COLOR_VIOLET}});
+	Object t_treesub = gui_initObject(
+		ui, TEXT, LEFT + 28, 630, TOPLEFT,
+		(ObjectParam){.text = {"유형 트리를 그래프로 보기", ui->font_small,
+							   COLOR_GRAY}});
+
+	Object codex_border =
+		gui_initObject(ui, BOX, card2_x, 570, TOPLEFT,
+					   (ObjectParam){.box = {card_w, 96, COLOR_SOFTVIOLET, 16}});
+	Object codex_fill =
+		gui_initObject(ui, BOX, card2_x + 2, 572, TOPLEFT,
+					   (ObjectParam){.box = {card_w - 4, 92, COLOR_WHITE, 14}});
+	Object t_codex = gui_initObject(
+		ui, TEXT, card2_x + 28, 592, TOPLEFT,
+		(ObjectParam){.text = {"유형 도감", ui->font_normal, COLOR_VIOLET}});
+	Object t_codexsub = gui_initObject(
+		ui, TEXT, card2_x + 28, 630, TOPLEFT,
+		(ObjectParam){.text = {"모든 유형 설명 보기", ui->font_small,
+							   COLOR_GRAY}});
+
 	while (!ui->quit) {
 		if (ui->next_state != HOME) {
 			break;
@@ -1001,6 +1030,12 @@ void display_showHome(SDL_Ui *ui, People *me) {
 			} else if (gui_isInObject(&record_border, ui->mx, ui->my)) {
 				// ui->next_state = MST;
 				//  break;
+			} else if (gui_isInObject(&tree_border, ui->mx, ui->my)) {
+				display_showTreeView(ui, me); // 블로킹 서브화면, 끝나면 홈 복귀
+				ui->is_mouse_down = false;
+			} else if (gui_isInObject(&codex_border, ui->mx, ui->my)) {
+				display_showCodex(ui, me);
+				ui->is_mouse_down = false;
 			} else if (gui_isInObject(&nav_box[NAV_PROFILE], ui->mx, ui->my)) {
 				// ui->next_state = PROFILE;
 				//  break;
@@ -1032,6 +1067,12 @@ void display_showHome(SDL_Ui *ui, People *me) {
 		record_fill.textcolor = gui_isInObject(&record_border, ui->mx, ui->my)
 									? COLOR_WHITEPINK
 									: COLOR_WHITE;
+		tree_fill.textcolor = gui_isInObject(&tree_border, ui->mx, ui->my)
+								  ? COLOR_WHITEVIOLET
+								  : COLOR_WHITE;
+		codex_fill.textcolor = gui_isInObject(&codex_border, ui->mx, ui->my)
+								   ? COLOR_WHITEVIOLET
+								   : COLOR_WHITE;
 
 		// ── 렌더링 ──
 		SDL_SetRenderDrawColor(ui->renderer, 255, 255, 255, 255);
@@ -1070,6 +1111,16 @@ void display_showHome(SDL_Ui *ui, People *me) {
 		gui_presentObject(&record_fill);
 		gui_presentObject(&t_record);
 		gui_presentObject(&t_recordsub);
+
+		gui_presentObject(&tree_border);
+		gui_presentObject(&tree_fill);
+		gui_presentObject(&t_tree);
+		gui_presentObject(&t_treesub);
+
+		gui_presentObject(&codex_border);
+		gui_presentObject(&codex_fill);
+		gui_presentObject(&t_codex);
+		gui_presentObject(&t_codexsub);
 
 		SDL_RenderPresent(ui->renderer);
 

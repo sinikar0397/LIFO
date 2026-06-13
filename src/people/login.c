@@ -55,9 +55,40 @@ int login_load_hashtable() {
 	return count == HASH_SIZE;
 }
 
-void login_init() {
-	if (login_load_hashtable())
+void login_compact_database() {
+	const char *tmp = "./database/peoples/data.tmp";
+
+	// 임시 파일 비우기
+	FILE *fp = fopen(tmp, "w");
+	if (fp == NULL)
 		return;
+	fclose(fp);
+
+	// 해시테이블이 가리키는 살아있는 레코드만 한 명씩 임시 파일로 옮기고
+	// offset을 새 위치로 갱신한다.
+	for (int i = 0; i < HASH_SIZE; i++) {
+		if (login_is_hash_empty(HashTable[i]) || HashTable[i].offset < 0)
+			continue;
+		People *p = people_read_people(DATA_PATH_PEOPLE, HashTable[i].offset);
+		if (p == NULL)
+			continue;
+		int off = people_save_people(p, tmp);
+		if (off >= 0)
+			HashTable[i].offset = off;
+		people_delete_people(p);
+	}
+
+	// data.jsonl을 압축본으로 교체하고 해시테이블 저장
+	remove(DATA_PATH_PEOPLE);
+	rename(tmp, DATA_PATH_PEOPLE);
+	login_save_hashtable();
+}
+
+void login_init() {
+	if (login_load_hashtable()) {
+		login_compact_database(); // 시작 시 죽은 줄 정리
+		return;
+	}
 
 	for (int i = 0; i < HASH_SIZE; i++)
 		HashTable[i] = login_create_empty_hash();

@@ -17,14 +17,14 @@ static const DateFitNode DATE_FIT_TREE[DFS_NODE_COUNT] = {
 	{DFS_NODE_DOMINANT_EMOTIONAL, DFS_NODE_DOMINANT, "DE", "감성적 케어", "정서적 반응과 돌봄으로 관계를 이끄는 편"},
 	{DFS_NODE_SUBMISSIVE_THINKING, DFS_NODE_SUBMISSIVE, "ST", "이성적 수용", "차분히 판단하며 상대의 제안을 받아들이는 편"},
 	{DFS_NODE_SUBMISSIVE_EMOTIONAL, DFS_NODE_SUBMISSIVE, "SE", "감성적 의존", "감정적 교감과 안정감을 중요하게 여기는 편"},
-	{DFS_NODE_DTF, DFS_NODE_DOMINANT_THINKING, "DTF", "이성 리드 정면 돌파형", "문제를 빠르게 마주하고 해결책을 제시한다"},
-	{DFS_NODE_DTC, DFS_NODE_DOMINANT_THINKING, "DTC", "이성 리드 회피 조정형", "갈등을 식힌 뒤 논리적으로 조율한다"},
-	{DFS_NODE_DEF, DFS_NODE_DOMINANT_EMOTIONAL, "DEF", "감성 케어 정면 돌파형", "감정을 바로 확인하고 따뜻하게 풀어낸다"},
-	{DFS_NODE_DEC, DFS_NODE_DOMINANT_EMOTIONAL, "DEC", "감성 케어 회피 안정형", "상대가 편해질 때까지 기다리며 보듬는다"},
-	{DFS_NODE_STF, DFS_NODE_SUBMISSIVE_THINKING, "STF", "이성 수용 정면 돌파형", "상대 의견을 듣되 필요한 말은 분명히 한다"},
-	{DFS_NODE_STC, DFS_NODE_SUBMISSIVE_THINKING, "STC", "이성 수용 회피 관찰형", "거리를 두고 상황을 분석한 뒤 반응한다"},
-	{DFS_NODE_SEF, DFS_NODE_SUBMISSIVE_EMOTIONAL, "SEF", "감성 의존 정면 돌파형", "불안을 숨기지 않고 애정을 확인한다"},
-	{DFS_NODE_SEC, DFS_NODE_SUBMISSIVE_EMOTIONAL, "SEC", "감성 의존 회피 보호형", "상처를 피하며 안정적인 애착을 원한다"},
+	{DFS_NODE_DTF, DFS_NODE_DOMINANT_THINKING, "DTF", "번개 지휘자", "문제를 빠르게 마주하고 해결책을 제시한다"},
+	{DFS_NODE_DTC, DFS_NODE_DOMINANT_THINKING, "DTC", "체스 전략가", "갈등을 식힌 뒤 논리적으로 조율한다"},
+	{DFS_NODE_DEF, DFS_NODE_DOMINANT_EMOTIONAL, "DEF", "따뜻한 횃불", "감정을 바로 확인하고 따뜻하게 풀어낸다"},
+	{DFS_NODE_DEC, DFS_NODE_DOMINANT_EMOTIONAL, "DEC", "포근한 담요", "상대가 편해질 때까지 기다리며 보듬는다"},
+	{DFS_NODE_STF, DFS_NODE_SUBMISSIVE_THINKING, "STF", "맑은 거울", "상대 의견을 듣되 필요한 말은 분명히 한다"},
+	{DFS_NODE_STC, DFS_NODE_SUBMISSIVE_THINKING, "STC", "조용한 관찰자", "거리를 두고 상황을 분석한 뒤 반응한다"},
+	{DFS_NODE_SEF, DFS_NODE_SUBMISSIVE_EMOTIONAL, "SEF", "솔직한 햇살", "불안을 숨기지 않고 애정을 확인한다"},
+	{DFS_NODE_SEC, DFS_NODE_SUBMISSIVE_EMOTIONAL, "SEC", "달빛 그림자", "상처를 피하며 안정적인 애착을 원한다"},
 };
 
 static const DateFitNode *getNode(DateFitNodeId id) {
@@ -33,6 +33,23 @@ static const DateFitNode *getNode(DateFitNodeId id) {
 	}
 	return &DATE_FIT_TREE[id];
 }
+
+// ── 매칭/표시용 공용 트리 캐시 ──
+// compat은 BFS에서 O(n^2)로, dfs_type_name은 화면마다 불리므로, 세분화가 누적된
+// 공용 설문 트리를 매번 로드하지 않고 한 번만 빌드·로드해 캐시한다.
+// trees[0]=성향, trees[1]=애착, trees[2]=사랑의 언어.
+static DfsSurvey g_match_survey;
+static int g_match_ready = 0;
+
+static void dfs_matching_ensure(void) {
+	if (!g_match_ready) {
+		dfs_build_self_survey(&g_match_survey); // 기본 트리 + JSON 세분화 로드
+		g_match_ready = 1;
+	}
+}
+
+// 세분화 등으로 트리 파일이 바뀌면 호출 → 다음 조회 때 다시 로드.
+void dfs_matching_reload(void) { g_match_ready = 0; }
 
 DateFitNodeId dfs_find_type_node(const char type[]) {
 	if (type == NULL) {
@@ -115,7 +132,34 @@ void dfs_print_type_description(const char type[]) {
 }
 
 const char *dfs_type_name(const char type[]) {
+	if (type == NULL || type[0] == '\0') {
+		return "미설정";
+	}
+	// 공용 설문 트리(성향·애착·사랑의 언어)에서 코드에 맞는 잎 이름을 찾는다.
+	// 세분화로 추가된 유형명도 여기서 해결된다.
+	dfs_matching_ensure();
+	for (int t = 0; t < g_match_survey.n_trees; t++) {
+		int li = dfs_find_leaf_by_code(&g_match_survey.trees[t], type);
+		if (li >= 0) {
+			return g_match_survey.trees[t].nodes[li].name;
+		}
+	}
+	// 트리에서 못 찾으면 레거시 하드코딩 테이블로 폴백.
 	return getNode(dfs_find_type_node(type))->name;
+}
+
+const char *dfs_type_desc(const char code[]) {
+	if (code == NULL || code[0] == '\0') {
+		return "";
+	}
+	dfs_matching_ensure();
+	for (int t = 0; t < g_match_survey.n_trees; t++) {
+		int li = dfs_find_leaf_by_code(&g_match_survey.trees[t], code);
+		if (li >= 0) {
+			return g_match_survey.trees[t].nodes[li].desc;
+		}
+	}
+	return getNode(dfs_find_type_node(code))->summary;
 }
 
 // ───────────────────────────────────────────────
@@ -198,45 +242,37 @@ const char *dfs_attach_name(const char code[]) {
 	return ATTACH_TREE[attach_find(code)].name;
 }
 
-// ── 매칭용 공용 트리 캐시 ──
-// compat은 BFS에서 O(n^2)로 불리므로, 세분화가 누적된 공용 설문 트리를 매번
-// 로드하지 않고 한 번만 빌드·로드해 캐시한다. trees[0]=성향, trees[1]=애착.
-static DfsSurvey g_match_survey;
-static int g_match_ready = 0;
-
-static void dfs_matching_ensure(void) {
-	if (!g_match_ready) {
-		dfs_build_self_survey(&g_match_survey); // 기본 트리 + JSON 세분화 로드
-		g_match_ready = 1;
-	}
-}
-
-// 세분화 등으로 트리 파일이 바뀌면 호출 → 다음 compat 때 다시 로드.
-void dfs_matching_reload(void) { g_match_ready = 0; }
-
 // 한쪽 방향(ideal 쪽이 상대 other를 얼마나 원하는지)의 유사도(0~100).
-// 성향·애착을 각각 generic 트리 유사도로 잰다. 트리에서 직접 계산하므로
-// 세분화 유형(DTF1 등)도 그대로 반영된다. 애착은 양쪽 다 있을 때만 합산.
-static int compat_dir(const char *ideal_dom, const char *ideal_att,
-					  const char *other_dom, const char *other_att) {
+// 차원(성향·애착·사랑의 언어)별 generic 트리 유사도를 평균한다. 트리에서 직접
+// 계산하므로 세분화 유형도 그대로 반영. 양쪽 다 값이 있는 차원만 합산한다.
+static int compat_dir(const char *ideal[], const char *other[]) {
 	dfs_matching_ensure();
-	int dom =
-		dfs_tree_similarity(&g_match_survey.trees[0], ideal_dom, other_dom);
-	if (ideal_att && ideal_att[0] && other_att && other_att[0]) {
-		int att =
-			dfs_tree_similarity(&g_match_survey.trees[1], ideal_att, other_att);
-		return (dom + att) / 2;
+	int sum = 0, cnt = 0;
+	int dims = g_match_survey.n_trees < DFS_MAX_TREES ? g_match_survey.n_trees
+													  : DFS_MAX_TREES;
+	for (int d = 0; d < dims; d++) {
+		if (ideal[d] && ideal[d][0] && other[d] && other[d][0]) {
+			sum += dfs_tree_similarity(&g_match_survey.trees[d], ideal[d],
+									   other[d]);
+			cnt++;
+		}
 	}
-	return dom;
+	return cnt ? sum / cnt : 0;
 }
 
 int compat(People *a, People *b) {
 	if (a == NULL || b == NULL) {
 		return 0;
 	}
+	// 차원 순서: 성향, 애착, 사랑의 언어 (트리 인덱스와 일치)
+	const char *a_ideal[DFS_MAX_TREES] = {a->love_type, a->love_attach,
+										  a->love_lang};
+	const char *a_self[DFS_MAX_TREES] = {a->type, a->attach, a->lang};
+	const char *b_ideal[DFS_MAX_TREES] = {b->love_type, b->love_attach,
+										  b->love_lang};
+	const char *b_self[DFS_MAX_TREES] = {b->type, b->attach, b->lang};
 
-	return compat_dir(a->love_type, a->love_attach, b->type, b->attach) +
-		   compat_dir(b->love_type, b->love_attach, a->type, a->attach);
+	return compat_dir(a_ideal, b_self) + compat_dir(b_ideal, a_self);
 }
 
 // ───────────────────────────────────────────────
@@ -244,15 +280,39 @@ int compat(People *a, People *b) {
 // ───────────────────────────────────────────────
 
 // 잎 8종(코드/이름)은 두 트리가 공유한다.
+// 잎 설정 + 설명까지 한 번에.
+static void dfs_leaf(DfsTree *t, int idx, const char *code, const char *name,
+					 const char *desc) {
+	dfs_set_leaf(&t->nodes[idx], code, name);
+	strncpy(t->nodes[idx].desc, desc, DFS_DESC_LEN - 1);
+	t->nodes[idx].desc[DFS_DESC_LEN - 1] = '\0';
+}
+
 static void dfs_fill_leaves(DfsTree *t) {
-	dfs_set_leaf(&t->nodes[7], "DTF", "이성 리드 정면 돌파형");
-	dfs_set_leaf(&t->nodes[8], "DTC", "이성 리드 회피 조정형");
-	dfs_set_leaf(&t->nodes[9], "DEF", "감성 케어 정면 돌파형");
-	dfs_set_leaf(&t->nodes[10], "DEC", "감성 케어 회피 안정형");
-	dfs_set_leaf(&t->nodes[11], "STF", "이성 수용 정면 돌파형");
-	dfs_set_leaf(&t->nodes[12], "STC", "이성 수용 회피 관찰형");
-	dfs_set_leaf(&t->nodes[13], "SEF", "감성 의존 정면 돌파형");
-	dfs_set_leaf(&t->nodes[14], "SEC", "감성 의존 회피 보호형");
+	dfs_leaf(t, 7, "DTF", "번개 지휘자",
+			 "관계를 주도하고 논리로 판단하며, 문제가 생기면 곧장 부딪쳐 "
+			 "해결한다. 빠르고 명쾌하지만 가끔 상대의 속도를 앞지른다.");
+	dfs_leaf(t, 8, "DTC", "체스 전략가",
+			 "주도하되 감정을 식힌 뒤 논리로 조율한다. 충동보다 계획, "
+			 "즉답보다 한 수 앞을 내다보는 신중한 리더형.");
+	dfs_leaf(t, 9, "DEF", "따뜻한 횃불",
+			 "감정을 먼저 읽고 다가가, 문제를 따뜻하게 정면으로 풀어낸다. "
+			 "표현이 솔직하고 적극적이라 곁에 있으면 든든하다.");
+	dfs_leaf(t, 10, "DEC", "포근한 담요",
+			 "상대를 보듬으며 이끌되, 갈등은 서두르지 않고 편안해질 때까지 "
+			 "기다린다. 잔잔한 안정감을 주는 케어형.");
+	dfs_leaf(t, 11, "STF", "맑은 거울",
+			 "상대의 흐름을 존중해 맞추지만 필요한 말은 분명히 한다. "
+			 "차분하면서도 솔직해 관계가 투명하다.");
+	dfs_leaf(t, 12, "STC", "조용한 관찰자",
+			 "한 발 물러나 상황을 분석한 뒤 반응한다. 신중하고 침착하지만 "
+			 "속마음 표현은 아껴 천천히 가까워진다.");
+	dfs_leaf(t, 13, "SEF", "솔직한 햇살",
+			 "감정에 솔직하고 애정을 자주 확인한다. 맞춰주면서도 마음을 "
+			 "숨기지 않아 따뜻함이 그대로 전해진다.");
+	dfs_leaf(t, 14, "SEC", "달빛 그림자",
+			 "깊이 정들지만 상처를 피해 조심스레 다가간다. 은근하고 섬세해 "
+			 "안전하다고 느낄수록 더 진한 애정을 보인다.");
 }
 
 void dfs_build_self_tree(DfsTree *t) {
@@ -432,10 +492,18 @@ int dfs_tree_similarity(const DfsTree *t, const char ideal[],
 
 // 애착 안정성 잎 4종(코드/이름)은 두 트리가 공유.
 static void dfs_fill_attach_leaves(DfsTree *t) {
-	dfs_set_leaf(&t->nodes[3], "AS", "안정 애착형");
-	dfs_set_leaf(&t->nodes[4], "AV", "회피 애착형");
-	dfs_set_leaf(&t->nodes[5], "AX", "불안 애착형");
-	dfs_set_leaf(&t->nodes[6], "FA", "혼란 애착형");
+	dfs_leaf(t, 3, "AS", "햇살 항구",
+			 "안정 애착. 친밀함과 독립을 둘 다 편하게 받아들이고, 솔직하게 "
+			 "소통하며 신뢰를 잘 쌓는다. 곁에 있으면 마음이 놓인다.");
+	dfs_leaf(t, 4, "AV", "바람 부는 절벽",
+			 "회피 애착. 독립을 중시하고 지나친 밀착은 부담스러워 거리를 "
+			 "둔다. 감정 표현이 절제돼 있어 속을 천천히 보여준다.");
+	dfs_leaf(t, 5, "AX", "보름달 파도",
+			 "불안 애착. 가까움을 강하게 원하고 자주 확인받고 싶어 한다. "
+			 "작은 거리에도 민감하게 흔들리지만 애정은 깊다.");
+	dfs_leaf(t, 6, "FA", "안갯속 미로",
+			 "혼란(불안+회피) 애착. 사랑을 원하면서도 상처가 두려워 다가갔다 "
+			 "물러서기를 반복한다. 안전함을 느끼면 비로소 마음을 연다.");
 }
 
 void dfs_build_attach_self_tree(DfsTree *t) {
@@ -472,24 +540,78 @@ void dfs_build_attach_ideal_tree(DfsTree *t) {
 	dfs_fill_attach_leaves(t);
 }
 
+// 사랑의 언어 잎 4종 (말·마음 / 함께·행동의 2x2)
+static void dfs_fill_lang_leaves(DfsTree *t) {
+	dfs_leaf(t, 3, "LW", "다정한 한마디",
+			 "인정·응원의 말로 사랑을 느낀다. '고마워, 사랑해' 같은 따뜻한 "
+			 "말 한마디가 하루를 버티게 하는 큰 힘이 된다.");
+	dfs_leaf(t, 4, "LT", "포옹의 온기",
+			 "스킨십과 가까운 거리로 사랑을 느낀다. 손을 잡고 안아줄 때 "
+			 "말보다 빠르게 마음이 채워진다.");
+	dfs_leaf(t, 5, "LQ", "같이 걷는 길",
+			 "함께 보내는 온전한 시간으로 사랑을 느낀다. 휴대폰을 내려놓고 "
+			 "집중해서 같이 있는 순간을 가장 소중히 여긴다.");
+	dfs_leaf(t, 6, "LA", "말없는 선물",
+			 "챙겨주는 행동과 선물로 사랑을 느낀다. 말보다 행동으로 보여주는 "
+			 "세심한 마음에 깊이 감동한다.");
+}
+
+void dfs_build_lang_self_tree(DfsTree *t) {
+	memset(t, 0, sizeof(*t));
+	strncpy(t->title, "사랑의 언어", sizeof(t->title) - 1);
+	t->root = 0;
+	t->n_nodes = 7;
+	dfs_set_branch(&t->nodes[0], "사랑받는다고 느끼는 순간은 주로?",
+				   "다정한 말과 따뜻한 표현을 들을 때", 1,
+				   "함께 시간을 보내거나 챙김을 받을 때", 2);
+	dfs_set_branch(&t->nodes[1], "그 표현은 어느 쪽이 더 와닿아?",
+				   "고마워·사랑해 같은 인정과 응원의 말", 3,
+				   "손잡기·포옹 같은 스킨십과 애정 표현", 4);
+	dfs_set_branch(&t->nodes[2], "함께일 때 어느 쪽이 더 좋아?",
+				   "오롯이 둘만의 시간을 보내는 것", 5,
+				   "필요한 걸 챙겨주거나 선물해 주는 것", 6);
+	dfs_fill_lang_leaves(t);
+}
+
+void dfs_build_lang_ideal_tree(DfsTree *t) {
+	memset(t, 0, sizeof(*t));
+	strncpy(t->title, "사랑의 언어", sizeof(t->title) - 1);
+	t->root = 0;
+	t->n_nodes = 7;
+	dfs_set_branch(&t->nodes[0], "상대가 사랑을 이렇게 표현해 주면 좋겠어:",
+				   "다정한 말과 따뜻한 표현으로", 1,
+				   "함께하는 시간과 챙김으로", 2);
+	dfs_set_branch(&t->nodes[1], "어떤 말이 더 듣고 싶어?",
+				   "인정과 응원의 말", 3,
+				   "스킨십과 애정 표현", 4);
+	dfs_set_branch(&t->nodes[2], "어떤 챙김이 더 좋아?",
+				   "둘만의 시간을 충분히 내주는 것", 5,
+				   "필요한 걸 챙겨주고 선물해 주는 것", 6);
+	dfs_fill_lang_leaves(t);
+}
+
 void dfs_build_self_survey(DfsSurvey *s) {
 	memset(s, 0, sizeof(*s));
 	strncpy(s->name, "내 연애 성향", sizeof(s->name) - 1);
-	s->n_trees = 2;
+	s->n_trees = 3;
 	dfs_build_self_tree(&s->trees[0]);
 	dfs_load_or_keep(&s->trees[0], "database/tree_self_0.json");
 	dfs_build_attach_self_tree(&s->trees[1]);
 	dfs_load_or_keep(&s->trees[1], "database/tree_self_1.json");
+	dfs_build_lang_self_tree(&s->trees[2]);
+	dfs_load_or_keep(&s->trees[2], "database/tree_self_2.json");
 }
 
 void dfs_build_ideal_survey(DfsSurvey *s) {
 	memset(s, 0, sizeof(*s));
 	strncpy(s->name, "내 이상형", sizeof(s->name) - 1);
-	s->n_trees = 2;
+	s->n_trees = 3;
 	dfs_build_ideal_tree(&s->trees[0]);
 	dfs_load_or_keep(&s->trees[0], "database/tree_ideal_0.json");
 	dfs_build_attach_ideal_tree(&s->trees[1]);
 	dfs_load_or_keep(&s->trees[1], "database/tree_ideal_1.json");
+	dfs_build_lang_ideal_tree(&s->trees[2]);
+	dfs_load_or_keep(&s->trees[2], "database/tree_ideal_2.json");
 }
 
 int dfs_find_leaf_by_code(const DfsTree *t, const char code[]) {
@@ -506,7 +628,8 @@ int dfs_find_leaf_by_code(const DfsTree *t, const char code[]) {
 // 기존처럼 "부모이름 · 선택지"로 자동 생성한다.
 int dfs_extend_leaf_named(DfsTree *t, int leaf_idx, const char question[],
 						  const char opt0[], const char opt1[],
-						  const char name0[], const char name1[]) {
+						  const char name0[], const char name1[],
+						  const char desc0[], const char desc1[]) {
 	if (leaf_idx < 0 || leaf_idx >= t->n_nodes) {
 		return 0;
 	}
@@ -517,11 +640,13 @@ int dfs_extend_leaf_named(DfsTree *t, int leaf_idx, const char question[],
 		return 0;
 	}
 
-	char pcode[MAX_TYPE_LEN], pname[DFS_NAME_LEN];
+	char pcode[MAX_TYPE_LEN], pname[DFS_NAME_LEN], pdesc[DFS_DESC_LEN];
 	strncpy(pcode, t->nodes[leaf_idx].code, MAX_TYPE_LEN - 1);
 	pcode[MAX_TYPE_LEN - 1] = '\0';
 	strncpy(pname, t->nodes[leaf_idx].name, DFS_NAME_LEN - 1);
 	pname[DFS_NAME_LEN - 1] = '\0';
+	strncpy(pdesc, t->nodes[leaf_idx].desc, DFS_DESC_LEN - 1);
+	pdesc[DFS_DESC_LEN - 1] = '\0';
 
 	int c0 = t->n_nodes, c1 = t->n_nodes + 1;
 	char code[MAX_TYPE_LEN], name[DFS_NAME_LEN];
@@ -532,7 +657,7 @@ int dfs_extend_leaf_named(DfsTree *t, int leaf_idx, const char question[],
 	} else {
 		snprintf(name, sizeof(name), "%s · %s", pname, opt0);
 	}
-	dfs_set_leaf(&t->nodes[c0], code, name);
+	dfs_leaf(t, c0, code, name, (desc0 && desc0[0]) ? desc0 : pdesc);
 	t->nodes[c0].user_added = 1;
 
 	snprintf(code, sizeof(code), "%s2", pcode);
@@ -541,7 +666,7 @@ int dfs_extend_leaf_named(DfsTree *t, int leaf_idx, const char question[],
 	} else {
 		snprintf(name, sizeof(name), "%s · %s", pname, opt1);
 	}
-	dfs_set_leaf(&t->nodes[c1], code, name);
+	dfs_leaf(t, c1, code, name, (desc1 && desc1[0]) ? desc1 : pdesc);
 	t->nodes[c1].user_added = 1;
 
 	// 기존 잎을 분기 노드로 변환
@@ -552,10 +677,11 @@ int dfs_extend_leaf_named(DfsTree *t, int leaf_idx, const char question[],
 	return 1;
 }
 
-// 이름 미지정 버전(자동 이름). 기존 호출부 하위호환용 래퍼.
+// 이름·설명 미지정 버전(자동). 기존 호출부 하위호환용 래퍼.
 int dfs_extend_leaf(DfsTree *t, int leaf_idx, const char question[],
 					const char opt0[], const char opt1[]) {
-	return dfs_extend_leaf_named(t, leaf_idx, question, opt0, opt1, NULL, NULL);
+	return dfs_extend_leaf_named(t, leaf_idx, question, opt0, opt1, NULL, NULL,
+								 NULL, NULL);
 }
 
 int dfs_save_tree(const DfsTree *t, const char path[]) {
@@ -585,6 +711,7 @@ int dfs_save_tree(const DfsTree *t, const char path[]) {
 		}
 		cJSON_AddStringToObject(o, "code", n->code);
 		cJSON_AddStringToObject(o, "name", n->name);
+		cJSON_AddStringToObject(o, "desc", n->desc);
 		cJSON_AddNumberToObject(o, "user_added", n->user_added);
 		cJSON_AddItemToArray(arr, o);
 	}
@@ -677,6 +804,10 @@ int dfs_load_tree(DfsTree *t, const char path[]) {
 			cJSON *name = cJSON_GetObjectItem(o, "name");
 			if (cJSON_IsString(name)) {
 				strncpy(n->name, name->valuestring, DFS_NAME_LEN - 1);
+			}
+			cJSON *desc = cJSON_GetObjectItem(o, "desc");
+			if (cJSON_IsString(desc)) {
+				strncpy(n->desc, desc->valuestring, DFS_DESC_LEN - 1);
 			}
 			cJSON *ua = cJSON_GetObjectItem(o, "user_added");
 			n->user_added = cJSON_IsNumber(ua) ? ua->valueint : 0;

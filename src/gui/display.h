@@ -17,5 +17,7 @@ void display_showHome(SDL_Ui *ui, People *me);
 void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n);
 void display_showDFS(SDL_Ui *ui, People *me);
 void display_showMST(SDL_Ui *ui, People *me);
+void display_showTreeView(SDL_Ui *ui, People *me); // 트리 시각화 (홈에서 호출)
+void display_showCodex(SDL_Ui *ui, People *me);	   // 유형 도감 (홈에서 호출)
 
 #endif // DISPLAY_H

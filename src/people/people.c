@@ -146,6 +146,8 @@ People* people_create_people(char name[], char id[], char pw[], char type[], cha
     newPeople->love_type[MAX_TYPE_LEN - 1] = '\0';
     newPeople->attach[0] = '\0';        // 애착 유형은 설문 전까지 미설정
     newPeople->love_attach[0] = '\0';
+    newPeople->lang[0] = '\0';          // 사랑의 언어도 설문 전까지 미설정
+    newPeople->love_lang[0] = '\0';
     newPeople->gen  = gen;
     newPeople->age  = age;
     newPeople->blocked_cnt = 0;
@@ -175,6 +177,16 @@ void people_set_people_attach(People* P, char attach[]){
 void people_set_people_love_attach(People* P, char love_attach[]){
     strncpy(P->love_attach, love_attach, MAX_TYPE_LEN - 1);
     P->love_attach[MAX_TYPE_LEN - 1] = '\0';
+}
+
+void people_set_people_lang(People* P, char lang[]){
+    strncpy(P->lang, lang, MAX_TYPE_LEN - 1);
+    P->lang[MAX_TYPE_LEN - 1] = '\0';
+}
+
+void people_set_people_love_lang(People* P, char love_lang[]){
+    strncpy(P->love_lang, love_lang, MAX_TYPE_LEN - 1);
+    P->love_lang[MAX_TYPE_LEN - 1] = '\0';
 }
 
 void people_set_people_id(People* P, char id[]){
@@ -258,6 +270,13 @@ People* people_read_people(const char path[], int offset){
     if (cJSON_IsString(love_attach_item) && love_attach_item->valuestring != NULL)
         people_set_people_love_attach(resultPeople, love_attach_item->valuestring);
 
+    cJSON* lang_item      = cJSON_GetObjectItem(root, "lang");
+    cJSON* love_lang_item = cJSON_GetObjectItem(root, "love_lang");
+    if (cJSON_IsString(lang_item) && lang_item->valuestring != NULL)
+        people_set_people_lang(resultPeople, lang_item->valuestring);
+    if (cJSON_IsString(love_lang_item) && love_lang_item->valuestring != NULL)
+        people_set_people_love_lang(resultPeople, love_lang_item->valuestring);
+
     cJSON_Delete(root);
     free(text);
 
@@ -281,6 +300,8 @@ int people_save_people(People* P, const char path[]){
     cJSON_AddStringToObject(root, "love_type", P->love_type);
     cJSON_AddStringToObject(root, "attach", P->attach);
     cJSON_AddStringToObject(root, "love_attach", P->love_attach);
+    cJSON_AddStringToObject(root, "lang", P->lang);
+    cJSON_AddStringToObject(root, "love_lang", P->love_lang);
     cJSON_AddNumberToObject(root, "gen", P->gen);
     cJSON_AddNumberToObject(root, "age", P->age);
 

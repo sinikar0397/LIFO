@@ -33,6 +33,11 @@ typedef struct IdHash{
 // Hashtable 불러오기, 없으면 새로 만들어서 저장하기 등등의 역할을 함
 void login_init();
 
+// @brief data.jsonl 압축: 해시테이블이 가리키는 '살아있는' 레코드만 남기고
+// 갱신으로 쌓인 죽은(옛) 줄을 제거한다. 한 명씩 임시 파일로 다시 써서 교체하고
+// offset을 갱신한 뒤 해시테이블을 저장한다. (login_init에서 시작 시 호출)
+void login_compact_database();
+
 // @brief Hashtable의 바이너리 파일을 초기화시킴
 void login_create_empty_hashtable();
 

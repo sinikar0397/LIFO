@@ -66,6 +66,8 @@ typedef struct People {
 	char love_type[MAX_TYPE_LEN];
 	char attach[MAX_TYPE_LEN];	   // 내 애착 유형 (AS/AV/AX/FA), 미설정 시 ""
 	char love_attach[MAX_TYPE_LEN]; // 이상형의 애착 유형, 미설정 시 ""
+	char lang[MAX_TYPE_LEN];	   // 내 사랑의 언어 (LW/LT/LQ/LA), 미설정 시 ""
+	char love_lang[MAX_TYPE_LEN];  // 이상형의 사랑의 언어, 미설정 시 ""
 	enum Gender gen;
 	int age;
 	MatchStatus status;
@@ -170,6 +172,18 @@ void people_set_people_attach(People *P, char attach[]);
 People의 이상형의 애착 유형에 대한 setter
 */
 void people_set_people_love_attach(People *P, char love_attach[]);
+
+/*
+@brief
+People의 사랑의 언어에 대한 setter
+*/
+void people_set_people_lang(People *P, char lang[]);
+
+/*
+@brief
+People의 이상형의 사랑의 언어에 대한 setter
+*/
+void people_set_people_love_lang(People *P, char love_lang[]);
 
 /*
 @brief
