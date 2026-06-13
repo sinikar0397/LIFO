@@ -127,12 +127,17 @@ static int dfsui_runTree(SDL_Ui *ui, DfsTree *tree, const char *big_title,
 	char status[128] = " ";
 	const int OY0 = 330, OH = 64, OGAP = 76;
 
+	ui->is_mouse_down = false; // 이전 화면/트리의 클릭이 새어들지 않게 초기화
+
 	while (!ui->quit) {
 		DfsTreeNode *node = &tree->nodes[current];
 		int n_opt = node->n_opt;
 		int by = OY0 + n_opt * OGAP + 16;
 		int prev_x = SV_MAIN_X, prev_w = 150;
 		int next_x = SV_RIGHT - 180, next_w = 180;
+		// 세분화(user_added) 질문은 답하지 않고 현재 유형으로 멈출 수 있다.
+		int can_stop = node->user_added && node->code[0] != '\0';
+		int stop_x = SV_MAIN_X + 270, stop_w = 320;
 
 		SDL_Event event;
 		SDL_PumpEvents();
@@ -173,6 +178,7 @@ static int dfsui_runTree(SDL_Ui *ui, DfsTree *tree, const char *big_title,
 
 		if (ui->is_mouse_down) {
 			if (dfsui_handleSidebarClick(ui, 2)) {
+				ui->is_mouse_down = false;
 				return 0;
 			}
 			for (int i = 0; i < n_opt; i++) {
@@ -181,8 +187,19 @@ static int dfsui_runTree(SDL_Ui *ui, DfsTree *tree, const char *big_title,
 					sel = i;
 				}
 			}
+			// 세분화 질문에서 "여기서 멈추기" → 현재(부모) 유형으로 확정
+			if (can_stop &&
+				dfsui_inRect(ui->mx, ui->my, stop_x, by, stop_w, 56)) {
+				strncpy(out_code, node->code, MAX_TYPE_LEN - 1);
+				out_code[MAX_TYPE_LEN - 1] = '\0';
+				strncpy(out_name, node->name, DFS_NAME_LEN - 1);
+				out_name[DFS_NAME_LEN - 1] = '\0';
+				ui->is_mouse_down = false;
+				return 1;
+			}
 			if (dfsui_inRect(ui->mx, ui->my, prev_x, by, prev_w, 56)) {
 				if (sp == 0) {
+					ui->is_mouse_down = false;
 					return 0;
 				}
 				sp--;
@@ -206,6 +223,7 @@ static int dfsui_runTree(SDL_Ui *ui, DfsTree *tree, const char *big_title,
 						strncpy(out_name, tree->nodes[next].name,
 								DFS_NAME_LEN - 1);
 						out_name[DFS_NAME_LEN - 1] = '\0';
+						ui->is_mouse_down = false;
 						return 1;
 					}
 					current = next;
@@ -266,6 +284,24 @@ static int dfsui_runTree(SDL_Ui *ui, DfsTree *tree, const char *big_title,
 						next_hover ? COLOR_DURTYPINK : COLOR_SUPERPINK);
 		dfsui_drawText(ui, "다음 →", ui->font_normal, COLOR_WHITE,
 					   next_x + next_w / 2, by + 28, CENTER, 0);
+
+		// 세분화 질문이면 안내 + "여기서 멈추기" 버튼
+		if (can_stop) {
+			char hint[160];
+			snprintf(hint, sizeof(hint),
+					 "추가된 세분화 질문이에요. 멈추면 '%s'(으)로 진단됩니다.",
+					 node->name);
+			dfsui_drawText(ui, hint, ui->font_small, COLOR_VIOLET,
+						   SV_MAIN_X + 2, 116, TOPLEFT, 876);
+			int stop_hover =
+				dfsui_inRect(ui->mx, ui->my, stop_x, by, stop_w, 56);
+			dfsui_drawRound(ui, stop_x, by, stop_w, 56, 14, COLOR_SOFTVIOLET);
+			dfsui_drawRound(ui, stop_x + 2, by + 2, stop_w - 4, 52, 12,
+							stop_hover ? COLOR_WHITEVIOLET : COLOR_WHITE);
+			dfsui_drawText(ui, "여기서 멈추기", ui->font_small, COLOR_VIOLET,
+						   stop_x + stop_w / 2, by + 28, CENTER, 0);
+		}
+
 		dfsui_drawText(ui, status, ui->font_small, COLOR_SUPERPINK, SV_MAIN_X,
 					   by + 70, TOPLEFT, 0);
 
@@ -305,14 +341,24 @@ static int dfsui_showAddQuestion(SDL_Ui *ui, DfsTree *tree, int leaf_idx,
 	char q_buf[DFS_Q_LEN] = "";
 	char o0[DFS_OPT_LEN] = "";
 	char o1[DFS_OPT_LEN] = "";
-	int focus = 0;
+	char name0[DFS_NAME_LEN] = ""; // 갈래 1 유형 이름 (비우면 자동)
+	char name1[DFS_NAME_LEN] = ""; // 갈래 2 유형 이름
+	int focus = 0; // 0 없음, 1 질문, 2 선택지1, 3 이름1, 4 선택지2, 5 이름2
 	int mine = -1;
 	char status[128] = " ";
 	const char *pname = tree->nodes[leaf_idx].name;
-	const int QY = 166, O0Y = 300, O1Y = 400;
+
+	// 레이아웃: 질문 한 줄, 그 아래 갈래 1/2가 각각 [선택지][이름](내유형) 한 행.
+	const int QY = 150, BOXH = 52;
+	const int G1_HDR = 240, R1Y = 272;
+	const int G2_HDR = 352, R2Y = 384;
+	const int OPT_X = 300, OPT_W = 360;
+	const int NAME_X = 680, NAME_W = 360;
+	const int RADIO_X = 1060, RADIO_W = 180;
 	const int SAVE_X = 300, SAVE_W = 200, CANCEL_X = 520, CANCEL_W = 160,
-			  BTNY = 500;
-	const int RADIO_X = 1040, RADIO_W = 200;
+			  BTNY = 478;
+	const int STATUS_Y = 548;
+	const int rowY[2] = {R1Y, R2Y};
 
 	while (!ui->quit) {
 		SDL_Event event;
@@ -331,28 +377,28 @@ static int dfsui_showAddQuestion(SDL_Ui *ui, DfsTree *tree, int leaf_idx,
 				ui->mx = event.motion.x;
 				ui->my = event.motion.y;
 				break;
-			case SDL_TEXTINPUT:
-				if (focus == 1) {
-					if (strlen(q_buf) + strlen(event.text.text) < DFS_Q_LEN - 1)
-						strcat(q_buf, event.text.text);
-				} else if (focus == 2) {
-					if (strlen(o0) + strlen(event.text.text) < DFS_OPT_LEN - 1)
-						strcat(o0, event.text.text);
-				} else if (focus == 3) {
-					if (strlen(o1) + strlen(event.text.text) < DFS_OPT_LEN - 1)
-						strcat(o1, event.text.text);
+			case SDL_TEXTINPUT: {
+				char *dst = NULL;
+				size_t cap = 0;
+				if (focus == 1) { dst = q_buf; cap = DFS_Q_LEN; }
+				else if (focus == 2) { dst = o0; cap = DFS_OPT_LEN; }
+				else if (focus == 3) { dst = name0; cap = DFS_NAME_LEN; }
+				else if (focus == 4) { dst = o1; cap = DFS_OPT_LEN; }
+				else if (focus == 5) { dst = name1; cap = DFS_NAME_LEN; }
+				if (dst && strlen(dst) + strlen(event.text.text) < cap - 1) {
+					strcat(dst, event.text.text);
 				}
 				break;
+			}
 			case SDL_KEYDOWN:
 				if (event.key.keysym.sym == SDLK_BACKSPACE) {
-					if (focus == 1)
-						gui_utf8Backspace(q_buf);
-					else if (focus == 2)
-						gui_utf8Backspace(o0);
-					else if (focus == 3)
-						gui_utf8Backspace(o1);
+					if (focus == 1) gui_utf8Backspace(q_buf);
+					else if (focus == 2) gui_utf8Backspace(o0);
+					else if (focus == 3) gui_utf8Backspace(name0);
+					else if (focus == 4) gui_utf8Backspace(o1);
+					else if (focus == 5) gui_utf8Backspace(name1);
 				} else if (event.key.keysym.sym == SDLK_TAB) {
-					focus = (focus >= 3) ? 1 : focus + 1;
+					focus = (focus >= 5) ? 1 : focus + 1;
 				}
 				break;
 			}
@@ -362,18 +408,22 @@ static int dfsui_showAddQuestion(SDL_Ui *ui, DfsTree *tree, int leaf_idx,
 			if (dfsui_handleSidebarClick(ui, 2)) {
 				return 0;
 			}
-			if (dfsui_inRect(ui->mx, ui->my, 300, QY, 940, 56)) {
+			if (dfsui_inRect(ui->mx, ui->my, OPT_X, QY, 940, 56)) {
 				focus = 1;
-			} else if (dfsui_inRect(ui->mx, ui->my, 300, O0Y, 720, 56)) {
+			} else if (dfsui_inRect(ui->mx, ui->my, OPT_X, R1Y, OPT_W, BOXH)) {
 				focus = 2;
-			} else if (dfsui_inRect(ui->mx, ui->my, 300, O1Y, 720, 56)) {
+			} else if (dfsui_inRect(ui->mx, ui->my, NAME_X, R1Y, NAME_W, BOXH)) {
 				focus = 3;
-			} else if (dfsui_inRect(ui->mx, ui->my, RADIO_X, O0Y, RADIO_W,
-									56)) {
+			} else if (dfsui_inRect(ui->mx, ui->my, OPT_X, R2Y, OPT_W, BOXH)) {
+				focus = 4;
+			} else if (dfsui_inRect(ui->mx, ui->my, NAME_X, R2Y, NAME_W, BOXH)) {
+				focus = 5;
+			} else if (dfsui_inRect(ui->mx, ui->my, RADIO_X, R1Y, RADIO_W,
+									BOXH)) {
 				mine = 0;
 				focus = 0;
-			} else if (dfsui_inRect(ui->mx, ui->my, RADIO_X, O1Y, RADIO_W,
-									56)) {
+			} else if (dfsui_inRect(ui->mx, ui->my, RADIO_X, R2Y, RADIO_W,
+									BOXH)) {
 				mine = 1;
 				focus = 0;
 			} else if (dfsui_inRect(ui->mx, ui->my, SAVE_X, BTNY, SAVE_W, 56)) {
@@ -382,7 +432,8 @@ static int dfsui_showAddQuestion(SDL_Ui *ui, DfsTree *tree, int leaf_idx,
 					strcpy(status, "질문과 두 선택지를 모두 입력해주세요.");
 				} else if (mine < 0) {
 					strcpy(status, "둘 중 본인에 해당하는 쪽을 골라주세요.");
-				} else if (!dfs_extend_leaf(tree, leaf_idx, q_buf, o0, o1)) {
+				} else if (!dfs_extend_leaf_named(tree, leaf_idx, q_buf, o0, o1,
+												  name0, name1)) {
 					strcpy(status, "더 이상 세분화할 수 없어요.");
 				} else {
 					dfs_save_tree(tree, tree->save_path);
@@ -415,25 +466,40 @@ static int dfsui_showAddQuestion(SDL_Ui *ui, DfsTree *tree, int leaf_idx,
 		dfsui_drawText(ui, sub, ui->font_small, COLOR_GRAY, SV_MAIN_X + 2, 92,
 					   TOPLEFT, 0);
 
-		dfsui_drawInput(ui, 300, QY, 940, 56, focus == 1, "추가할 질문", q_buf,
+		dfsui_drawInput(ui, OPT_X, QY, 940, 56, focus == 1, "추가할 질문", q_buf,
 						"예: 주말엔 주로 뭐 해?");
-		dfsui_drawInput(ui, 300, O0Y, 720, 56, focus == 2, "선택지 1", o0,
-						"예: 집에서 쉰다");
-		dfsui_drawInput(ui, 300, O1Y, 720, 56, focus == 3, "선택지 2", o1,
-						"예: 밖에서 논다");
 
+		// 갈래 1 / 갈래 2: [선택지][유형 이름](내 유형)
+		const char *opt_ph[2] = {"예: 집에서 쉰다", "예: 밖에서 논다"};
+		const char *name_ph[2] = {"유형 이름 (비우면 자동)",
+								  "유형 이름 (비우면 자동)"};
+		char *opt_buf[2] = {o0, o1};
+		char *name_buf[2] = {name0, name1};
+		int hdrY[2] = {G1_HDR, G2_HDR};
+		int opt_focus[2] = {2, 4};
+		int name_focus[2] = {3, 5};
 		for (int k = 0; k < 2; k++) {
-			int ry = (k == 0) ? O0Y : O1Y;
+			char hdr[16];
+			snprintf(hdr, sizeof(hdr), "갈래 %d", k + 1);
+			dfsui_drawText(ui, hdr, ui->font_normal, COLOR_DURTYPINK, OPT_X,
+						   hdrY[k], TOPLEFT, 0);
+			dfsui_drawInput(ui, OPT_X, rowY[k], OPT_W, BOXH,
+							focus == opt_focus[k], "", opt_buf[k], opt_ph[k]);
+			dfsui_drawInput(ui, NAME_X, rowY[k], NAME_W, BOXH,
+							focus == name_focus[k], "", name_buf[k], name_ph[k]);
+
 			int sel = (mine == k);
-			int hov = dfsui_inRect(ui->mx, ui->my, RADIO_X, ry, RADIO_W, 56);
-			dfsui_drawRound(ui, RADIO_X, ry, RADIO_W, 56, 12,
+			int hov = dfsui_inRect(ui->mx, ui->my, RADIO_X, rowY[k], RADIO_W,
+								   BOXH);
+			dfsui_drawRound(ui, RADIO_X, rowY[k], RADIO_W, BOXH, 12,
 							sel ? COLOR_DURTYPINK : COLOR_PINK);
-			dfsui_drawRound(ui, RADIO_X + 2, ry + 2, RADIO_W - 4, 52, 10,
+			dfsui_drawRound(ui, RADIO_X + 2, rowY[k] + 2, RADIO_W - 4, BOXH - 4,
+							10,
 							sel ? COLOR_SUPERPINK
 								: (hov ? COLOR_WHITEPINK : COLOR_WHITE));
 			dfsui_drawText(ui, "내 유형", ui->font_small,
 						   sel ? COLOR_WHITE : COLOR_GRAY,
-						   RADIO_X + RADIO_W / 2, ry + 28, CENTER, 0);
+						   RADIO_X + RADIO_W / 2, rowY[k] + BOXH / 2, CENTER, 0);
 		}
 
 		int sh = dfsui_inRect(ui->mx, ui->my, SAVE_X, BTNY, SAVE_W, 56);
@@ -448,7 +514,7 @@ static int dfsui_showAddQuestion(SDL_Ui *ui, DfsTree *tree, int leaf_idx,
 		dfsui_drawText(ui, "취소", ui->font_small, COLOR_GRAY,
 					   CANCEL_X + CANCEL_W / 2, BTNY + 28, CENTER, 0);
 		dfsui_drawText(ui, status, ui->font_small, COLOR_SUPERPINK, SV_MAIN_X,
-					   BTNY + 72, TOPLEFT, 0);
+					   STATUS_Y, TOPLEFT, 0);
 
 		SDL_RenderPresent(ui->renderer);
 		ui->is_mouse_down = false;
@@ -458,14 +524,322 @@ static int dfsui_showAddQuestion(SDL_Ui *ui, DfsTree *tree, int leaf_idx,
 	return 0;
 }
 
+// ───────────────────────────────────────────────
+// 트리 시각화 (그래프: 위→아래 노드-연결선)
+// ───────────────────────────────────────────────
+// 각 노드 중심 좌표를 px/py에 채운다. 잎은 col 순서대로 가로 배치,
+// 내부 노드는 자식들의 가운데 x. 반환값은 해당 노드의 x.
+static int treeview_layout(const DfsTree *t, int node, int depth, int *col,
+						   int *px, int *py, int colW, int rowH, int baseX,
+						   int baseY) {
+	if (node < 0 || node >= t->n_nodes) {
+		return baseX;
+	}
+	const DfsTreeNode *n = &t->nodes[node];
+	py[node] = baseY + depth * rowH;
+	if (n->is_leaf) {
+		px[node] = baseX + (*col) * colW;
+		(*col)++;
+		return px[node];
+	}
+	long sum = 0;
+	int cnt = 0;
+	for (int i = 0; i < n->n_opt; i++) {
+		sum += treeview_layout(t, n->child[i], depth + 1, col, px, py, colW,
+							   rowH, baseX, baseY);
+		cnt++;
+	}
+	px[node] = cnt ? (int)(sum / cnt) : baseX + (*col) * colW;
+	return px[node];
+}
+
+static void treeview_draw(SDL_Ui *ui, const DfsTree *t, const char *highlight,
+						  int baseX, int baseY) {
+	const int colW = 165, rowH = 130, boxW = 150;
+	int px[DFS_TREE_MAX_NODES], py[DFS_TREE_MAX_NODES];
+	int col = 0;
+	treeview_layout(t, t->root, 0, &col, px, py, colW, rowH, baseX, baseY);
+
+	// 간선 먼저 (노드 박스가 위에 덮이도록)
+	SDL_SetRenderDrawColor(ui->renderer, 201, 116, 138, 255); // DURTYPINK
+	for (int i = 0; i < t->n_nodes; i++) {
+		const DfsTreeNode *n = &t->nodes[i];
+		if (n->is_leaf) {
+			continue;
+		}
+		for (int k = 0; k < n->n_opt; k++) {
+			int c = n->child[k];
+			if (c < 0 || c >= t->n_nodes) {
+				continue;
+			}
+			SDL_RenderDrawLine(ui->renderer, px[i], py[i] + 28, px[c],
+							   py[c] - 28);
+		}
+	}
+
+	// 노드
+	for (int i = 0; i < t->n_nodes; i++) {
+		const DfsTreeNode *n = &t->nodes[i];
+		int bx = px[i] - boxW / 2;
+		if (n->is_leaf) {
+			int hl = highlight && highlight[0] &&
+					 strcmp(n->code, highlight) == 0;
+			int by = py[i] - 28;
+			dfsui_drawRound(ui, bx, by, boxW, 60, 12,
+							hl ? COLOR_SUPERPINK : COLOR_PINK);
+			dfsui_drawRound(ui, bx + 2, by + 2, boxW - 4, 56, 10,
+							hl ? COLOR_WHITEPINK : COLOR_WHITE);
+			dfsui_drawText(ui, n->code, ui->font_small,
+						   hl ? COLOR_SUPERPINK : COLOR_DURTYPINK, px[i],
+						   by + 16, CENTER, 0);
+			dfsui_drawText(ui, n->name, ui->font_ssmall, COLOR_GRAY, px[i],
+						   by + 34, MIDTOP, boxW - 12);
+		} else {
+			int by = py[i] - 26;
+			dfsui_drawRound(ui, bx, by, boxW, 52, 12, COLOR_SOFTVIOLET);
+			dfsui_drawRound(ui, bx + 2, by + 2, boxW - 4, 48, 10,
+							COLOR_WHITEVIOLET);
+			dfsui_drawText(ui, n->question, ui->font_ssmall, COLOR_VIOLET,
+						   px[i], by + 6, MIDTOP, boxW - 12);
+		}
+	}
+}
+
+static void dfsui_showTreeView(SDL_Ui *ui, DfsSurvey *self_s,
+							   char self_codes[][MAX_TYPE_LEN],
+							   DfsSurvey *ideal_s,
+							   char ideal_codes[][MAX_TYPE_LEN]) {
+	DfsTree *trees[4];
+	const char *tabs[4];
+	const char *hl[4];
+	int ntab = 0;
+	for (int i = 0; i < self_s->n_trees && ntab < 4; i++) {
+		trees[ntab] = &self_s->trees[i];
+		tabs[ntab] = (i == 0) ? "내 성향" : "내 애착";
+		hl[ntab] = self_codes[i];
+		ntab++;
+	}
+	for (int i = 0; i < ideal_s->n_trees && ntab < 4; i++) {
+		trees[ntab] = &ideal_s->trees[i];
+		tabs[ntab] = (i == 0) ? "이상형 성향" : "이상형 애착";
+		hl[ntab] = ideal_codes[i];
+		ntab++;
+	}
+	if (ntab == 0) {
+		return;
+	}
+
+	int cur = 0, ox = 0, oy = 0;
+	int dragging = 0, dsx = 0, dsy = 0, dox = 0, doy = 0;
+	const int BACK_X = SV_MAIN_X, BACK_Y = 36, BACK_W = 110, BACK_H = 40;
+	const int TAB_Y = 92, TAB_H = 42, TAB_W = 168, TAB_GAP = 178;
+	const int TREE_TOP = TAB_Y + TAB_H + 24; // 트리/헤더 마스킹 경계
+
+	while (!ui->quit) {
+		SDL_Event event;
+		SDL_PumpEvents();
+		while (SDL_PollEvent(&event)) {
+			switch (event.type) {
+			case SDL_QUIT:
+				ui->quit = true;
+				break;
+			case SDL_MOUSEBUTTONDOWN:
+				ui->is_mouse_down = true;
+				ui->mx = event.button.x;
+				ui->my = event.button.y;
+				if (ui->my > TREE_TOP && ui->mx > 260) { // 트리 영역 → 드래그
+					dragging = 1;
+					dsx = ui->mx;
+					dsy = ui->my;
+					dox = ox;
+					doy = oy;
+				}
+				break;
+			case SDL_MOUSEBUTTONUP:
+				dragging = 0;
+				break;
+			case SDL_MOUSEMOTION:
+				ui->mx = event.motion.x;
+				ui->my = event.motion.y;
+				if (dragging) {
+					ox = dox + (ui->mx - dsx);
+					oy = doy + (ui->my - dsy);
+				}
+				break;
+			case SDL_MOUSEWHEEL:
+				oy += event.wheel.y * 40;
+				ox += event.wheel.x * 40;
+				break;
+			case SDL_KEYDOWN: {
+				SDL_Keycode k = event.key.keysym.sym;
+				if (k == SDLK_ESCAPE) {
+					return;
+				} else if (k == SDLK_LEFT) {
+					ox += 60;
+				} else if (k == SDLK_RIGHT) {
+					ox -= 60;
+				} else if (k == SDLK_UP) {
+					oy += 60;
+				} else if (k == SDLK_DOWN) {
+					oy -= 60;
+				}
+				break;
+			}
+			}
+		}
+
+		if (ui->is_mouse_down && !dragging) {
+			if (dfsui_inRect(ui->mx, ui->my, BACK_X, BACK_Y, BACK_W, BACK_H)) {
+				ui->is_mouse_down = false;
+				return;
+			}
+			if (dfsui_handleSidebarClick(ui, 2)) {
+				ui->is_mouse_down = false;
+				return;
+			}
+			for (int i = 0; i < ntab; i++) {
+				int tx = SV_MAIN_X + i * TAB_GAP;
+				if (dfsui_inRect(ui->mx, ui->my, tx, TAB_Y, TAB_W, TAB_H)) {
+					if (cur != i) {
+						cur = i;
+						ox = 0;
+						oy = 0;
+					}
+				}
+			}
+		}
+
+		SDL_SetRenderDrawColor(ui->renderer, 255, 255, 255, 255);
+		SDL_RenderClear(ui->renderer);
+
+		// 트리부터 그린 뒤, 상단/사이드바를 덮어 영역 밖을 가린다.
+		treeview_draw(ui, trees[cur], hl[cur], SV_MAIN_X + 120 + ox,
+					  TREE_TOP + 30 + oy);
+
+		dfsui_drawRect(ui, 0, 0, WINDOW_WIDTH, TREE_TOP, COLOR_WHITE);
+		dfsui_drawSidebar(ui, 2);
+
+		dfsui_drawRound(ui, BACK_X, BACK_Y, BACK_W, BACK_H, 12, COLOR_SOFTPINK);
+		dfsui_drawText(ui, "← 뒤로", ui->font_small, COLOR_DURTYPINK,
+					   BACK_X + BACK_W / 2, BACK_Y + BACK_H / 2, CENTER, 0);
+		dfsui_drawText(ui, "트리 시각화", ui->font_big, COLOR_BLACK,
+					   BACK_X + BACK_W + 24, BACK_Y + 2, TOPLEFT, 0);
+
+		for (int i = 0; i < ntab; i++) {
+			int tx = SV_MAIN_X + i * TAB_GAP;
+			int on = (i == cur);
+			int hov = dfsui_inRect(ui->mx, ui->my, tx, TAB_Y, TAB_W, TAB_H);
+			dfsui_drawRound(ui, tx, TAB_Y, TAB_W, TAB_H, 12,
+							on ? COLOR_SUPERPINK : COLOR_PINK);
+			dfsui_drawRound(ui, tx + 2, TAB_Y + 2, TAB_W - 4, TAB_H - 4, 10,
+							on ? COLOR_SUPERPINK
+							   : (hov ? COLOR_WHITEPINK : COLOR_WHITE));
+			dfsui_drawText(ui, tabs[i], ui->font_small,
+						   on ? COLOR_WHITE : COLOR_DURTYPINK, tx + TAB_W / 2,
+						   TAB_Y + TAB_H / 2, CENTER, 0);
+		}
+		dfsui_drawText(ui, "드래그·휠·방향키로 이동", ui->font_ssmall,
+					   COLOR_GRAY, WINDOW_WIDTH - 230, BACK_Y + 14, TOPLEFT, 0);
+
+		SDL_RenderPresent(ui->renderer);
+		ui->is_mouse_down = false;
+		ui->is_mouse_up = false;
+		ui->is_mouse_move = false;
+	}
+}
+
+// 세분화 버튼 레이아웃 (각 결과 줄 오른쪽).
+#define DFSUI_SUB_X (SV_MAIN_X + 720)
+#define DFSUI_SUB_W 180
+#define DFSUI_SUB_H 30
+#define DFSUI_SELF_Y(i) (212 + (i) * 36)
+#define DFSUI_IDEAL_Y(i) (392 + (i) * 36)
+
+// 결과 줄의 코드가 실제 leaf면 세분화 가능. 중간에 멈춘(분기 노드) 결과는 -1.
+static int dfsui_canExtend(DfsSurvey *s, char codes[][MAX_TYPE_LEN], int i) {
+	return dfs_find_leaf_by_code(&s->trees[i], codes[i]) >= 0;
+}
+
+// self 트리 i를 세분화하고, 같은 세분화를 이상형 트리에도 적용한다.
+// 성공 시 1. (세분화는 '내 성향'에서만 시작하지만 구조는 양쪽 트리에 반영)
+static int dfsui_resultExtend(SDL_Ui *ui, People *me, DfsSurvey *self_s,
+							  char codes[][MAX_TYPE_LEN],
+							  char names[][DFS_NAME_LEN], DfsSurvey *ideal_s,
+							  int i) {
+	int li = dfs_find_leaf_by_code(&self_s->trees[i], codes[i]);
+	if (li < 0) {
+		return 0;
+	}
+	char parent_code[MAX_TYPE_LEN];
+	strncpy(parent_code, codes[i], MAX_TYPE_LEN - 1);
+	parent_code[MAX_TYPE_LEN - 1] = '\0';
+
+	char nc[MAX_TYPE_LEN], nn[DFS_NAME_LEN];
+	if (!dfsui_showAddQuestion(ui, &self_s->trees[i], li, nc, nn)) {
+		return 0;
+	}
+
+	// 내 성향 결과/People 갱신
+	strncpy(codes[i], nc, MAX_TYPE_LEN - 1);
+	codes[i][MAX_TYPE_LEN - 1] = '\0';
+	strncpy(names[i], nn, DFS_NAME_LEN - 1);
+	names[i][DFS_NAME_LEN - 1] = '\0';
+	if (i == 0) {
+		people_set_people_type(me, nc);
+	} else if (i == 1) {
+		people_set_people_attach(me, nc);
+	}
+
+	// 같은 세분화를 이상형 트리에도 적용 (코드/이름 동일하게 노드만 추가)
+	if (i < ideal_s->n_trees) {
+		DfsTree *it = &ideal_s->trees[i];
+		int ili = dfs_find_leaf_by_code(it, parent_code);
+		DfsTreeNode *sb = &self_s->trees[i].nodes[li]; // 방금 분기로 바뀜
+		if (ili >= 0 && !sb->is_leaf && sb->n_opt >= 2) {
+			const char *cn0 = self_s->trees[i].nodes[sb->child[0]].name;
+			const char *cn1 = self_s->trees[i].nodes[sb->child[1]].name;
+			if (dfs_extend_leaf_named(it, ili, sb->question, sb->opt_text[0],
+									  sb->opt_text[1], cn0, cn1)) {
+				dfs_save_tree(it, it->save_path);
+			}
+		}
+	}
+
+	login_update_account(me);
+	dfs_matching_reload(); // 세분화가 매칭 유사도에 반영되도록 캐시 무효화
+	return 1;
+}
+
+// 결과 카드 한 줄 + (leaf면) "세분화" 버튼을 그린다.
+static void dfsui_drawResultLine(SDL_Ui *ui, const char *title,
+								 const char *name, const char *code, int y,
+								 SDL_Color text_color, int can_ext) {
+	char line[160];
+	snprintf(line, sizeof(line), "· %s : %s (%s)", title, name, code);
+	dfsui_drawText(ui, line, ui->font_small, text_color, SV_MAIN_X + 40, y + 4,
+				   TOPLEFT, 660);
+	if (can_ext) {
+		int hov = dfsui_inRect(ui->mx, ui->my, DFSUI_SUB_X, y, DFSUI_SUB_W,
+							   DFSUI_SUB_H);
+		dfsui_drawRound(ui, DFSUI_SUB_X, y, DFSUI_SUB_W, DFSUI_SUB_H, 12,
+						COLOR_DURTYPINK);
+		dfsui_drawRound(ui, DFSUI_SUB_X + 2, y + 2, DFSUI_SUB_W - 4,
+						DFSUI_SUB_H - 4, 10,
+						hov ? COLOR_WHITEPINK : COLOR_WHITE);
+		dfsui_drawText(ui, "세분화", ui->font_small, COLOR_DURTYPINK,
+					   DFSUI_SUB_X + DFSUI_SUB_W / 2, y + DFSUI_SUB_H / 2,
+					   CENTER, 0);
+	}
+}
+
 static void dfsui_showSurveyResult(SDL_Ui *ui, People *me, DfsSurvey *self_s,
 								   char self_codes[][MAX_TYPE_LEN],
 								   char self_names[][DFS_NAME_LEN],
 								   DfsSurvey *ideal_s,
 								   char ideal_codes[][MAX_TYPE_LEN],
 								   char ideal_names[][DFS_NAME_LEN]) {
-	int bx = SV_MAIN_X, bw = 200, byy = 520;
-	int ex_x = 540, ex_w = 260;
+	int bx = SV_MAIN_X, bw = 200, byy = 540;
+	int extended = 0; // 세분화는 설문당 1회 (재설문해야 다시 가능)
 	while (!ui->quit) {
 		SDL_Event event;
 		SDL_PumpEvents();
@@ -493,29 +867,41 @@ static void dfsui_showSurveyResult(SDL_Ui *ui, People *me, DfsSurvey *self_s,
 		if (ui->is_mouse_down) {
 			if (dfsui_inRect(ui->mx, ui->my, bx, byy, bw, 56)) {
 				ui->next_state = HOME;
+				ui->is_mouse_down = false; // 클릭이 홈 화면으로 새어들지 않게
 				return;
 			}
 			if (dfsui_handleSidebarClick(ui, 2)) {
+				ui->is_mouse_down = false;
 				return;
 			}
-			if (dfsui_inRect(ui->mx, ui->my, ex_x, byy, ex_w, 56)) {
-				int li =
-					dfs_find_leaf_by_code(&self_s->trees[0], self_codes[0]);
-				if (li >= 0) {
-					char nc[MAX_TYPE_LEN], nn[DFS_NAME_LEN];
-					if (dfsui_showAddQuestion(ui, &self_s->trees[0], li, nc,
-											  nn)) {
-						strncpy(self_codes[0], nc, MAX_TYPE_LEN - 1);
-						self_codes[0][MAX_TYPE_LEN - 1] = '\0';
-						strncpy(self_names[0], nn, DFS_NAME_LEN - 1);
-						self_names[0][DFS_NAME_LEN - 1] = '\0';
-						strncpy(me->type, nc, MAX_TYPE_LEN - 1);
-						me->type[MAX_TYPE_LEN - 1] = '\0';
-						login_update_account(me);
+			// 트리 시각화 보기
+			if (dfsui_inRect(ui->mx, ui->my, SV_MAIN_X + 220, byy, 200, 56)) {
+				dfsui_showTreeView(ui, self_s, self_codes, ideal_s,
+								   ideal_codes);
+				ui->is_mouse_down = false;
+				if (ui->next_state != DFS) {
+					return; // 트리 화면에서 사이드바로 나갔으면 따른다
+				}
+				continue;
+			}
+			// 세분화는 '내 성향' 트리에서만, 설문당 1회.
+			int handled = 0;
+			for (int i = 0; !extended && i < self_s->n_trees && !handled; i++) {
+				if (dfsui_canExtend(self_s, self_codes, i) &&
+					dfsui_inRect(ui->mx, ui->my, DFSUI_SUB_X, DFSUI_SELF_Y(i),
+								 DFSUI_SUB_W, DFSUI_SUB_H)) {
+					if (dfsui_resultExtend(ui, me, self_s, self_codes,
+										   self_names, ideal_s, i)) {
+						extended = 1;
 					}
+					handled = 1;
 				}
 			}
 			ui->is_mouse_down = false;
+			// 세분화 화면에서 사이드바로 나갔으면 그 이동을 따른다.
+			if (handled && ui->next_state != DFS) {
+				return;
+			}
 		}
 
 		SDL_SetRenderDrawColor(ui->renderer, 255, 255, 255, 255);
@@ -524,30 +910,35 @@ static void dfsui_showSurveyResult(SDL_Ui *ui, People *me, DfsSurvey *self_s,
 
 		dfsui_drawText(ui, "진단이 완료됐어요", ui->font_big, COLOR_BLACK,
 					   SV_MAIN_X, 36, TOPLEFT, 0);
-		dfsui_drawText(
-			ui,
-			"대주제별 결과예요. 매칭 유사도는 이 결과들을 합쳐 계산할 예정.",
-			ui->font_small, COLOR_GRAY, SV_MAIN_X + 2, 92, TOPLEFT, 0);
+		dfsui_drawText(ui,
+					   "leaf까지 진단된 트리는 '세분화'로 더 나눌 수 있어요. "
+					   "매칭 유사도는 성향과 애착을 합쳐 계산됩니다.",
+					   ui->font_small, COLOR_GRAY, SV_MAIN_X + 2, 92, TOPLEFT,
+					   900);
 
-		char line[160];
 		dfsui_drawRound(ui, SV_MAIN_X, 150, 940, 160, 20, COLOR_WHITEPINK);
 		dfsui_drawText(ui, "내 연애 성향", ui->font_normal, COLOR_SUPERPINK,
 					   SV_MAIN_X + 30, 172, TOPLEFT, 0);
 		for (int i = 0; i < self_s->n_trees; i++) {
-			snprintf(line, sizeof(line), "· %s : %s (%s)",
-					 self_s->trees[i].title, self_names[i], self_codes[i]);
-			dfsui_drawText(ui, line, ui->font_small, COLOR_DURTYPINK,
-						   SV_MAIN_X + 40, 216 + i * 36, TOPLEFT, 860);
+			dfsui_drawResultLine(ui, self_s->trees[i].title, self_names[i],
+								 self_codes[i], DFSUI_SELF_Y(i), COLOR_DURTYPINK,
+								 !extended &&
+									 dfsui_canExtend(self_s, self_codes, i));
+		}
+		if (extended) {
+			dfsui_drawText(
+				ui, "세분화는 설문당 한 번이에요. 다시 하려면 재설문하세요.",
+				ui->font_small, COLOR_VIOLET, SV_MAIN_X + 2, 500, TOPLEFT, 900);
 		}
 
 		dfsui_drawRound(ui, SV_MAIN_X, 330, 940, 160, 20, COLOR_WHITEVIOLET);
 		dfsui_drawText(ui, "내 이상형", ui->font_normal, COLOR_VIOLET,
 					   SV_MAIN_X + 30, 352, TOPLEFT, 0);
 		for (int i = 0; i < ideal_s->n_trees; i++) {
-			snprintf(line, sizeof(line), "· %s : %s (%s)",
-					 ideal_s->trees[i].title, ideal_names[i], ideal_codes[i]);
-			dfsui_drawText(ui, line, ui->font_small, COLOR_SOFTVIOLET,
-						   SV_MAIN_X + 40, 396 + i * 36, TOPLEFT, 860);
+			// 이상형은 세분화 버튼 없이 결과만 표시 (can_ext = 0).
+			dfsui_drawResultLine(ui, ideal_s->trees[i].title, ideal_names[i],
+								 ideal_codes[i], DFSUI_IDEAL_Y(i),
+								 COLOR_SOFTVIOLET, 0);
 		}
 
 		int hov = dfsui_inRect(ui->mx, ui->my, bx, byy, bw, 56);
@@ -556,12 +947,12 @@ static void dfsui_showSurveyResult(SDL_Ui *ui, People *me, DfsSurvey *self_s,
 		dfsui_drawText(ui, "홈으로 →", ui->font_normal, COLOR_WHITE,
 					   bx + bw / 2, byy + 28, CENTER, 0);
 
-		int eh = dfsui_inRect(ui->mx, ui->my, ex_x, byy, ex_w, 56);
-		dfsui_drawRound(ui, ex_x, byy, ex_w, 56, 14, COLOR_SOFTPINK);
-		dfsui_drawRound(ui, ex_x + 2, byy + 2, ex_w - 4, 52, 12,
-						eh ? COLOR_WHITEPINK : COLOR_WHITE);
-		dfsui_drawText(ui, "내 성향 세분화하기", ui->font_small,
-					   COLOR_DURTYPINK, ex_x + ex_w / 2, byy + 28, CENTER, 0);
+		int tv = dfsui_inRect(ui->mx, ui->my, SV_MAIN_X + 220, byy, 200, 56);
+		dfsui_drawRound(ui, SV_MAIN_X + 220, byy, 200, 56, 14, COLOR_SOFTVIOLET);
+		dfsui_drawRound(ui, SV_MAIN_X + 222, byy + 2, 196, 52, 12,
+						tv ? COLOR_WHITEVIOLET : COLOR_WHITE);
+		dfsui_drawText(ui, "트리 보기", ui->font_normal, COLOR_VIOLET,
+					   SV_MAIN_X + 320, byy + 28, CENTER, 0);
 
 		SDL_RenderPresent(ui->renderer);
 		ui->is_mouse_down = false;
