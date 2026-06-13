@@ -118,13 +118,125 @@ const char *dfs_type_name(const char type[]) {
 	return getNode(dfs_find_type_node(type))->name;
 }
 
+// ───────────────────────────────────────────────
+// 애착 안정성 차원 (AS/AV/AX/FA)
+// 주도·표현 성향과는 별개의 트리. 매칭 호감도에 함께 합산한다.
+//   ROOT ─ LOW(낮은 불안) ─ {AS 안정, AV 회피}
+//        └ HIGH(높은 불안) ─ {AX 불안, FA 혼란}
+// ───────────────────────────────────────────────
+typedef enum AttachNodeId {
+	ATT_ROOT, ATT_LOW, ATT_HIGH, ATT_AS, ATT_AV, ATT_AX, ATT_FA, ATT_COUNT
+} AttachNodeId;
+
+static const struct {
+	int parent;
+	const char *code;
+	const char *name;
+} ATTACH_TREE[ATT_COUNT] = {
+	{ATT_ROOT, "ROOT", "애착 안정성"},
+	{ATT_ROOT, "LOW", "낮은 불안"},
+	{ATT_ROOT, "HIGH", "높은 불안"},
+	{ATT_LOW, "AS", "안정 애착형"},
+	{ATT_LOW, "AV", "회피 애착형"},
+	{ATT_HIGH, "AX", "불안 애착형"},
+	{ATT_HIGH, "FA", "혼란 애착형"},
+};
+
+static AttachNodeId attach_find(const char code[]) {
+	if (code != NULL) {
+		for (int i = 0; i < ATT_COUNT; i++) {
+			if (strcmp(code, ATTACH_TREE[i].code) == 0) {
+				return (AttachNodeId)i;
+			}
+		}
+	}
+	return ATT_ROOT;
+}
+
+static int attach_depth(AttachNodeId n) {
+	int d = 0;
+	while (n != ATT_ROOT) {
+		n = ATTACH_TREE[n].parent;
+		d++;
+	}
+	return d;
+}
+
+static AttachNodeId attach_lca(AttachNodeId u, AttachNodeId v) {
+	int du = attach_depth(u), dv = attach_depth(v);
+	while (du > dv) {
+		u = ATTACH_TREE[u].parent;
+		du--;
+	}
+	while (dv > du) {
+		v = ATTACH_TREE[v].parent;
+		dv--;
+	}
+	while (u != v) {
+		u = ATTACH_TREE[u].parent;
+		v = ATTACH_TREE[v].parent;
+	}
+	return u;
+}
+
+int dfs_attach_similarity(const char ideal[], const char other[]) {
+	AttachNodeId a = attach_find(ideal), b = attach_find(other);
+	AttachNodeId l = attach_lca(a, b);
+	int dist = attach_depth(a) + attach_depth(b) - 2 * attach_depth(l);
+	int max_dist = 2 * attach_depth(ATT_AS); // 서로 다른 가지의 잎 = 4
+
+	if (max_dist == 0) {
+		return 0;
+	}
+	if (dist > max_dist) {
+		dist = max_dist;
+	}
+	return (max_dist - dist) * 100 / max_dist;
+}
+
+const char *dfs_attach_name(const char code[]) {
+	return ATTACH_TREE[attach_find(code)].name;
+}
+
+// ── 매칭용 공용 트리 캐시 ──
+// compat은 BFS에서 O(n^2)로 불리므로, 세분화가 누적된 공용 설문 트리를 매번
+// 로드하지 않고 한 번만 빌드·로드해 캐시한다. trees[0]=성향, trees[1]=애착.
+static DfsSurvey g_match_survey;
+static int g_match_ready = 0;
+
+static void dfs_matching_ensure(void) {
+	if (!g_match_ready) {
+		dfs_build_self_survey(&g_match_survey); // 기본 트리 + JSON 세분화 로드
+		g_match_ready = 1;
+	}
+}
+
+// 세분화 등으로 트리 파일이 바뀌면 호출 → 다음 compat 때 다시 로드.
+void dfs_matching_reload(void) { g_match_ready = 0; }
+
+// 한쪽 방향(ideal 쪽이 상대 other를 얼마나 원하는지)의 유사도(0~100).
+// 성향·애착을 각각 generic 트리 유사도로 잰다. 트리에서 직접 계산하므로
+// 세분화 유형(DTF1 등)도 그대로 반영된다. 애착은 양쪽 다 있을 때만 합산.
+static int compat_dir(const char *ideal_dom, const char *ideal_att,
+					  const char *other_dom, const char *other_att) {
+	dfs_matching_ensure();
+	int dom =
+		dfs_tree_similarity(&g_match_survey.trees[0], ideal_dom, other_dom);
+	if (ideal_att && ideal_att[0] && other_att && other_att[0]) {
+		int att =
+			dfs_tree_similarity(&g_match_survey.trees[1], ideal_att, other_att);
+		return (dom + att) / 2;
+	}
+	return dom;
+}
+
 int compat(People *a, People *b) {
 	if (a == NULL || b == NULL) {
 		return 0;
 	}
 
-	return dfs_type_similarity(a->love_type, b->type) +
-		   dfs_type_similarity(b->love_type, a->type);
+	return compat_dir(a->love_type, a->love_attach, b->type, b->attach) +
+		   compat_dir(b->love_type, b->love_attach, a->type, a->attach);
 }
 
 // ───────────────────────────────────────────────
@@ -214,6 +326,110 @@ int dfs_tree_max_depth(const DfsTree *t) {
 	return dfs_node_depth(t, t->root);
 }
 
+// ───────────────────────────────────────────────
+// 트리 기반 유사도 (가중치: 깊을수록 절반)
+//   깊이 d로 들어가는 간선 가중치 = DFS_EDGE_BASE >> (d-1), 최소 1
+//   거리 = 두 잎에서 LCA까지 올라가며 만난 간선 가중치의 합
+//   루트 가까운 차이(주도성)는 무겁게, 세분화(깊은 잎) 차이는 가볍게.
+// ───────────────────────────────────────────────
+#define DFS_EDGE_BASE 8 // 루트 직속 분기 가중치. 한 단계 깊어질수록 절반.
+
+static int dfs_edge_weight(int depth) {
+	if (depth < 1) {
+		return 0;
+	}
+	int w = DFS_EDGE_BASE >> (depth - 1);
+	return w < 1 ? 1 : w;
+}
+
+// 루트에서 code 잎까지의 노드 index 경로를 path[]에 채운다.
+// 반환: 경로 길이(노드 수, 잎 depth+1). 못 찾으면 -1.
+static int dfs_find_path(const DfsTree *t, int node, const char code[],
+						 int *path, int depth) {
+	if (node < 0 || node >= t->n_nodes || depth >= DFS_TREE_MAX_NODES) {
+		return -1;
+	}
+	path[depth] = node;
+	const DfsTreeNode *n = &t->nodes[node];
+	if (n->is_leaf) {
+		return (strcmp(n->code, code) == 0) ? depth + 1 : -1;
+	}
+	for (int i = 0; i < n->n_opt; i++) {
+		int len = dfs_find_path(t, n->child[i], code, path, depth + 1);
+		if (len > 0) {
+			return len;
+		}
+	}
+	return -1;
+}
+
+// node(깊이 depth) 아래 가장 무거운 루트→잎 경로 가중치 합.
+static int dfs_max_weight_depth(const DfsTree *t, int node, int depth) {
+	if (node < 0 || node >= t->n_nodes) {
+		return 0;
+	}
+	const DfsTreeNode *n = &t->nodes[node];
+	if (n->is_leaf) {
+		int s = 0;
+		for (int d = 1; d <= depth; d++) {
+			s += dfs_edge_weight(d);
+		}
+		return s;
+	}
+	int best = 0;
+	for (int i = 0; i < n->n_opt; i++) {
+		int v = dfs_max_weight_depth(t, n->child[i], depth + 1);
+		if (v > best) {
+			best = v;
+		}
+	}
+	return best;
+}
+
+// 트리 내 두 잎 코드 사이 가중 거리. 둘 중 하나라도 없으면 -1.
+int dfs_tree_distance(const DfsTree *t, const char a[], const char b[]) {
+	int pa[DFS_TREE_MAX_NODES], pb[DFS_TREE_MAX_NODES];
+	int la = dfs_find_path(t, t->root, a, pa, 0);
+	int lb = dfs_find_path(t, t->root, b, pb, 0);
+	if (la <= 0 || lb <= 0) {
+		return -1;
+	}
+
+	// 공통 접두 = 루트부터 같은 노드. 마지막 공통 노드가 LCA.
+	int i = 0;
+	while (i < la && i < lb && pa[i] == pb[i]) {
+		i++;
+	}
+	int lca_depth = i - 1;
+	int da = la - 1, db = lb - 1; // 각 잎의 깊이
+
+	int dist = 0;
+	for (int d = lca_depth + 1; d <= da; d++) {
+		dist += dfs_edge_weight(d);
+	}
+	for (int d = lca_depth + 1; d <= db; d++) {
+		dist += dfs_edge_weight(d);
+	}
+	return dist;
+}
+
+// 트리 내 두 유형 코드 사이 유사도(0~100). 코드를 못 찾으면 0.
+int dfs_tree_similarity(const DfsTree *t, const char ideal[],
+						const char other[]) {
+	int dist = dfs_tree_distance(t, ideal, other);
+	if (dist < 0) {
+		return 0;
+	}
+	int max_dist = 2 * dfs_max_weight_depth(t, t->root, 0);
+	if (max_dist <= 0) {
+		return 0;
+	}
+	if (dist > max_dist) {
+		dist = max_dist;
+	}
+	return (max_dist - dist) * 100 / max_dist;
+}
+
 // 애착 안정성 잎 4종(코드/이름)은 두 트리가 공유.
 static void dfs_fill_attach_leaves(DfsTree *t) {
 	dfs_set_leaf(&t->nodes[3], "AS", "안정 애착형");
@@ -285,8 +501,12 @@ int dfs_find_leaf_by_code(const DfsTree *t, const char code[]) {
 	return -1;
 }
 
-int dfs_extend_leaf(DfsTree *t, int leaf_idx, const char question[],
-					const char opt0[], const char opt1[]) {
+// 잎을 분기로 확장하면서 두 하위 유형의 이름을 직접 지정한다.
+// 코드는 자동(부모코드+"1"/"2"). name0/name1이 NULL이거나 빈 문자열이면
+// 기존처럼 "부모이름 · 선택지"로 자동 생성한다.
+int dfs_extend_leaf_named(DfsTree *t, int leaf_idx, const char question[],
+						  const char opt0[], const char opt1[],
+						  const char name0[], const char name1[]) {
 	if (leaf_idx < 0 || leaf_idx >= t->n_nodes) {
 		return 0;
 	}
@@ -307,12 +527,20 @@ int dfs_extend_leaf(DfsTree *t, int leaf_idx, const char question[],
 	char code[MAX_TYPE_LEN], name[DFS_NAME_LEN];
 
 	snprintf(code, sizeof(code), "%s1", pcode);
-	snprintf(name, sizeof(name), "%s · %s", pname, opt0);
+	if (name0 && name0[0]) {
+		snprintf(name, sizeof(name), "%s", name0);
+	} else {
+		snprintf(name, sizeof(name), "%s · %s", pname, opt0);
+	}
 	dfs_set_leaf(&t->nodes[c0], code, name);
 	t->nodes[c0].user_added = 1;
 
 	snprintf(code, sizeof(code), "%s2", pcode);
-	snprintf(name, sizeof(name), "%s · %s", pname, opt1);
+	if (name1 && name1[0]) {
+		snprintf(name, sizeof(name), "%s", name1);
+	} else {
+		snprintf(name, sizeof(name), "%s · %s", pname, opt1);
+	}
 	dfs_set_leaf(&t->nodes[c1], code, name);
 	t->nodes[c1].user_added = 1;
 
@@ -322,6 +550,12 @@ int dfs_extend_leaf(DfsTree *t, int leaf_idx, const char question[],
 
 	t->n_nodes += 2;
 	return 1;
+}
+
+// 이름 미지정 버전(자동 이름). 기존 호출부 하위호환용 래퍼.
+int dfs_extend_leaf(DfsTree *t, int leaf_idx, const char question[],
+					const char opt0[], const char opt1[]) {
+	return dfs_extend_leaf_named(t, leaf_idx, question, opt0, opt1, NULL, NULL);
 }
 
 int dfs_save_tree(const DfsTree *t, const char path[]) {

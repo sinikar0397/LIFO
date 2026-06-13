@@ -597,6 +597,9 @@ void display_showDFS(SDL_Ui *ui, People *me) {
 	}
 	strncpy(me->type, self_codes[0], MAX_TYPE_LEN - 1);
 	me->type[MAX_TYPE_LEN - 1] = '\0';
+	if (self_s->n_trees > 1) {
+		people_set_people_attach(me, self_codes[1]); // 애착 차원 결과 저장
+	}
 	login_update_account(me);
 
 	if (!dfsui_runSurvey(ui, ideal_s, ideal_codes, ideal_names)) {
@@ -604,6 +607,9 @@ void display_showDFS(SDL_Ui *ui, People *me) {
 	}
 	strncpy(me->love_type, ideal_codes[0], MAX_TYPE_LEN - 1);
 	me->love_type[MAX_TYPE_LEN - 1] = '\0';
+	if (ideal_s->n_trees > 1) {
+		people_set_people_love_attach(me, ideal_codes[1]); // 이상형 애착 저장
+	}
 	login_update_account(me);
 
 	dfsui_showSurveyResult(ui, me, self_s, self_codes, self_names, ideal_s,

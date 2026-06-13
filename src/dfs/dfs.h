@@ -40,7 +40,14 @@ void dfs_print_type_description(const char type[]);
 // 유형 코드(예: "DTF")에 해당하는 유형명을 돌려준다. 못 찾으면 루트명을 반환.
 const char *dfs_type_name(const char type[]);
 
+// 애착 유형(AS/AV/AX/FA) 사이의 유사도(0~100)와 유형명.
+int dfs_attach_similarity(const char ideal_type[], const char other_type[]);
+const char *dfs_attach_name(const char code[]);
+
 int compat(People *a, People *b);
+
+// 매칭용 공용 트리 캐시를 무효화한다(세분화로 트리 파일이 바뀐 뒤 호출).
+void dfs_matching_reload(void);
 
 // ───────────────────────────────────────────────
 // 트리 엔진 (GUI 설문용)
@@ -95,12 +102,23 @@ void dfs_build_ideal_survey(DfsSurvey *survey);
 // 루트에서 잎까지의 최대 질문 수.
 int dfs_tree_max_depth(const DfsTree *tree);
 
+// 트리 내 두 유형 코드 사이의 가중 거리/유사도(0~100).
+// 깊을수록(세분화일수록) 간선 가중치가 작아 차이가 점수에 덜 반영된다.
+// 세분화로 추가된 유형 코드도 그대로 계산되므로 동적 트리를 그대로 지원한다.
+int dfs_tree_distance(const DfsTree *tree, const char a[], const char b[]);
+int dfs_tree_similarity(const DfsTree *tree, const char ideal[],
+						const char other[]);
+
 // 코드로 잎 노드 index를 찾는다. 없으면 -1.
 int dfs_find_leaf_by_code(const DfsTree *tree, const char code[]);
 
 // 잎(leaf_idx)을 분기 노드로 확장한다. 새 하위 유형 2개를 잎으로 추가하며,
-// 하위 유형명은 "부모유형명 · 선택지", 코드는 "부모코드1"/"부모코드2"로 자동 생성.
-// 성공 시 1 (공간 부족/잘못된 노드면 0).
+// 코드는 "부모코드1"/"부모코드2"로 자동 생성. 성공 시 1 (공간 부족/잘못된 노드면 0).
+// _named: 하위 유형명을 사용자가 직접 지정(name0/name1). NULL/빈 문자열이면
+//         "부모유형명 · 선택지"로 자동 생성. dfs_extend_leaf는 자동 이름 래퍼.
+int dfs_extend_leaf_named(DfsTree *tree, int leaf_idx, const char question[],
+						  const char opt0[], const char opt1[],
+						  const char name0[], const char name1[]);
 int dfs_extend_leaf(DfsTree *tree, int leaf_idx, const char question[],
 					const char opt0[], const char opt1[]);
 
