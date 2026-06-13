@@ -46,6 +46,9 @@ const char *dfs_attach_name(const char code[]);
 
 int compat(People *a, People *b);
 
+// 매칭용 공용 트리 캐시를 무효화한다(세분화로 트리 파일이 바뀐 뒤 호출).
+void dfs_matching_reload(void);
+
 // ───────────────────────────────────────────────
 // 트리 엔진 (GUI 설문용)
 // 하드코딩 분기 대신, 노드 배열로 트리를 표현한다.

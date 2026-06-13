@@ -198,14 +198,33 @@ const char *dfs_attach_name(const char code[]) {
 	return ATTACH_TREE[attach_find(code)].name;
 }
 
+// ── 매칭용 공용 트리 캐시 ──
+// compat은 BFS에서 O(n^2)로 불리므로, 세분화가 누적된 공용 설문 트리를 매번
+// 로드하지 않고 한 번만 빌드·로드해 캐시한다. trees[0]=성향, trees[1]=애착.
+static DfsSurvey g_match_survey;
+static int g_match_ready = 0;
+
+static void dfs_matching_ensure(void) {
+	if (!g_match_ready) {
+		dfs_build_self_survey(&g_match_survey); // 기본 트리 + JSON 세분화 로드
+		g_match_ready = 1;
+	}
+}
+
+// 세분화 등으로 트리 파일이 바뀌면 호출 → 다음 compat 때 다시 로드.
+void dfs_matching_reload(void) { g_match_ready = 0; }
+
 // 한쪽 방향(ideal 쪽이 상대 other를 얼마나 원하는지)의 유사도(0~100).
-// 성향 유사도 + 애착 유사도 평균. 단, 애착 정보가 양쪽 다 있을 때만 합산하고
-// 없으면 성향만으로 계산한다(구버전 데이터/미설문 사용자 하위호환).
+// 성향·애착을 각각 generic 트리 유사도로 잰다. 트리에서 직접 계산하므로
+// 세분화 유형(DTF1 등)도 그대로 반영된다. 애착은 양쪽 다 있을 때만 합산.
 static int compat_dir(const char *ideal_dom, const char *ideal_att,
 					  const char *other_dom, const char *other_att) {
-	int dom = dfs_type_similarity(ideal_dom, other_dom);
+	dfs_matching_ensure();
+	int dom =
+		dfs_tree_similarity(&g_match_survey.trees[0], ideal_dom, other_dom);
 	if (ideal_att && ideal_att[0] && other_att && other_att[0]) {
-		int att = dfs_attach_similarity(ideal_att, other_att);
+		int att =
+			dfs_tree_similarity(&g_match_survey.trees[1], ideal_att, other_att);
 		return (dom + att) / 2;
 	}
 	return dom;
