@@ -561,15 +561,16 @@ static int treeview_layout(const DfsTree *t, int node, int depth, int *col,
 // scale(%): 60~180. 노드/간격/박스를 확대·축소. 유형 코드(영문)는 표시하지 않음.
 static void treeview_draw(SDL_Ui *ui, const DfsTree *t, const char *highlight,
 						  int baseX, int baseY, int scale) {
-	int colW = 215 * scale / 100;
-	int rowH = 155 * scale / 100;
-	int boxW = 180 * scale / 100;
-	int lh = 64 * scale / 100;	// 잎/단순 분기 박스 높이
-	int dh = 96 * scale / 100;	// 이름+질문 동시 표시 박스 높이
-	int pillW = 168 * scale / 100, pillH = 34 * scale / 100;
-	int wrap = boxW - 18;
-	TTF_Font *nf = (scale >= 90) ? ui->font_small : ui->font_ssmall; // 이름
-	TTF_Font *qf = ui->font_ssmall;									 // 질문/라벨
+	int colW = 260 * scale / 100;
+	int rowH = 200 * scale / 100;
+	int boxW = 224 * scale / 100;
+	int lh = 80 * scale / 100;	 // 잎/단순 분기 박스 높이
+	int dh = 132 * scale / 100;	 // 이름+질문 동시 표시 박스 높이
+	int pillW = 220 * scale / 100, pillH = 54 * scale / 100;
+	int wrap = boxW - 22;
+	// 글씨 키움: 이름은 normal(작을 땐 small), 질문/간선 라벨은 small
+	TTF_Font *nf = (scale >= 100) ? ui->font_normal : ui->font_small;
+	TTF_Font *qf = ui->font_small;
 	int px[DFS_TREE_MAX_NODES], py[DFS_TREE_MAX_NODES];
 	int col = 0;
 	treeview_layout(t, t->root, 0, &col, px, py, colW, rowH, baseX, baseY);
@@ -679,8 +680,9 @@ static void dfsui_showTreeView(SDL_Ui *ui, DfsSurvey *self_s,
 	int dragging = 0, dsx = 0, dsy = 0, dox = 0, doy = 0;
 	const int BACK_X = SV_MAIN_X, BACK_Y = 36, BACK_W = 110, BACK_H = 40;
 	const int TAB_Y = 92, TAB_H = 42, TAB_W = 145, TAB_GAP = 152;
-	const int ZOUT_X = WINDOW_WIDTH - 110, ZIN_X = WINDOW_WIDTH - 64,
-			  ZBTN_Y = TAB_Y, ZBTN = 42; // 축소/확대 버튼
+	// 축소/확대 버튼: 탭과 겹치지 않게 상단(헤더) 우측에 둔다.
+	const int ZBTN = 40, ZBTN_Y = 34;
+	const int ZIN_X = WINDOW_WIDTH - 58, ZOUT_X = WINDOW_WIDTH - 106;
 	const int TREE_TOP = TAB_Y + TAB_H + 24; // 트리/헤더 마스킹 경계
 
 	while (!ui->quit) {
@@ -814,9 +816,8 @@ static void dfsui_showTreeView(SDL_Ui *ui, DfsSurvey *self_s,
 					   ZBTN_Y + ZBTN / 2, CENTER, 0);
 		char zlbl[16];
 		snprintf(zlbl, sizeof(zlbl), "%d%%", scale);
-		dfsui_drawText(ui, zlbl, ui->font_ssmall, COLOR_GRAY,
-					   (ZOUT_X + ZIN_X + ZBTN) / 2, ZBTN_Y + ZBTN + 8, CENTER,
-					   0);
+		dfsui_drawText(ui, zlbl, ui->font_small, COLOR_GRAY, ZOUT_X - 16,
+					   ZBTN_Y + ZBTN / 2, CENTER, 0);
 
 		SDL_RenderPresent(ui->renderer);
 		ui->is_mouse_down = false;
@@ -834,7 +835,7 @@ static void dfsui_showCodex(SDL_Ui *ui, DfsSurvey *s,
 	int oy = 0, dragging = 0, dsy = 0, doy = 0;
 	const int BACK_X = SV_MAIN_X, BACK_Y = 36, BACK_W = 110, BACK_H = 40;
 	const int TOPMASK = 150;
-	const int LX = SV_MAIN_X, LW = 920, CARDH = 88;
+	const int LX = SV_MAIN_X, LW = 920, CARDH = 112;
 
 	while (!ui->quit) {
 		SDL_Event event;
@@ -915,14 +916,14 @@ static void dfsui_showCodex(SDL_Ui *ui, DfsSurvey *s,
 								mine ? COLOR_WHITEPINK : COLOR_WHITE);
 				dfsui_drawText(ui, n->name, ui->font_normal,
 							   mine ? COLOR_SUPERPINK : COLOR_DURTYPINK, LX + 24,
-							   y + 12, TOPLEFT, LW - 220);
+							   y + 14, TOPLEFT, LW - 220);
 				if (mine) {
 					dfsui_drawText(ui, "★ 내 유형", ui->font_small,
-								   COLOR_SUPERPINK, LX + LW - 130, y + 16,
+								   COLOR_SUPERPINK, LX + LW - 130, y + 18,
 								   TOPLEFT, 0);
 				}
-				dfsui_drawText(ui, n->desc, ui->font_ssmall, COLOR_GRAY,
-							   LX + 24, y + 48, TOPLEFT, LW - 48);
+				dfsui_drawText(ui, n->desc, ui->font_small, COLOR_GRAY,
+							   LX + 24, y + 54, TOPLEFT, LW - 48);
 				y += CARDH + 12;
 			}
 			y += 14;
