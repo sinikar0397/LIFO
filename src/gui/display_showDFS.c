@@ -561,7 +561,7 @@ static int treeview_layout(const DfsTree *t, int node, int depth, int *col,
 // scale(%): 60~180. 노드/간격/박스를 확대·축소. 유형 코드(영문)는 표시하지 않음.
 static void treeview_draw(SDL_Ui *ui, const DfsTree *t, const char *highlight,
 						  int baseX, int baseY, int scale) {
-	int colW = 260 * scale / 100;
+	int colW = 500 * scale / 100; // 형제 간선 라벨(pill)이 가로로 겹치지 않게 넓힘
 	int rowH = 200 * scale / 100;
 	int boxW = 224 * scale / 100;
 	int lh = 80 * scale / 100;	 // 잎/단순 분기 박스 높이
@@ -950,8 +950,8 @@ static void dfsui_showCodex(SDL_Ui *ui, DfsSurvey *s,
 #define DFSUI_SUB_X (SV_MAIN_X + 720)
 #define DFSUI_SUB_W 180
 #define DFSUI_SUB_H 30
-#define DFSUI_SELF_Y(i) (212 + (i) * 36)
-#define DFSUI_IDEAL_Y(i) (392 + (i) * 36)
+#define DFSUI_SELF_Y(i) (210 + (i) * 32)
+#define DFSUI_IDEAL_Y(i) (390 + (i) * 32)
 
 // 결과 줄의 코드가 실제 leaf면 세분화 가능. 중간에 멈춘(분기 노드) 결과는 -1.
 static int dfsui_canExtend(DfsSurvey *s, char codes[][MAX_TYPE_LEN], int i) {
@@ -1034,14 +1034,16 @@ static void dfsui_drawResultLine(SDL_Ui *ui, const char *title,
 	}
 }
 
-static void dfsui_showSurveyResult(SDL_Ui *ui, People *me, DfsSurvey *self_s,
+// 반환: 0 = 홈/사이드바 등으로 나감, 1 = '재설문' 요청(호출부에서 다시 진단)
+static int dfsui_showSurveyResult(SDL_Ui *ui, People *me, DfsSurvey *self_s,
 								   char self_codes[][MAX_TYPE_LEN],
 								   char self_names[][DFS_NAME_LEN],
 								   DfsSurvey *ideal_s,
 								   char ideal_codes[][MAX_TYPE_LEN],
 								   char ideal_names[][DFS_NAME_LEN]) {
 	int bx = SV_MAIN_X, bw = 200, byy = 540;
-	int extended = 0; // 세분화는 설문당 1회 (재설문해야 다시 가능)
+	// 세분화는 설문당 1회. me에 들고 있어 홈/다른 화면을 다녀와도 유지된다.
+	int extended = me->dfs_extended;
 	while (!ui->quit) {
 		SDL_Event event;
 		SDL_PumpEvents();
@@ -1061,7 +1063,7 @@ static void dfsui_showSurveyResult(SDL_Ui *ui, People *me, DfsSurvey *self_s,
 				break;
 			case SDL_KEYDOWN:
 				if (event.key.keysym.sym == SDLK_RETURN) {
-					return;
+					return 0;
 				}
 				break;
 			}
@@ -1070,11 +1072,11 @@ static void dfsui_showSurveyResult(SDL_Ui *ui, People *me, DfsSurvey *self_s,
 			if (dfsui_inRect(ui->mx, ui->my, bx, byy, bw, 56)) {
 				ui->next_state = HOME;
 				ui->is_mouse_down = false; // 클릭이 홈 화면으로 새어들지 않게
-				return;
+				return 0;
 			}
 			if (dfsui_handleSidebarClick(ui, 2)) {
 				ui->is_mouse_down = false;
-				return;
+				return 0;
 			}
 			// 트리 시각화 보기
 			if (dfsui_inRect(ui->mx, ui->my, SV_MAIN_X + 220, byy, 200, 56)) {
@@ -1082,9 +1084,14 @@ static void dfsui_showSurveyResult(SDL_Ui *ui, People *me, DfsSurvey *self_s,
 								   ideal_codes);
 				ui->is_mouse_down = false;
 				if (ui->next_state != DFS) {
-					return; // 트리 화면에서 사이드바로 나갔으면 따른다
+					return 0; // 트리 화면에서 사이드바로 나갔으면 따른다
 				}
 				continue;
+			}
+			// 재설문: 결과를 지우지 않고 다시 진단 (호출부에서 처리)
+			if (dfsui_inRect(ui->mx, ui->my, SV_MAIN_X + 440, byy, 200, 56)) {
+				ui->is_mouse_down = false;
+				return 1;
 			}
 			// 세분화는 '내 성향' 트리에서만, 설문당 1회.
 			int handled = 0;
@@ -1095,6 +1102,7 @@ static void dfsui_showSurveyResult(SDL_Ui *ui, People *me, DfsSurvey *self_s,
 					if (dfsui_resultExtend(ui, me, self_s, self_codes,
 										   self_names, ideal_s, i)) {
 						extended = 1;
+						me->dfs_extended = 1; // 화면 재진입에도 유지
 					}
 					handled = 1;
 				}
@@ -1102,7 +1110,7 @@ static void dfsui_showSurveyResult(SDL_Ui *ui, People *me, DfsSurvey *self_s,
 			ui->is_mouse_down = false;
 			// 세분화 화면에서 사이드바로 나갔으면 그 이동을 따른다.
 			if (handled && ui->next_state != DFS) {
-				return;
+				return 0;
 			}
 		}
 
@@ -1156,11 +1164,78 @@ static void dfsui_showSurveyResult(SDL_Ui *ui, People *me, DfsSurvey *self_s,
 		dfsui_drawText(ui, "트리 보기", ui->font_normal, COLOR_VIOLET,
 					   SV_MAIN_X + 320, byy + 28, CENTER, 0);
 
+		int rs = dfsui_inRect(ui->mx, ui->my, SV_MAIN_X + 440, byy, 200, 56);
+		dfsui_drawRound(ui, SV_MAIN_X + 440, byy, 200, 56, 14, COLOR_DURTYPINK);
+		dfsui_drawRound(ui, SV_MAIN_X + 442, byy + 2, 196, 52, 12,
+						rs ? COLOR_WHITEPINK : COLOR_WHITE);
+		dfsui_drawText(ui, "다시 진단하기", ui->font_normal, COLOR_DURTYPINK,
+					   SV_MAIN_X + 540, byy + 28, CENTER, 0);
+
 		SDL_RenderPresent(ui->renderer);
 		ui->is_mouse_down = false;
 		ui->is_mouse_up = false;
 		ui->is_mouse_move = false;
 	}
+	return 0;
+}
+
+// me에 저장된 유형 코드로 결과 codes/names 배열을 채운다 (이전 결과 표시용).
+// 코드로 트리에서 잎을 찾아 이름을 얻고, 못 찾으면 '(미진단)'으로 둔다.
+static void dfsui_fillStored(DfsSurvey *s, char codes[][MAX_TYPE_LEN],
+							 char names[][DFS_NAME_LEN], const char *stored[]) {
+	for (int i = 0; i < s->n_trees && i < 3; i++) {
+		const char *c = stored[i] ? stored[i] : "";
+		strncpy(codes[i], c, MAX_TYPE_LEN - 1);
+		codes[i][MAX_TYPE_LEN - 1] = '\0';
+		names[i][0] = '\0';
+		if (codes[i][0]) {
+			int li = dfs_find_leaf_by_code(&s->trees[i], codes[i]);
+			if (li >= 0) {
+				strncpy(names[i], s->trees[i].nodes[li].name, DFS_NAME_LEN - 1);
+				names[i][DFS_NAME_LEN - 1] = '\0';
+			}
+		}
+		if (!names[i][0]) {
+			strncpy(names[i], "(미진단)", DFS_NAME_LEN - 1);
+			names[i][DFS_NAME_LEN - 1] = '\0';
+		}
+	}
+}
+
+// 자기/이상형 설문을 모두 진행하고 결과를 me에 저장한다. 완료 1, 중단 0.
+static int dfsui_runDfsSurveys(SDL_Ui *ui, People *me, DfsSurvey *self_s,
+							   char self_codes[][MAX_TYPE_LEN],
+							   char self_names[][DFS_NAME_LEN],
+							   DfsSurvey *ideal_s,
+							   char ideal_codes[][MAX_TYPE_LEN],
+							   char ideal_names[][DFS_NAME_LEN]) {
+	if (!dfsui_runSurvey(ui, self_s, self_codes, self_names)) {
+		return 0;
+	}
+	strncpy(me->type, self_codes[0], MAX_TYPE_LEN - 1);
+	me->type[MAX_TYPE_LEN - 1] = '\0';
+	if (self_s->n_trees > 1) {
+		people_set_people_attach(me, self_codes[1]); // 애착 차원 결과 저장
+	}
+	if (self_s->n_trees > 2) {
+		people_set_people_lang(me, self_codes[2]); // 사랑의 언어 결과 저장
+	}
+	login_update_account(me);
+
+	if (!dfsui_runSurvey(ui, ideal_s, ideal_codes, ideal_names)) {
+		return 0;
+	}
+	strncpy(me->love_type, ideal_codes[0], MAX_TYPE_LEN - 1);
+	me->love_type[MAX_TYPE_LEN - 1] = '\0';
+	if (ideal_s->n_trees > 1) {
+		people_set_people_love_attach(me, ideal_codes[1]); // 이상형 애착 저장
+	}
+	if (ideal_s->n_trees > 2) {
+		people_set_people_love_lang(me, ideal_codes[2]); // 이상형 사랑의 언어
+	}
+	me->dfs_extended = 0; // 새 설문이므로 세분화 1회 권한을 다시 부여
+	login_update_account(me);
+	return 1;
 }
 
 void display_showDFS(SDL_Ui *ui, People *me) {
@@ -1185,34 +1260,34 @@ void display_showDFS(SDL_Ui *ui, People *me) {
 	char ideal_codes[DFS_MAX_TREES][MAX_TYPE_LEN];
 	char ideal_names[DFS_MAX_TREES][DFS_NAME_LEN];
 
-	if (!dfsui_runSurvey(ui, self_s, self_codes, self_names)) {
+	// 이전 진단 결과가 있으면 바로 재설문하지 않고 그 결과를 먼저 보여준다.
+	// (없으면 처음이므로 곧장 설문 진행)
+	if (me->type[0] != '\0') {
+		const char *self_stored[3] = {me->type, me->attach, me->lang};
+		const char *ideal_stored[3] = {me->love_type, me->love_attach,
+									   me->love_lang};
+		dfsui_fillStored(self_s, self_codes, self_names, self_stored);
+		dfsui_fillStored(ideal_s, ideal_codes, ideal_names, ideal_stored);
+	} else if (!dfsui_runDfsSurveys(ui, me, self_s, self_codes, self_names,
+									ideal_s, ideal_codes, ideal_names)) {
 		goto done;
 	}
-	strncpy(me->type, self_codes[0], MAX_TYPE_LEN - 1);
-	me->type[MAX_TYPE_LEN - 1] = '\0';
-	if (self_s->n_trees > 1) {
-		people_set_people_attach(me, self_codes[1]); // 애착 차원 결과 저장
-	}
-	if (self_s->n_trees > 2) {
-		people_set_people_lang(me, self_codes[2]); // 사랑의 언어 결과 저장
-	}
-	login_update_account(me);
 
-	if (!dfsui_runSurvey(ui, ideal_s, ideal_codes, ideal_names)) {
-		goto done;
+	// 결과 화면. '다시 진단하기'를 누르면 재설문하고 결과를 갱신한 뒤 복귀.
+	while (!ui->quit) {
+		int r = dfsui_showSurveyResult(ui, me, self_s, self_codes, self_names,
+									   ideal_s, ideal_codes, ideal_names);
+		if (r != 1) {
+			break; // 홈/사이드바 등으로 나감
+		}
+		if (!dfsui_runDfsSurveys(ui, me, self_s, self_codes, self_names, ideal_s,
+								 ideal_codes, ideal_names)) {
+			// 재설문 중단: 사이드바로 나갔으면 따르고, 아니면 이전 결과로 복귀
+			if (ui->next_state != DFS) {
+				goto done;
+			}
+		}
 	}
-	strncpy(me->love_type, ideal_codes[0], MAX_TYPE_LEN - 1);
-	me->love_type[MAX_TYPE_LEN - 1] = '\0';
-	if (ideal_s->n_trees > 1) {
-		people_set_people_love_attach(me, ideal_codes[1]); // 이상형 애착 저장
-	}
-	if (ideal_s->n_trees > 2) {
-		people_set_people_love_lang(me, ideal_codes[2]); // 이상형 사랑의 언어
-	}
-	login_update_account(me);
-
-	dfsui_showSurveyResult(ui, me, self_s, self_codes, self_names, ideal_s,
-						   ideal_codes, ideal_names);
 
 done:
 	free(self_s);
