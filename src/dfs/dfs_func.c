@@ -3,12 +3,6 @@
 #include <stdio.h>
 #include <string.h>
 
-// static void dfs_clear_input_buffer(void) {
-// 	int ch;
-// 	while ((ch = getchar()) != '\n' && ch != EOF) {
-// 	}
-// }
-
 static void dfs_copy_text(char *dst, size_t dst_size, const char *src) {
 	if (dst_size == 0) {
 		return;
@@ -21,19 +15,6 @@ static void dfs_copy_text(char *dst, size_t dst_size, const char *src) {
 	strncpy(dst, src, dst_size - 1);
 	dst[dst_size - 1] = '\0';
 }
-
-// int dfs_read_int_in_range(int min_value, int max_value) {
-// 	int value;
-
-// 	while (1) {
-// 		printf("입력 : ");
-// 		if (scanf("%d", &value) == 1 && min_value <= value && value <= max_value) {
-// 			return value;
-// 		}
-// 		dfs_clear_input_buffer();
-// 		printf("%d부터 %d 사이의 숫자를 입력해주세요.\n", min_value, max_value);
-// 	}
-// }
 
 void dfs_set_branch(DfsTreeNode *n, const char *q, const char *o0,
 					int c0, const char *o1, int c1) {

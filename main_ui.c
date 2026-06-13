@@ -12,7 +12,7 @@ int main(int argc, char **argv) {
 	ui_asdf.window = window;
 	ui_asdf.renderer = renderer;
 	SDL_Ui *ui = &ui_asdf;
-	People *p;
+	People *p = NULL;
 	login_init();
 	gui_initUi(ui);
 
@@ -20,6 +20,10 @@ int main(int argc, char **argv) {
 
 		switch (ui->next_state) {
 		case LOGIN:
+			if (p != NULL) {
+				people_delete_people(p);
+				p = NULL;
+			}
 			p = display_showLogin(ui);
 			break;
 		case HOME:
@@ -32,9 +36,13 @@ int main(int argc, char **argv) {
 			display_showBFS(ui, p);
 			break;
 		case MST:
+			display_showMST(ui, p);
 			break;
 		}
 	}
 
+	if (p != NULL) {
+		people_delete_people(p);
+	}
 	gui_closeUi(ui);
 }

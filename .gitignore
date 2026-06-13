@@ -18,3 +18,7 @@ build/
 *.exe
 *.o
 *.obj
+
+# 앱 실행 중 생성되는 커플 공간 데이터
+database/couples/*.json
+database/matches/*.json
