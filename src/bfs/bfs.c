@@ -1,9 +1,16 @@
 #include "../headers.h"
 #include "bfs.h"
 #include "../dfs/dfs.h"
+#define BLOCK -500000000
 
 // compat(People *a, People *b) 함수 있어야 함!!
 // dfs에서 구현 후 헤더로 불러와야 됨
+
+int bfsCompat(People *a, People *b) {
+	int block = 0;
+	block += BLOCK * (isBlocked(a, b) + isBlocked(b, a));
+	return compat(a, b) + block;
+}
 
 // 큐 구현
 typedef struct Queue {
@@ -140,7 +147,7 @@ void makePrefList(MatchingInfo infos[], int user_idx, int candidates[], int cand
 		if (infos[cand_idx].person->status != AVAILABLE) continue;
 
 		tmp[tmp_size].idx = cand_idx;
-		tmp[tmp_size].score = compat(infos[user_idx].person, infos[cand_idx].person);
+		tmp[tmp_size].score = bfsCompat(infos[user_idx].person, infos[cand_idx].person);
 		tmp_size++;
 	}
 
@@ -317,6 +324,39 @@ int stableMatching(MatchingInfo infos[], int n, int proposers[], int proposer_cn
 	return result_cnt;
 }
 
-void makeHate(People *a, People *b) {
+int isBlocked(People *a, People *b) {
+	for (int i = 0; i < a->blocked_cnt; i++) {
+		if (strcmp(a->blocked_ids[i], b->id) == 0) {
+			return 1;
+		}
+	}
+	return 0;
+}
 
+void blockUser(People *a, People *b) {
+	if (a->blocked_cnt >= MAX_BLOCKED) {
+		printf("최대 차단 인원 %d명 초과\n", MAX_BLOCKED);
+		return;
+	}
+
+	// 이미 차단된 경우
+	if (isBlocked(a, b)) {
+		return;
+	}
+
+	strcpy(a->blocked_ids[a->blocked_cnt], b->id);
+	a->blocked_cnt++;
+	return;
+}
+
+void unblockUser(People *a, People *b) {
+	for (int i = 0; i < a->blocked_cnt; i++) {
+		if (strcmp(a->blocked_ids[i], b->id) == 0) {
+			if (i != a->blocked_cnt - 1) {
+				strcpy(a->blocked_ids[i], a->blocked_ids[a->blocked_cnt-1]);
+			}
+			a->blocked_cnt--;
+			return;
+		}
+	}
 }
