@@ -64,6 +64,8 @@ typedef struct People {
 	Password pw;
 	char type[MAX_TYPE_LEN];
 	char love_type[MAX_TYPE_LEN];
+	char attach[MAX_TYPE_LEN];	   // 내 애착 유형 (AS/AV/AX/FA), 미설정 시 ""
+	char love_attach[MAX_TYPE_LEN]; // 이상형의 애착 유형, 미설정 시 ""
 	enum Gender gen;
 	int age;
 	MatchStatus status;
@@ -156,6 +158,18 @@ void people_set_people_type(People *P, char type[]);
 People의 이상형의 성격유형에 대한 setter
 */
 void people_set_people_love_type(People *P, char love_type[]);
+
+/*
+@brief
+People의 애착 유형에 대한 setter
+*/
+void people_set_people_attach(People *P, char attach[]);
+
+/*
+@brief
+People의 이상형의 애착 유형에 대한 setter
+*/
+void people_set_people_love_attach(People *P, char love_attach[]);
 
 /*
 @brief

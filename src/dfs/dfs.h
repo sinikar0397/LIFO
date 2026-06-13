@@ -40,6 +40,10 @@ void dfs_print_type_description(const char type[]);
 // 유형 코드(예: "DTF")에 해당하는 유형명을 돌려준다. 못 찾으면 루트명을 반환.
 const char *dfs_type_name(const char type[]);
 
+// 애착 유형(AS/AV/AX/FA) 사이의 유사도(0~100)와 유형명.
+int dfs_attach_similarity(const char ideal_type[], const char other_type[]);
+const char *dfs_attach_name(const char code[]);
+
 int compat(People *a, People *b);
 
 // ───────────────────────────────────────────────
@@ -94,6 +98,13 @@ void dfs_build_ideal_survey(DfsSurvey *survey);
 
 // 루트에서 잎까지의 최대 질문 수.
 int dfs_tree_max_depth(const DfsTree *tree);
+
+// 트리 내 두 유형 코드 사이의 가중 거리/유사도(0~100).
+// 깊을수록(세분화일수록) 간선 가중치가 작아 차이가 점수에 덜 반영된다.
+// 세분화로 추가된 유형 코드도 그대로 계산되므로 동적 트리를 그대로 지원한다.
+int dfs_tree_distance(const DfsTree *tree, const char a[], const char b[]);
+int dfs_tree_similarity(const DfsTree *tree, const char ideal[],
+						const char other[]);
 
 // 코드로 잎 노드 index를 찾는다. 없으면 -1.
 int dfs_find_leaf_by_code(const DfsTree *tree, const char code[]);
