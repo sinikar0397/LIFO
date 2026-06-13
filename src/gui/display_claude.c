@@ -1084,6 +1084,7 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 	const int LEFT = 280;
 	const int RIGHT = 1250;
 
+	// ── 사이드바 ──
 	Object sidebar = gui_initObject(
 		ui, BOX, 0, 0, TOPLEFT,
 		(ObjectParam){.box = {SIDEBAR_W, WINDOW_HEIGHT, COLOR_WHITEPINK, 0}});
@@ -1091,7 +1092,6 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 		ui, TEXT, 110, 44, MIDTOP,
 		(ObjectParam){.text = {"LIFO", ui->font_bbsig, COLOR_SUPERPINK}});
 
-	// 사이드바
 	enum { NAV_HOME, NAV_BFS, NAV_DFS, NAV_PROFILE, NAV_CNT };
 	char *nav_labels[NAV_CNT] = {"홈", "매칭", "설문", "프로필"};
 	int nav_y[NAV_CNT] = {150, 150 + 65, 150 + 65 * 2, 150 + 65 * 3};
@@ -1113,21 +1113,22 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 		ui, TEXT, 72, WINDOW_HEIGHT - 30 - 51 / 2, CENTER,
 		(ObjectParam){.text = {"설정", ui->font_normal, COLOR_DURTYPINK}});
 
-	// 메인 기능 화면
-	Object t_greet =
+	// ── 페이지 제목 ──
+	Object t_title =
 		gui_initObject(ui, TEXT, LEFT, 36, TOPLEFT,
 					   (ObjectParam){.text = {"Best Fit Stable-Matching",
 											  ui->font_big, COLOR_BLACK}});
 
-	// 카드 화면
-	int CARD_X = LEFT + 250;
-	int CARD_Y = 100;
-	int CARD_W = 400;				  // 카드 너비
-	int CARD_H = 580;				  // 카드 높이
-	int BTN_X = CARD_X + CARD_W + 40; // 버튼 x 시작
-	int BTN_W = 200;
-	int BTN_H = 60;
-	int BTN_GAP = 80; // 버튼 간격
+	// ── 카드 영역 레이아웃 ──
+	// 카드: 왼쪽 절반(상대 정보), 오른쪽에 버튼 3개 세로 배치
+	const int CARD_X = LEFT;
+	const int CARD_Y = 100;
+	const int CARD_W = 620;				  // 카드 너비
+	const int CARD_H = 480;				  // 카드 높이
+	const int BTN_X = LEFT + CARD_W + 40; // 버튼 x 시작
+	const int BTN_W = 200;
+	const int BTN_H = 60;
+	const int BTN_GAP = 80; // 버튼 간격
 
 	// 카드 (border + fill)
 	Object card_border = gui_initObject(
@@ -1139,28 +1140,25 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 
 	// 아바타 (카드 상단 중앙)
 	Object avatar =
-		gui_initObject(ui, BOX, CARD_X + CARD_W / 2, CARD_Y + 170, CENTER,
-					   (ObjectParam){.box = {300, 300, COLOR_PINK, 26}});
+		gui_initObject(ui, BOX, CARD_X + CARD_W / 2, CARD_Y + 120, CENTER,
+					   (ObjectParam){.box = {120, 120, COLOR_PINK, 26}});
 
 	// 카드 내 텍스트 오브젝트들 (내용은 루프마다 setText로 갱신)
-	Object t_card_name =
-		gui_initObject(ui, TEXT, CARD_X + 40, CARD_Y + 340, TOPLEFT,
-					   (ObjectParam){.text = {"아야츠노 유니", ui->font_big,
-											  COLOR_DURTYPINK}});
+	Object t_card_name = gui_initObject(
+		ui, TEXT, CARD_X + CARD_W / 2, CARD_Y + 200, MIDTOP,
+		(ObjectParam){.text = {" ", ui->font_big, COLOR_DURTYPINK}});
 	Object t_card_age = gui_initObject(
-		ui, TEXT, CARD_X + 40, CARD_Y + 370, TOPLEFT,
-		(ObjectParam){.text = {"4살", ui->font_normal, COLOR_GRAY}});
+		ui, TEXT, CARD_X + CARD_W / 2, CARD_Y + 260, MIDTOP,
+		(ObjectParam){.text = {" ", ui->font_normal, COLOR_GRAY}});
 	Object t_card_type = gui_initObject(
-		ui, TEXT, CARD_X + 40, CARD_Y + 400, TOPLEFT,
-		(ObjectParam){
-			.text = {"유니콘나라 유니콘", ui->font_normal, COLOR_DURTYPINK}});
+		ui, TEXT, CARD_X + CARD_W / 2, CARD_Y + 310, MIDTOP,
+		(ObjectParam){.text = {" ", ui->font_small, COLOR_DURTYPINK}});
 	Object t_card_lovetype = gui_initObject(
-		ui, TEXT, CARD_X + 40, CARD_Y + 430, TOPLEFT,
-		(ObjectParam){.text = {"아르냥", ui->font_normal, COLOR_GRAY}});
-
-	Object card_set[10] = {card_border,	   card_fill,  avatar,
-						   t_card_name,	   t_card_age, t_card_type,
-						   t_card_lovetype};
+		ui, TEXT, CARD_X + CARD_W / 2, CARD_Y + 350, MIDTOP,
+		(ObjectParam){.text = {" ", ui->font_small, COLOR_GRAY}});
+	Object t_card_status = gui_initObject(
+		ui, TEXT, CARD_X + CARD_W / 2, CARD_Y + 400, MIDTOP,
+		(ObjectParam){.text = {" ", ui->font_small, COLOR_GRAY}});
 
 	// ── 버튼 3개: 수락 / 채팅 / 거절 ──
 	int btn_y_accept = CARD_Y + 60;
@@ -1175,7 +1173,7 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 		(ObjectParam){.box = {BTN_W - 4, BTN_H - 4, COLOR_SUPERPINK, 14}});
 	Object t_accept = gui_initObject(
 		ui, TEXT, BTN_X + BTN_W / 2, btn_y_accept + BTN_H / 2, CENTER,
-		(ObjectParam){.text = {"수락", ui->font_normal, COLOR_WHITE}});
+		(ObjectParam){.text = {"✓ 수락", ui->font_normal, COLOR_WHITE}});
 
 	Object btn_chat_border =
 		gui_initObject(ui, BOX, BTN_X, btn_y_chat, TOPLEFT,
@@ -1185,7 +1183,7 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 		(ObjectParam){.box = {BTN_W - 4, BTN_H - 4, COLOR_WHITEPINK, 14}});
 	Object t_chat = gui_initObject(
 		ui, TEXT, BTN_X + BTN_W / 2, btn_y_chat + BTN_H / 2, CENTER,
-		(ObjectParam){.text = {"채팅", ui->font_normal, COLOR_DURTYPINK}});
+		(ObjectParam){.text = {"✉ 채팅", ui->font_normal, COLOR_DURTYPINK}});
 
 	Object btn_reject_border = gui_initObject(
 		ui, BOX, BTN_X, btn_y_reject, TOPLEFT,
@@ -1195,31 +1193,31 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 		(ObjectParam){.box = {BTN_W - 4, BTN_H - 4, COLOR_WHITE, 14}});
 	Object t_reject = gui_initObject(
 		ui, TEXT, BTN_X + BTN_W / 2, btn_y_reject + BTN_H / 2, CENTER,
-		(ObjectParam){.text = {"거절", ui->font_normal, COLOR_GRAY}});
+		(ObjectParam){.text = {"✕ 거절", ui->font_normal, COLOR_GRAY}});
 
 	// ── 매칭 실행 버튼 (카드 아래) ──
-	const int RUN_Y = CARD_Y + CARD_H - 52 - 24;
-	Object btn_run = gui_initObject(
-		ui, BOX, CARD_X + 50, RUN_Y, TOPLEFT,
-		(ObjectParam){.box = {CARD_W - 100, 52, COLOR_SUPERPINK, 14}});
+	const int RUN_Y = CARD_Y + CARD_H + 24;
+	Object btn_run =
+		gui_initObject(ui, BOX, CARD_X, RUN_Y, TOPLEFT,
+					   (ObjectParam){.box = {CARD_W, 52, COLOR_SUPERPINK, 14}});
 	Object t_run = gui_initObject(
 		ui, TEXT, CARD_X + CARD_W / 2, RUN_Y + 26, CENTER,
 		(ObjectParam){.text = {"매칭 실행", ui->font_normal, COLOR_WHITE}});
 
+	// ── 상태 메시지 텍스트 ──
 	Object t_status = gui_initObject(
-		ui, TEXT, LEFT, CARD_Y + CARD_H - 90, TOPLEFT,
+		ui, TEXT, LEFT, CARD_Y + CARD_H + 90, TOPLEFT,
 		(ObjectParam){.text = {" ", ui->font_small, COLOR_GRAY}});
 
 	// ── 매칭 상태 ──
 	// me의 index를 infos에서 찾기
 	int me_idx = -1;
 	for (int i = 0; i < n; i++) {
-		if (infos[i].person != NULL && strcmp(infos[i].person->id, me->id)) {
+		if (infos[i].person == me) {
 			me_idx = i;
 			break;
 		}
 	}
-	// printf("%d\n", me_idx);
 
 	// stableMatching 결과 저장용
 	Pair result[MAX_PEOPLE];
@@ -1254,20 +1252,18 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 			}
 		}
 
-		if (ui->is_mouse_up) {
-			// todo if()if()DFS;
-
+		if (ui->is_mouse_down) {
+			// ── 사이드바 네비게이션 ──
 			if (gui_isInObject(&nav_box[NAV_HOME], ui->mx, ui->my)) {
 				ui->next_state = HOME;
 				break;
 			} else if (gui_isInObject(&nav_box[NAV_DFS], ui->mx, ui->my)) {
 				ui->next_state = DFS;
 				break;
-			} // 네비 더 짜기
+			}
 
 			// ── 매칭 실행 ──
-			else if (gui_isInObject(&btn_run, ui->mx, ui->my) &&
-					 !(matched_idx >= 0 && infos[matched_idx].person != NULL)) {
+			else if (gui_isInObject(&btn_run, ui->mx, ui->my)) {
 				if (me_idx == -1) {
 					strcpy(status_msg, "내 계정을 찾을 수 없습니다.");
 					status_color = COLOR_SUPERPINK;
@@ -1275,7 +1271,8 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 					strcpy(status_msg, "이미 매칭된 상태입니다.");
 					status_color = COLOR_SUPERPINK;
 				} else {
-					me->status = AVAILABLE; //?
+					// AVAILABLE 상태로 초기화 후 매칭 실행
+					me->status = AVAILABLE;
 
 					int proposers[MAX_PEOPLE];
 					int proposer_cnt;
@@ -1334,7 +1331,7 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 					status_color = COLOR_SUPERPINK;
 				} else {
 					confirmMatch(infos, me_idx, matched_idx);
-					strcpy(status_msg, "매칭이 성사되었습니다!");
+					strcpy(status_msg, "매칭이 성사되었습니다! 💕");
 					status_color = COLOR_GREEN;
 				}
 			}
@@ -1380,10 +1377,10 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 								? COLOR_DURTYPINK
 								: COLOR_SUPERPINK;
 
+		// ── 사이드바 텍스트 색상 갱신 ──
 		for (int i = 0; i <= NAV_CNT; i++) {
 			int active = (i == NAV_BFS);
 			int hover = gui_isInObject(&nav_box[i], ui->mx, ui->my);
-			nav_box[i].textcolor = active ? COLOR_PINK : COLOR_PINK; //??
 			SDL_Color want = (active || hover) ? COLOR_WHITE : COLOR_DURTYPINK;
 			if (want.r != nav_txt[i].textcolor.r ||
 				want.g != nav_txt[i].textcolor.g ||
@@ -1424,13 +1421,35 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 				strcpy(love_str, "이상형: 미설정");
 			}
 			gui_setText(&t_card_lovetype, love_str);
+
+			// 매칭 상태
+			char st_str[32];
+			switch (partner->status) {
+			case PROPOSED:
+				strcpy(st_str, "답변 대기 중");
+				break;
+			case MATCHED:
+				strcpy(st_str, "매칭 성사 ✓");
+				break;
+			default:
+				strcpy(st_str, " ");
+				break;
+			}
+			gui_setColorText(&t_card_status, partner->status == MATCHED
+												 ? COLOR_GREEN
+												 : COLOR_GRAY);
+			gui_setText(&t_card_status, st_str);
+
 		} else {
+			// 상대 없음 → 카드 비우기
 			gui_setText(&t_card_name, "상대를 찾는 중...");
 			gui_setText(&t_card_age, " ");
 			gui_setText(&t_card_type, " ");
 			gui_setText(&t_card_lovetype, " ");
+			gui_setText(&t_card_status, " ");
 		}
 
+		// 상태 메시지 갱신
 		gui_setColorText(&t_status, status_color);
 		gui_setText(&t_status, status_msg[0] ? status_msg : " ");
 
@@ -1438,6 +1457,7 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 		SDL_SetRenderDrawColor(ui->renderer, 255, 255, 255, 255);
 		SDL_RenderClear(ui->renderer);
 
+		// 사이드바
 		gui_presentObject(&sidebar);
 		gui_presentObject(&t_logo);
 		for (int i = 0; i <= NAV_CNT; i++) {
@@ -1449,7 +1469,8 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 			gui_presentObject(&nav_txt[i]);
 		}
 
-		gui_presentObject(&t_greet);
+		// 제목
+		gui_presentObject(&t_title);
 
 		// 카드
 		gui_presentObject(&card_border);
@@ -1459,6 +1480,7 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 		gui_presentObject(&t_card_age);
 		gui_presentObject(&t_card_type);
 		gui_presentObject(&t_card_lovetype);
+		gui_presentObject(&t_card_status);
 
 		// 버튼 3개
 		gui_presentObject(&btn_accept_border);
@@ -1474,11 +1496,10 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 		gui_presentObject(&t_reject);
 
 		// 매칭 실행 버튼
-		if (!(matched_idx >= 0 && infos[matched_idx].person != NULL)) {
-			gui_presentObject(&btn_run);
-			gui_presentObject(&t_run);
-		}
+		gui_presentObject(&btn_run);
+		gui_presentObject(&t_run);
 
+		// 상태 메시지
 		gui_presentObject(&t_status);
 
 		SDL_RenderPresent(ui->renderer);
@@ -1496,8 +1517,8 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 // ───────────────────────────────────────────────
 // 설문(DFS) 화면 — image 2 스타일
 // 즉시 모드(immediate-mode) 렌더링 헬퍼들. TEXT는 매 프레임 텍스처를 만들고
-// 바로 파괴하므로 누수가 없고, 둥근 BOX는 텍스처를 만들지 않으므로
-// 안전하다. ───────────────────────────────────────────────
+// 바로 파괴하므로 누수가 없고, 둥근 BOX는 텍스처를 만들지 않으므로 안전하다.
+// ───────────────────────────────────────────────
 
 // 근데 읽어보니까 코드 씹창나있어서 걍 다 다시짜는게 나을수도;; 그냥 밑에
 // 참고하는 느낌으로 위에 display_showHome()양식 맞춰서 다시 짜세요
@@ -1521,8 +1542,7 @@ static void s_drawRound(SDL_Ui *ui, int x, int y, int w, int h, int radius,
 	gui_presentObject(&o);
 }
 
-// 즉시 모드 텍스트. wrap>0이면 그 폭으로 줄바꿈. 매 프레임 텍스처
-// 생성/파괴.
+// 즉시 모드 텍스트. wrap>0이면 그 폭으로 줄바꿈. 매 프레임 텍스처 생성/파괴.
 static void s_drawText(SDL_Ui *ui, const char *text, TTF_Font *font,
 					   SDL_Color color, int x, int y, AnchorEnum anchor,
 					   int wrap) {
@@ -1758,8 +1778,7 @@ static int display_runTree(SDL_Ui *ui, DfsTree *tree, const char *big_title,
 }
 
 // 설문 하나(대주제 트리 묶음)를 순서대로 진행한다.
-// 모든 트리를 끝내면 1, 취소/창닫기면 0. 각 트리 결과를 codes/names에
-// 채운다.
+// 모든 트리를 끝내면 1, 취소/창닫기면 0. 각 트리 결과를 codes/names에 채운다.
 static int display_runSurvey(SDL_Ui *ui, DfsSurvey *survey,
 							 char codes[][MAX_TYPE_LEN],
 							 char names[][DFS_NAME_LEN]) {
@@ -2029,10 +2048,10 @@ static void display_showSurveyResult(SDL_Ui *ui, People *me, DfsSurvey *self_s,
 
 		s_drawText(ui, "진단이 완료됐어요", ui->font_big, COLOR_BLACK,
 				   SV_MAIN_X, 36, TOPLEFT, 0);
-		s_drawText(ui,
-				   "대주제별 결과예요. 매칭 유사도는 이 결과들을 합쳐 "
-				   "계산할 예정.",
-				   ui->font_small, COLOR_GRAY, SV_MAIN_X + 2, 92, TOPLEFT, 0);
+		s_drawText(
+			ui,
+			"대주제별 결과예요. 매칭 유사도는 이 결과들을 합쳐 계산할 예정.",
+			ui->font_small, COLOR_GRAY, SV_MAIN_X + 2, 92, TOPLEFT, 0);
 
 		char line[160];
 		// 내 성향 카드

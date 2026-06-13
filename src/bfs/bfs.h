@@ -3,7 +3,7 @@
 #include "../people/people.h"
 
 #define MAX_PEOPLE 5000
-
+#define PEOPLE_DATA_PATH "./database/peoples/data.jsonl"
 
 /*
  * Stable Matching 알고리즘 실행에 필요한 사용자 정보
@@ -152,5 +152,7 @@ void blockUser(People *a, People *b);
  * a도 b를, b도 a를 차단하지 않아야 매칭이 된다
  */
 void unblockUser(People *a, People *b);
+
+int bfs_loadPeopleFromDatabase(People *people[]);
 
 #endif // MATCHING_H

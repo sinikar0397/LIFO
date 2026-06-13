@@ -13,14 +13,24 @@ int main(int argc, char **argv) {
 	ui_asdf.renderer = renderer;
 	SDL_Ui *ui = &ui_asdf;
 	People *p;
+	People *people[MAX_PEOPLE] = {0};
+	MatchingInfo *infos =
+		(MatchingInfo *)calloc(MAX_PEOPLE, sizeof(MatchingInfo));
 	login_init();
 	gui_initUi(ui);
+	int n = 0;
+
+	if (infos == NULL) {
+		free(infos);
+		return 1;
+	}
 
 	while (!ui->quit) {
-
 		switch (ui->next_state) {
 		case LOGIN:
 			p = display_showLogin(ui);
+			n = bfs_loadPeopleFromDatabase(people);
+			initMatchingInfos(infos, people, n);
 			break;
 		case HOME:
 			display_showHome(ui, p);
@@ -29,7 +39,7 @@ int main(int argc, char **argv) {
 			display_showSurvey(ui, p);
 			break;
 		case BFS:
-			display_showBFS(ui, p);
+			display_showBFS(ui, p, infos, n);
 			break;
 		case MST:
 			break;
@@ -37,4 +47,5 @@ int main(int argc, char **argv) {
 	}
 
 	gui_closeUi(ui);
+	free(infos);
 }

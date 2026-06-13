@@ -1,6 +1,7 @@
-#include "../headers.h"
 #include "bfs.h"
 #include "../dfs/dfs.h"
+#include "../headers.h"
+
 #define BLOCK -500000000
 
 // compat(People *a, People *b) 함수 있어야 함!!
@@ -15,30 +16,28 @@ int bfsCompat(People *a, People *b) {
 // 큐 구현
 typedef struct Queue {
 	int total_size;
-	int data[MAX_PEOPLE+5];
+	int data[MAX_PEOPLE + 5];
 	int front;
 	int rear;
 } Queue;
 
 Queue *createQueue() {
 	Queue *q = (Queue *)malloc(sizeof(Queue));
-	if (q == NULL) return NULL;
+	if (q == NULL)
+		return NULL;
 	q->front = 0;
 	q->rear = 0;
 	q->total_size = MAX_PEOPLE + 5;
 	return q;
 }
 
-int isQueueEmpty(Queue *q) {
-	return q->front == q->rear;
-}
+int isQueueEmpty(Queue *q) { return q->front == q->rear; }
 
-int isQueueFull(Queue *q) {
-	return (q->rear+1) % q->total_size == q->front;
-}
+int isQueueFull(Queue *q) { return (q->rear + 1) % q->total_size == q->front; }
 
 void pushQueue(Queue *q, int x) {
-	if (q == NULL) return;
+	if (q == NULL)
+		return;
 	if (isQueueFull(q)) {
 		printf("Error: Queue is Full\n");
 		return;
@@ -48,7 +47,8 @@ void pushQueue(Queue *q, int x) {
 }
 
 int popQueue(Queue *q) {
-	if (q == NULL) return -1;
+	if (q == NULL)
+		return -1;
 	if (isQueueEmpty(q)) {
 		printf("Error: Queue is Empty\n");
 		return -1;
@@ -58,9 +58,9 @@ int popQueue(Queue *q) {
 	return x;
 }
 
-
 void initMatchingInfo(MatchingInfo *info, People *person) {
-	if (info == NULL) return;
+	if (info == NULL)
+		return;
 	info->person = person;
 	info->match_idx = -1;
 	info->pref_size = 0;
@@ -72,19 +72,22 @@ void initMatchingInfo(MatchingInfo *info, People *person) {
 }
 
 void initMatchingInfos(MatchingInfo infos[], People *people[], int n) {
-	if (infos == NULL || people == NULL) return;
+	if (infos == NULL || people == NULL)
+		return;
 	for (int i = 0; i < n; i++) {
 		initMatchingInfo(&infos[i], people[i]);
 	}
 }
 
 void changeStatus(MatchingInfo infos[], int idx, MatchStatus status) {
-	if (infos == NULL || idx < 0) return;
+	if (infos == NULL || idx < 0)
+		return;
 	infos[idx].person->status = status;
 }
 
 void addUser(MatchingInfo infos[], int *n, People *new_person) {
-	if (infos == NULL || n == NULL || new_person == NULL) return;
+	if (infos == NULL || n == NULL || new_person == NULL)
+		return;
 	if (*n >= MAX_PEOPLE) {
 		printf("Error: Too many people\n");
 		return;
@@ -94,7 +97,8 @@ void addUser(MatchingInfo infos[], int *n, People *new_person) {
 }
 
 void removeUser(MatchingInfo infos[], int user_idx) {
-	if (infos == NULL || user_idx < 0) return;
+	if (infos == NULL || user_idx < 0)
+		return;
 
 	int partner_idx = infos[user_idx].match_idx;
 	if (partner_idx != -1) {
@@ -111,13 +115,17 @@ void removeUser(MatchingInfo infos[], int user_idx) {
 }
 
 int collectUser(MatchingInfo infos[], int n, enum Gender gen, int result[]) {
-	if (infos == NULL || result == NULL || n <= 0) return 0;
+	if (infos == NULL || result == NULL || n <= 0)
+		return 0;
 
 	int cnt = 0;
 	for (int i = 0; i < n; i++) {
-		if (infos[i].person == NULL) continue;
-		if (infos[i].person->status != AVAILABLE) continue;
-		if (infos[i].person->gen != gen) continue;
+		if (infos[i].person == NULL)
+			continue;
+		if (infos[i].person->status != AVAILABLE)
+			continue;
+		if (infos[i].person->gen != gen)
+			continue;
 		result[cnt++] = i;
 	}
 
@@ -128,26 +136,35 @@ int compareCandidate(const void *a, const void *b) {
 	const Candidate *x = (const Candidate *)a;
 	const Candidate *y = (const Candidate *)b;
 
-	if (x->score != y->score) return y->score - x->score;
+	if (x->score != y->score)
+		return y->score - x->score;
 	return x->idx - y->idx;
 }
 
-void makePrefList(MatchingInfo infos[], int user_idx, int candidates[], int cand_size) {
-	if (infos == NULL || candidates == NULL) return;
-	if (user_idx < 0 || user_idx >= MAX_PEOPLE) return;
-	if (infos[user_idx].person == NULL) return;
+void makePrefList(MatchingInfo infos[], int user_idx, int candidates[],
+				  int cand_size) {
+	if (infos == NULL || candidates == NULL)
+		return;
+	if (user_idx < 0 || user_idx >= MAX_PEOPLE)
+		return;
+	if (infos[user_idx].person == NULL)
+		return;
 
 	Candidate tmp[MAX_PEOPLE];
 	int tmp_size = 0;
 	for (int i = 0; i < cand_size; i++) {
 		int cand_idx = candidates[i];
 
-		if (cand_idx < 0 || cand_idx >= MAX_PEOPLE) continue;
-		if (infos[cand_idx].person == NULL) continue;
-		if (infos[cand_idx].person->status != AVAILABLE) continue;
+		if (cand_idx < 0 || cand_idx >= MAX_PEOPLE)
+			continue;
+		if (infos[cand_idx].person == NULL)
+			continue;
+		if (infos[cand_idx].person->status != AVAILABLE)
+			continue;
 
 		tmp[tmp_size].idx = cand_idx;
-		tmp[tmp_size].score = bfsCompat(infos[user_idx].person, infos[cand_idx].person);
+		tmp[tmp_size].score =
+			bfsCompat(infos[user_idx].person, infos[cand_idx].person);
 		tmp_size++;
 	}
 
@@ -166,7 +183,8 @@ void makePrefList(MatchingInfo infos[], int user_idx, int candidates[], int cand
 }
 
 void makePrefLists(MatchingInfo infos[], int n) {
-	if (infos == NULL || n <= 0) return;
+	if (infos == NULL || n <= 0)
+		return;
 
 	int males[MAX_PEOPLE];
 	int females[MAX_PEOPLE];
@@ -185,7 +203,8 @@ void makePrefLists(MatchingInfo infos[], int n) {
 }
 
 void createProposal(MatchingInfo infos[], int u, int v) {
-	if (infos == NULL || u < 0 || v < 0) return;
+	if (infos == NULL || u < 0 || v < 0)
+		return;
 
 	infos[u].match_idx = v;
 	infos[v].match_idx = u;
@@ -194,7 +213,8 @@ void createProposal(MatchingInfo infos[], int u, int v) {
 }
 
 void confirmMatch(MatchingInfo infos[], int u, int v) {
-	if (infos == NULL || u < 0 || v < 0) return;
+	if (infos == NULL || u < 0 || v < 0)
+		return;
 
 	infos[u].match_idx = v;
 	infos[v].match_idx = u;
@@ -203,7 +223,8 @@ void confirmMatch(MatchingInfo infos[], int u, int v) {
 }
 
 void rejectMatch(MatchingInfo infos[], int u, int v) {
-	if (infos == NULL || u < 0 || v < 0) return;
+	if (infos == NULL || u < 0 || v < 0)
+		return;
 
 	infos[u].match_idx = -1;
 	infos[v].match_idx = -1;
@@ -216,9 +237,14 @@ void rejectMatch(MatchingInfo infos[], int u, int v) {
 	}
 }
 
-int stableMatching(MatchingInfo infos[], int n, int proposers[], int proposer_cnt, int rank_table[][MAX_PEOPLE], Pair result[]) {
-	if (infos == NULL || proposers == NULL || rank_table == NULL || result == NULL) return 0;
-	if (n <= 0 || proposer_cnt <= 0) return 0;
+int stableMatching(MatchingInfo infos[], int n, int proposers[],
+				   int proposer_cnt, int rank_table[][MAX_PEOPLE],
+				   Pair result[]) {
+	if (infos == NULL || proposers == NULL || rank_table == NULL ||
+		result == NULL)
+		return 0;
+	if (n <= 0 || proposer_cnt <= 0)
+		return 0;
 
 	// AVAILABLE 사용자 상태 초기화
 	for (int i = 0; i < n; i++) {
@@ -247,7 +273,8 @@ int stableMatching(MatchingInfo infos[], int n, int proposers[], int proposer_cn
 
 		for (int rank = 0; rank < infos[i].pref_size; rank++) {
 			int target_idx = infos[i].preference[rank];
-			if (target_idx < 0 || target_idx >= n) continue;
+			if (target_idx < 0 || target_idx >= n)
+				continue;
 			rank_table[i][target_idx] = rank;
 		}
 	}
@@ -261,9 +288,12 @@ int stableMatching(MatchingInfo infos[], int n, int proposers[], int proposer_cn
 	for (int i = 0; i < proposer_cnt; i++) {
 		int proposer_idx = proposers[i];
 
-		if (proposer_idx < 0 || proposer_idx >= n) continue;
-		if (infos[proposer_idx].person == NULL) continue;
-		if (infos[proposer_idx].person->status != AVAILABLE) continue;
+		if (proposer_idx < 0 || proposer_idx >= n)
+			continue;
+		if (infos[proposer_idx].person == NULL)
+			continue;
+		if (infos[proposer_idx].person->status != AVAILABLE)
+			continue;
 
 		pushQueue(q, proposer_idx);
 	}
@@ -271,15 +301,23 @@ int stableMatching(MatchingInfo infos[], int n, int proposers[], int proposer_cn
 	// Gale-Shapley Stable Matching
 	while (!isQueueEmpty(q)) {
 		int proposer_idx = popQueue(q);
-		if (proposer_idx < 0 || proposer_idx >= n) continue;
-		if (infos[proposer_idx].person->status != AVAILABLE) continue;
-		if (infos[proposer_idx].match_idx != -1) continue;
+		if (proposer_idx < 0 || proposer_idx >= n)
+			continue;
+		if (infos[proposer_idx].person->status != AVAILABLE)
+			continue;
+		if (infos[proposer_idx].match_idx != -1)
+			continue;
 
-		while (infos[proposer_idx].next_proposal < infos[proposer_idx].pref_size) {
-			int receiver_idx = infos[proposer_idx].preference[infos[proposer_idx].next_proposal];
+		while (infos[proposer_idx].next_proposal <
+			   infos[proposer_idx].pref_size) {
+			int receiver_idx =
+				infos[proposer_idx]
+					.preference[infos[proposer_idx].next_proposal];
 			infos[proposer_idx].next_proposal++;
-			if (receiver_idx < 0 || receiver_idx >= n) continue;
-			if (infos[receiver_idx].person->status != AVAILABLE) continue;
+			if (receiver_idx < 0 || receiver_idx >= n)
+				continue;
+			if (infos[receiver_idx].person->status != AVAILABLE)
+				continue;
 
 			if (infos[receiver_idx].match_idx == -1) {
 				infos[proposer_idx].match_idx = receiver_idx;
@@ -303,15 +341,17 @@ int stableMatching(MatchingInfo infos[], int n, int proposers[], int proposer_cn
 			}
 		}
 	}
-	
+
 	free(q);
 
 	int result_cnt = 0;
 	for (int i = 0; i < proposer_cnt; i++) {
 		int proposer_idx = proposers[i];
-		if (proposer_idx < 0 || proposer_idx >= n) continue;
+		if (proposer_idx < 0 || proposer_idx >= n)
+			continue;
 		int receiver_idx = infos[proposer_idx].match_idx;
-		if (receiver_idx == -1) continue;
+		if (receiver_idx == -1)
+			continue;
 
 		result[result_cnt].p1 = proposer_idx;
 		result[result_cnt].p2 = receiver_idx;
@@ -353,10 +393,38 @@ void unblockUser(People *a, People *b) {
 	for (int i = 0; i < a->blocked_cnt; i++) {
 		if (strcmp(a->blocked_ids[i], b->id) == 0) {
 			if (i != a->blocked_cnt - 1) {
-				strcpy(a->blocked_ids[i], a->blocked_ids[a->blocked_cnt-1]);
+				strcpy(a->blocked_ids[i], a->blocked_ids[a->blocked_cnt - 1]);
 			}
 			a->blocked_cnt--;
 			return;
 		}
 	}
+}
+
+int bfs_loadPeopleFromDatabase(People *people[]) {
+	FILE *fp = fopen(PEOPLE_DATA_PATH, "r");
+	if (fp == NULL) {
+		printf("파일 못 열어씅ㅁ 경로 ㅈ됨");
+		return 0;
+	}
+	char line[1024];
+	int n = 0;
+
+	while (n < MAX_PEOPLE) {
+		int offset = ftell(fp);
+		if (fgets(line, sizeof(line), fp) == NULL) {
+			break;
+		}
+		if (line[0] == '\n' || line[0] == '\0') {
+			continue;
+		}
+		people[n] = people_read_people(PEOPLE_DATA_PATH, offset);
+		if (people[n] != NULL) {
+			n++;
+		}
+	}
+
+	fclose(fp);
+	// printf("Loaded %d people from %s\n", n, PEOPLE_DATA_PATH);
+	return n;
 }
