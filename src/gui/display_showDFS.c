@@ -1,7 +1,7 @@
 #include "display.h"
 
-#define SV_MAIN_X 300
-#define SV_RIGHT 1240
+#define SV_MAIN_X 280
+#define SV_RIGHT 1250
 
 static int dfsui_inRect(int px, int py, int x, int y, int w, int h) {
 	return px >= x && px <= x + w && py >= y && py <= y + h;
@@ -57,34 +57,34 @@ static void dfsui_drawText(SDL_Ui *ui, const char *text, TTF_Font *font,
 
 static void dfsui_drawSidebar(SDL_Ui *ui, int active) {
 	const char *labels[4] = {"홈", "매칭", "설문", "프로필"};
-	int ny[4] = {150, 212, 274, 336};
-	dfsui_drawRect(ui, 0, 0, 260, WINDOW_HEIGHT, COLOR_WHITEPINK);
+	int ny[4] = {150, 150 + 65, 150 + 65 * 2, 150 + 65 * 3};
+	dfsui_drawRect(ui, 0, 0, 250, WINDOW_HEIGHT, COLOR_WHITEPINK);
 	dfsui_drawText(ui, "LIFO", ui->font_bbsig, COLOR_SUPERPINK, 110, 44,
 				   MIDTOP, 0);
 	for (int i = 0; i < 4; i++) {
-		int hover = dfsui_inRect(ui->mx, ui->my, 30, ny[i], 200, 52);
+		int hover = dfsui_inRect(ui->mx, ui->my, 40, ny[i], 170, 51);
 		if (i == active || hover) {
-			dfsui_drawRound(ui, 30, ny[i], 200, 52, 14, COLOR_PINK);
+			dfsui_drawRound(ui, 40, ny[i], 170, 51, 14, COLOR_PINK);
 		}
 		SDL_Color tc = (i == active || hover) ? COLOR_WHITE : COLOR_DURTYPINK;
-		dfsui_drawText(ui, labels[i], ui->font_normal, tc, 70, ny[i] + 13,
-					   TOPLEFT, 0);
+		dfsui_drawText(ui, labels[i], ui->font_normal, tc, 72,
+					   ny[i] + 51 / 2, CENTER, 0);
 	}
-	int logout_y = WINDOW_HEIGHT - 82;
-	int logout_hover = dfsui_inRect(ui->mx, ui->my, 30, logout_y, 200, 52);
+	int logout_y = WINDOW_HEIGHT - 30 - 51;
+	int logout_hover = dfsui_inRect(ui->mx, ui->my, 40, logout_y, 170, 51);
 	if (logout_hover) {
-		dfsui_drawRound(ui, 30, logout_y, 200, 52, 14, COLOR_PINK);
+		dfsui_drawRound(ui, 40, logout_y, 170, 51, 14, COLOR_PINK);
 	}
 	dfsui_drawText(ui, "로그아웃", ui->font_normal,
-				   logout_hover ? COLOR_WHITE : COLOR_DURTYPINK, 70,
-				   logout_y + 13, TOPLEFT, 0);
+				   logout_hover ? COLOR_WHITE : COLOR_DURTYPINK, 72,
+				   WINDOW_HEIGHT - 30 - 51 / 2, CENTER, 0);
 }
 
 static int dfsui_handleSidebarClick(SDL_Ui *ui, int active) {
-	int ny[3] = {150, 212, 274};
+	int ny[3] = {150, 150 + 65, 150 + 65 * 2};
 	MainStateEnum states[3] = {HOME, BFS, DFS};
 	for (int i = 0; i < 3; i++) {
-		if (dfsui_inRect(ui->mx, ui->my, 30, ny[i], 200, 52)) {
+		if (dfsui_inRect(ui->mx, ui->my, 40, ny[i], 170, 51)) {
 			if (i == active) {
 				return 0;
 			}
@@ -92,7 +92,7 @@ static int dfsui_handleSidebarClick(SDL_Ui *ui, int active) {
 			return 1;
 		}
 	}
-	if (dfsui_inRect(ui->mx, ui->my, 30, WINDOW_HEIGHT - 82, 200, 52)) {
+	if (dfsui_inRect(ui->mx, ui->my, 40, WINDOW_HEIGHT - 30 - 51, 170, 51)) {
 		ui->next_state = LOGIN;
 		return 1;
 	}

@@ -986,14 +986,13 @@ void display_showHome(SDL_Ui *ui, People *me) {
 		return;
 	}
 
-	const int SIDEBAR_W = 260; // 사이드바 너비
-	const int LEFT = 300;	   // 본문 시작 x
-	const int RIGHT = 1240;	   // 본문 오른쪽 끝 x
-	const int NAV_X = 30;
-	const int NAV_W = 200;
-	const int NAV_H = 52;
-	const int NAV_TEXT_X = 70;
-	const int NAV_TEXT_OFFSET_Y = 13;
+	const int SIDEBAR_W = 250; // 사이드바 너비
+	const int LEFT = 280;	   // 본문 시작 x
+	const int RIGHT = 1250;	   // 본문 오른쪽 끝 x
+	const int NAV_X = 125;
+	const int NAV_W = SIDEBAR_W - 80;
+	const int NAV_H = 51;
+	const int NAV_TEXT_X = 72;
 
 	// ── 사이드바 ──
 	Object sidebar = gui_initObject(
@@ -1006,23 +1005,23 @@ void display_showHome(SDL_Ui *ui, People *me) {
 	// 네비게이션 항목 (0:홈 이 현재 화면)
 	enum { NAV_HOME, NAV_BFS, NAV_DFS, NAV_PROFILE, NAV_CNT };
 	char *nav_labels[NAV_CNT] = {"홈", "매칭", "설문", "프로필"};
-	int nav_y[NAV_CNT] = {150, 212, 274, 336};
+	int nav_y[NAV_CNT] = {150, 150 + 65, 150 + 65 * 2, 150 + 65 * 3};
 	Object nav_box[NAV_CNT + 1];
 	Object nav_txt[NAV_CNT + 1];
 	for (int i = 0; i < NAV_CNT; i++) {
 		nav_box[i] = gui_initObject(
-			ui, BOX, NAV_X, nav_y[i], TOPLEFT,
+			ui, BOX, NAV_X, nav_y[i], MIDTOP,
 			(ObjectParam){.box = {NAV_W, NAV_H, COLOR_PINK, 14}});
 		nav_txt[i] = gui_initObject(
-			ui, TEXT, NAV_TEXT_X, nav_y[i] + NAV_TEXT_OFFSET_Y, TOPLEFT,
+			ui, TEXT, NAV_TEXT_X, nav_y[i] + NAV_H / 2, CENTER,
 			(ObjectParam){.text = {" ", ui->font_normal, COLOR_DURTYPINK}});
 		gui_setText(&nav_txt[i], nav_labels[i]);
 	}
 	nav_box[NAV_CNT] = gui_initObject(
-		ui, BOX, NAV_X, WINDOW_HEIGHT - 82, TOPLEFT,
+		ui, BOX, NAV_X, WINDOW_HEIGHT - 30, MIDBOTTOM,
 		(ObjectParam){.box = {NAV_W, NAV_H, COLOR_PINK, 14}});
 	nav_txt[NAV_CNT] = gui_initObject(
-		ui, TEXT, NAV_TEXT_X, WINDOW_HEIGHT - 82 + NAV_TEXT_OFFSET_Y, TOPLEFT,
+		ui, TEXT, NAV_TEXT_X, WINDOW_HEIGHT - 30 - NAV_H / 2, CENTER,
 		(ObjectParam){.text = {"로그아웃", ui->font_normal, COLOR_DURTYPINK}});
 
 	// ── 상단 인사말 ──
@@ -1239,14 +1238,13 @@ void display_showBFS(SDL_Ui *ui, People *me) {
 		return;
 	}
 
-	const int SIDEBAR_W = 260;
-	const int LEFT = 300;
-	const int RIGHT = 1240;
-	const int NAV_X = 30;
-	const int NAV_W = 200;
-	const int NAV_H = 52;
-	const int NAV_TEXT_X = 70;
-	const int NAV_TEXT_OFFSET_Y = 13;
+	const int SIDEBAR_W = 250;
+	const int LEFT = 280;
+	const int RIGHT = 1250;
+	const int NAV_X = 125;
+	const int NAV_W = SIDEBAR_W - 80;
+	const int NAV_H = 51;
+	const int NAV_TEXT_X = 72;
 	People *loaded_people[128];
 	People *recommendations[4];
 	int recommend_scores[4] = {0};
@@ -1290,23 +1288,23 @@ void display_showBFS(SDL_Ui *ui, People *me) {
 	// 사이드바
 	enum { NAV_HOME, NAV_BFS, NAV_DFS, NAV_PROFILE, NAV_CNT };
 	char *nav_labels[NAV_CNT] = {"홈", "매칭", "설문", "프로필"};
-	int nav_y[NAV_CNT] = {150, 212, 274, 336};
+	int nav_y[NAV_CNT] = {150, 150 + 65, 150 + 65 * 2, 150 + 65 * 3};
 	Object nav_box[NAV_CNT + 1];
 	Object nav_txt[NAV_CNT + 1];
 	for (int i = 0; i < NAV_CNT; i++) {
 		nav_box[i] = gui_initObject(
-			ui, BOX, NAV_X, nav_y[i], TOPLEFT,
+			ui, BOX, NAV_X, nav_y[i], MIDTOP,
 			(ObjectParam){.box = {NAV_W, NAV_H, COLOR_PINK, 14}});
 		nav_txt[i] = gui_initObject(
-			ui, TEXT, NAV_TEXT_X, nav_y[i] + NAV_TEXT_OFFSET_Y, TOPLEFT,
+			ui, TEXT, NAV_TEXT_X, nav_y[i] + NAV_H / 2, CENTER,
 			(ObjectParam){.text = {" ", ui->font_normal, COLOR_DURTYPINK}});
 		gui_setText(&nav_txt[i], nav_labels[i]);
 	}
 	nav_box[NAV_CNT] = gui_initObject(
-		ui, BOX, NAV_X, WINDOW_HEIGHT - 82, TOPLEFT,
+		ui, BOX, NAV_X, WINDOW_HEIGHT - 30, MIDBOTTOM,
 		(ObjectParam){.box = {NAV_W, NAV_H, COLOR_PINK, 14}});
 	nav_txt[NAV_CNT] = gui_initObject(
-		ui, TEXT, NAV_TEXT_X, WINDOW_HEIGHT - 82 + NAV_TEXT_OFFSET_Y, TOPLEFT,
+		ui, TEXT, NAV_TEXT_X, WINDOW_HEIGHT - 30 - NAV_H / 2, CENTER,
 		(ObjectParam){.text = {"로그아웃", ui->font_normal, COLOR_DURTYPINK}});
 
 	// 메인 기능 화면
