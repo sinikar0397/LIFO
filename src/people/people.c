@@ -1,6 +1,9 @@
 #include "../headers.h"
 #include "people.h"
 
+extern const char* DATA_PATH_PEOPLE;
+extern const char* DATA_PATH_HASH;
+
 uint32_t k[64] = {
     0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,
     0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501,
@@ -325,6 +328,153 @@ int people_save_people(People* P, const char path[]){
     cJSON_Delete(root);
     return offset;
 }
+
+static unsigned long people_simple_hash(const char* s) {
+    unsigned long h = 5381;
+    for (; *s; s++) h = h * 33 + (unsigned char)*s;
+    return h;
+}
+
+static int people_temp_set_contains_or_add(TempIdSet* set, const char* id) {
+    unsigned long h = people_simple_hash(id) % TEMP_SET_SIZE;
+    for (int tries = 0; tries < TEMP_SET_SIZE; tries++) {
+        int idx = (h + tries) % TEMP_SET_SIZE;
+        if (!set[idx].used) {
+            set[idx].used = 1;
+            strncpy(set[idx].id, id, MAX_ID_LEN - 1);
+            set[idx].id[MAX_ID_LEN - 1] = '\0';
+            return 0; // 새로 추가됨
+        }
+        if (strcmp(set[idx].id, id) == 0) {
+            return 1; // 이미 존재
+        }
+    }
+    return 1; // 셋이 가득 찬 경우 (사실상 발생하지 않음)
+}
+
+People** people_read_all_people(int* count) {
+    FILE* fp = fopen(DATA_PATH_PEOPLE, "r");
+    if (fp == NULL) {
+        printf("[ERROR] file : people.c, function : people_read_all_people.     Can't open data file.\n");
+        *count = 0;
+        return NULL;
+    }
+
+    // 1. 전체 파일을 줄 단위로 메모리에 적재
+    int line_capacity = MAX_DATA_LINES;
+    int line_cnt = 0;
+    char** lines = (char**)malloc(sizeof(char*) * line_capacity);
+
+    char buf[512];
+    while (fgets(buf, sizeof(buf), fp) != NULL) {
+        if (line_cnt >= line_capacity) {
+            line_capacity *= 2;
+            lines = (char**)realloc(lines, sizeof(char*) * line_capacity);
+        }
+        lines[line_cnt] = strdup(buf);
+        line_cnt++;
+    }
+    fclose(fp);
+
+    // 2. 임시 해시셋 준비
+    TempIdSet* seen = (TempIdSet*)calloc(TEMP_SET_SIZE, sizeof(TempIdSet));
+
+    // 3. 결과 배열 준비
+    int capacity = MAX_DATA_LINES;
+    int cnt = 0;
+    People** result = (People**)malloc(sizeof(People*) * capacity);
+
+    // 4. 아래(최신)부터 위(과거)로 순회
+    for (int i = line_cnt - 1; i >= 0; i--) {
+        cJSON* root = cJSON_Parse(lines[i]);
+        if (root == NULL) {
+            free(lines[i]);
+            continue;
+        }
+
+        cJSON* id_item = cJSON_GetObjectItem(root, "id");
+        if (!cJSON_IsString(id_item) || id_item->valuestring == NULL) {
+            cJSON_Delete(root);
+            free(lines[i]);
+            continue;
+        }
+
+        // 이미 처리한 id면 (더 최신 데이터가 있었음) 스킵
+        if (people_temp_set_contains_or_add(seen, id_item->valuestring)) {
+            cJSON_Delete(root);
+            free(lines[i]);
+            continue;
+        }
+
+        // People 생성 (people_read_people과 동일한 파싱)
+        char name[MAX_NAME_LEN];
+        char id[MAX_ID_LEN];
+        char type[MAX_TYPE_LEN];
+        char love_type[MAX_TYPE_LEN];
+
+        strcpy(name,      cJSON_GetObjectItem(root, "name")->valuestring);
+        strcpy(id,        id_item->valuestring);
+        strcpy(type,      cJSON_GetObjectItem(root, "type")->valuestring);
+        strcpy(love_type, cJSON_GetObjectItem(root, "love_type")->valuestring);
+
+        char* pw_hex = cJSON_GetObjectItem(root, "pw")->valuestring;
+        Password pw = people_read_password_from_hex(pw_hex);
+
+        enum Gender gen = cJSON_GetObjectItem(root, "gen")->valueint;
+        int age         = cJSON_GetObjectItem(root, "age")->valueint;
+
+        People* p = people_create_people(name, id, "\0", type, love_type, gen, age);
+        people_set_people_pw_hashed(p, pw);
+
+        cJSON* attach_item      = cJSON_GetObjectItem(root, "attach");
+        cJSON* love_attach_item = cJSON_GetObjectItem(root, "love_attach");
+        if (cJSON_IsString(attach_item) && attach_item->valuestring != NULL)
+            people_set_people_attach(p, attach_item->valuestring);
+        if (cJSON_IsString(love_attach_item) && love_attach_item->valuestring != NULL)
+            people_set_people_love_attach(p, love_attach_item->valuestring);
+
+        cJSON* lang_item      = cJSON_GetObjectItem(root, "lang");
+        cJSON* love_lang_item = cJSON_GetObjectItem(root, "love_lang");
+        if (cJSON_IsString(lang_item) && lang_item->valuestring != NULL)
+            people_set_people_lang(p, lang_item->valuestring);
+        if (cJSON_IsString(love_lang_item) && love_lang_item->valuestring != NULL)
+            people_set_people_love_lang(p, love_lang_item->valuestring);
+
+        cJSON_Delete(root);
+        free(lines[i]);
+
+        if (cnt >= capacity) {
+            capacity *= 2;
+            result = (People**)realloc(result, sizeof(People*) * capacity);
+        }
+        result[cnt++] = p;
+    }
+
+    free(lines);
+    free(seen);
+
+    *count = cnt;
+    return result;
+}
+
+void people_delete_all_people(People** people, int count) {
+    for (int i = 0; i < count; i++) {
+        people_delete_people(people[i]);
+    }
+    free(people);
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 void people_print_people(People* P){
     if(P == NULL){
