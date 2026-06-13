@@ -40,6 +40,7 @@ int main(int argc, char **argv) {
 			display_showHome(ui, p);
 			break;
 		case DFS:
+			display_showDFS(ui, p);
 			break;
 		case BFS:
 			display_showBFS(ui, p, infos, n);
