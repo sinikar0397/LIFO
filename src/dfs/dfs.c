@@ -501,8 +501,12 @@ int dfs_find_leaf_by_code(const DfsTree *t, const char code[]) {
 	return -1;
 }
 
-int dfs_extend_leaf(DfsTree *t, int leaf_idx, const char question[],
-					const char opt0[], const char opt1[]) {
+// 잎을 분기로 확장하면서 두 하위 유형의 이름을 직접 지정한다.
+// 코드는 자동(부모코드+"1"/"2"). name0/name1이 NULL이거나 빈 문자열이면
+// 기존처럼 "부모이름 · 선택지"로 자동 생성한다.
+int dfs_extend_leaf_named(DfsTree *t, int leaf_idx, const char question[],
+						  const char opt0[], const char opt1[],
+						  const char name0[], const char name1[]) {
 	if (leaf_idx < 0 || leaf_idx >= t->n_nodes) {
 		return 0;
 	}
@@ -523,12 +527,20 @@ int dfs_extend_leaf(DfsTree *t, int leaf_idx, const char question[],
 	char code[MAX_TYPE_LEN], name[DFS_NAME_LEN];
 
 	snprintf(code, sizeof(code), "%s1", pcode);
-	snprintf(name, sizeof(name), "%s · %s", pname, opt0);
+	if (name0 && name0[0]) {
+		snprintf(name, sizeof(name), "%s", name0);
+	} else {
+		snprintf(name, sizeof(name), "%s · %s", pname, opt0);
+	}
 	dfs_set_leaf(&t->nodes[c0], code, name);
 	t->nodes[c0].user_added = 1;
 
 	snprintf(code, sizeof(code), "%s2", pcode);
-	snprintf(name, sizeof(name), "%s · %s", pname, opt1);
+	if (name1 && name1[0]) {
+		snprintf(name, sizeof(name), "%s", name1);
+	} else {
+		snprintf(name, sizeof(name), "%s · %s", pname, opt1);
+	}
 	dfs_set_leaf(&t->nodes[c1], code, name);
 	t->nodes[c1].user_added = 1;
 
@@ -538,6 +550,12 @@ int dfs_extend_leaf(DfsTree *t, int leaf_idx, const char question[],
 
 	t->n_nodes += 2;
 	return 1;
+}
+
+// 이름 미지정 버전(자동 이름). 기존 호출부 하위호환용 래퍼.
+int dfs_extend_leaf(DfsTree *t, int leaf_idx, const char question[],
+					const char opt0[], const char opt1[]) {
+	return dfs_extend_leaf_named(t, leaf_idx, question, opt0, opt1, NULL, NULL);
 }
 
 int dfs_save_tree(const DfsTree *t, const char path[]) {

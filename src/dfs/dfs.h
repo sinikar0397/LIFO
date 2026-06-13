@@ -113,8 +113,12 @@ int dfs_tree_similarity(const DfsTree *tree, const char ideal[],
 int dfs_find_leaf_by_code(const DfsTree *tree, const char code[]);
 
 // 잎(leaf_idx)을 분기 노드로 확장한다. 새 하위 유형 2개를 잎으로 추가하며,
-// 하위 유형명은 "부모유형명 · 선택지", 코드는 "부모코드1"/"부모코드2"로 자동 생성.
-// 성공 시 1 (공간 부족/잘못된 노드면 0).
+// 코드는 "부모코드1"/"부모코드2"로 자동 생성. 성공 시 1 (공간 부족/잘못된 노드면 0).
+// _named: 하위 유형명을 사용자가 직접 지정(name0/name1). NULL/빈 문자열이면
+//         "부모유형명 · 선택지"로 자동 생성. dfs_extend_leaf는 자동 이름 래퍼.
+int dfs_extend_leaf_named(DfsTree *tree, int leaf_idx, const char question[],
+						  const char opt0[], const char opt1[],
+						  const char name0[], const char name1[]);
 int dfs_extend_leaf(DfsTree *tree, int leaf_idx, const char question[],
 					const char opt0[], const char opt1[]);
 
