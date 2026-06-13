@@ -94,14 +94,14 @@ int main(void) {
 			break;
 		}
 
-		case 5: {
-			char type[MAX_TYPE_LEN];
+		// case 5: {
+		// 	char type[MAX_TYPE_LEN];
 
-			dfs_run_date_fit_survey(type, "Date Fit Survey");
-			printf("\n저장 가능한 최종 유형 코드 : %s\n", type);
+		// 	dfs_run_date_fit_survey(type, "Date Fit Survey");
+		// 	printf("\n저장 가능한 최종 유형 코드 : %s\n", type);
 
-			break;
-		}
+		// 	break;
+		// }
 
 		case 6: {
 			char ideal_owner_id[MAX_ID_LEN];

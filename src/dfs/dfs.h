@@ -27,8 +27,8 @@ typedef enum DateFitNodeId {
  * Date Fit Survey 결과 코드?�� ?��리의 경로�? ????��?��?��.
  * ?��: DTF = �?배형 + ?��?��?�� 리드 + ?���? ?��?��
  */
-void dfs_run_date_fit_survey(char result_type[MAX_TYPE_LEN], const char title[]);
-void dfs_customize_date_fit_type(char result_type[MAX_TYPE_LEN]);
+// void dfs_run_date_fit_survey(char result_type[MAX_TYPE_LEN], const char title[]);
+// void dfs_customize_date_fit_type(char result_type[MAX_TYPE_LEN]);
 
 DateFitNodeId dfs_find_type_node(const char type[]);
 int dfs_depth(DateFitNodeId node);

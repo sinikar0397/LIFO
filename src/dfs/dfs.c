@@ -1,4 +1,5 @@
 #include "dfs.h"
+#include "dfs_func.h"
 
 typedef struct DateFitNode {
 	DateFitNodeId id;
@@ -26,146 +27,11 @@ static const DateFitNode DATE_FIT_TREE[DFS_NODE_COUNT] = {
 	{DFS_NODE_SEC, DFS_NODE_SUBMISSIVE_EMOTIONAL, "SEC", "감성 의존 회피 보호형", "상처를 피하며 안정적인 애착을 원한다"},
 };
 
-static void clearInputBuffer(void) {
-	int ch;
-	while ((ch = getchar()) != '\n' && ch != EOF) {
-	}
-}
-
-static int readIntInRange(int min_value, int max_value) {
-	int value;
-
-	while (1) {
-		printf("입력 : ");
-		if (scanf("%d", &value) == 1 && min_value <= value && value <= max_value) {
-			return value;
-		}
-		clearInputBuffer();
-		printf("%d부터 %d 사이의 숫자를 입력해주세요.\n", min_value, max_value);
-	}
-}
-
 static const DateFitNode *getNode(DateFitNodeId id) {
 	if (id < 0 || id >= DFS_NODE_COUNT) {
 		return &DATE_FIT_TREE[DFS_NODE_ROOT];
 	}
 	return &DATE_FIT_TREE[id];
-}
-
-static DateFitNodeId chooseMajorBranch(void) {
-	printf("\n[대분류] 관계에서 더 자연스러운 모습은 무엇인가요?\n");
-	printf("1. 내가 먼저 데이트 방향, 대화 주제, 문제 해결을 제안한다.\n");
-	printf("2. 상대의 제안과 분위기를 존중하며 흐름을 맞춘다.\n");
-	return readIntInRange(1, 2) == 1 ? DFS_NODE_DOMINANT : DFS_NODE_SUBMISSIVE;
-}
-
-static DateFitNodeId chooseMiddleBranch(DateFitNodeId major) {
-	printf("\n[중분류] 애정을 표현하거나 갈등을 다룰 때 더 가까운 방식은?\n");
-	if (major == DFS_NODE_DOMINANT) {
-		printf("1. 사실, 기준, 계획을 정리해서 관계를 이끈다.\n");
-		printf("2. 감정 확인, 위로, 케어로 관계를 이끈다.\n");
-		return readIntInRange(1, 2) == 1 ? DFS_NODE_DOMINANT_THINKING
-										 : DFS_NODE_DOMINANT_EMOTIONAL;
-	}
-
-	printf("1. 상대 의견을 듣고 논리적으로 납득되면 수용한다.\n");
-	printf("2. 상대에게 정서적으로 기대고 친밀감을 확인한다.\n");
-	return readIntInRange(1, 2) == 1 ? DFS_NODE_SUBMISSIVE_THINKING
-									 : DFS_NODE_SUBMISSIVE_EMOTIONAL;
-}
-
-static DateFitNodeId chooseActionBranch(DateFitNodeId middle) {
-	int face_to_face;
-
-	printf("\n[소분류] 문제가 생겼을 때 행동 방식은?\n");
-	printf("1. 바로 마주 보고 이야기해서 풀고 싶다. (F: 정면 돌파)\n");
-	printf("2. 잠시 거리를 두고 감정을 가라앉힌 뒤 다룬다. (C: 회피/조정)\n");
-	face_to_face = readIntInRange(1, 2) == 1;
-
-	switch (middle) {
-	case DFS_NODE_DOMINANT_THINKING:
-		return face_to_face ? DFS_NODE_DTF : DFS_NODE_DTC;
-	case DFS_NODE_DOMINANT_EMOTIONAL:
-		return face_to_face ? DFS_NODE_DEF : DFS_NODE_DEC;
-	case DFS_NODE_SUBMISSIVE_THINKING:
-		return face_to_face ? DFS_NODE_STF : DFS_NODE_STC;
-	case DFS_NODE_SUBMISSIVE_EMOTIONAL:
-		return face_to_face ? DFS_NODE_SEF : DFS_NODE_SEC;
-	default:
-		return DFS_NODE_ROOT;
-	}
-}
-
-void dfs_run_date_fit_survey(char result_type[MAX_TYPE_LEN], const char title[]) {
-	DateFitNodeId major;
-	DateFitNodeId middle;
-	DateFitNodeId leaf;
-
-	if (title != NULL && title[0] != '\0') {
-		printf("\n========================================\n");
-		printf(" %s\n", title);
-		printf("========================================\n");
-	}
-
-	major = chooseMajorBranch();
-	middle = chooseMiddleBranch(major);
-	leaf = chooseActionBranch(middle);
-
-	strncpy(result_type, getNode(leaf)->code, MAX_TYPE_LEN - 1);
-	result_type[MAX_TYPE_LEN - 1] = '\0';
-
-	printf("\n산출된 성격 유형: %s\n", result_type);
-	dfs_print_type_description(result_type);
-	dfs_customize_date_fit_type(result_type);
-}
-
-void dfs_customize_date_fit_type(char result_type[MAX_TYPE_LEN]) {
-	DateFitNodeId current;
-	int cmd;
-
-	printf("\n추가 질문으로 결과를 커스터마이징할까요?\n");
-	printf("1. 아니오, 현재 결과를 사용합니다.\n");
-	printf("2. 예, 일부 분기점을 다시 고릅니다.\n");
-	if (readIntInRange(1, 2) == 1) {
-		return;
-	}
-
-	current = dfs_find_type_node(result_type);
-	if (current == DFS_NODE_ROOT) {
-		current = DFS_NODE_DTF;
-	}
-
-	while (1) {
-		DateFitNodeId major = getNode(getNode(current)->parent)->parent;
-		DateFitNodeId middle = getNode(current)->parent;
-
-		printf("\n현재 유형: %s\n", getNode(current)->code);
-		dfs_print_type_description(getNode(current)->code);
-		printf("1. 대분류 다시 선택\n");
-		printf("2. 중분류 다시 선택\n");
-		printf("3. 소분류 다시 선택\n");
-		printf("4. 커스터마이징 완료\n");
-		cmd = readIntInRange(1, 4);
-
-		if (cmd == 4) {
-			break;
-		}
-		if (cmd == 1) {
-			major = chooseMajorBranch();
-			middle = chooseMiddleBranch(major);
-			current = chooseActionBranch(middle);
-		} else if (cmd == 2) {
-			middle = chooseMiddleBranch(major);
-			current = chooseActionBranch(middle);
-		} else {
-			current = chooseActionBranch(middle);
-		}
-	}
-
-	strncpy(result_type, getNode(current)->code, MAX_TYPE_LEN - 1);
-	result_type[MAX_TYPE_LEN - 1] = '\0';
-	printf("\n최종 성격 유형: %s\n", result_type);
-	dfs_print_type_description(result_type);
 }
 
 DateFitNodeId dfs_find_type_node(const char type[]) {
@@ -264,28 +130,6 @@ int compat(People *a, People *b) {
 // ───────────────────────────────────────────────
 // 트리 엔진
 // ───────────────────────────────────────────────
-
-// 내부(분기) 노드를 채우는 헬퍼: 2지선다용.
-static void dfs_set_branch(DfsTreeNode *n, const char *q, const char *o0,
-						   int c0, const char *o1, int c1) {
-	n->is_leaf = 0;
-	n->user_added = 0;
-	n->n_opt = 2;
-	strncpy(n->question, q, DFS_Q_LEN - 1);
-	strncpy(n->opt_text[0], o0, DFS_OPT_LEN - 1);
-	n->child[0] = c0;
-	strncpy(n->opt_text[1], o1, DFS_OPT_LEN - 1);
-	n->child[1] = c1;
-}
-
-// 잎 노드를 채우는 헬퍼.
-static void dfs_set_leaf(DfsTreeNode *n, const char *code, const char *name) {
-	n->is_leaf = 1;
-	n->user_added = 0;
-	n->n_opt = 0;
-	strncpy(n->code, code, MAX_TYPE_LEN - 1);
-	strncpy(n->name, name, DFS_NAME_LEN - 1);
-}
 
 // 잎 8종(코드/이름)은 두 트리가 공유한다.
 static void dfs_fill_leaves(DfsTree *t) {
@@ -410,13 +254,6 @@ void dfs_build_attach_ideal_tree(DfsTree *t) {
 				   "적극적으로 다가오고 확인시켜 주는 사람", 5,
 				   "마음은 깊지만 조심스럽게 표현하는 사람", 6);
 	dfs_fill_attach_leaves(t);
-}
-
-// 기본 트리를 빌드한 뒤, 저장 파일이 있으면 덮어쓰고, 마지막에 경로를 박아둔다.
-static void dfs_load_or_keep(DfsTree *t, const char *path) {
-	dfs_load_tree(t, path); // 파일 있으면 t를 덮어씀, 없으면 기본 트리 유지
-	strncpy(t->save_path, path, sizeof(t->save_path) - 1);
-	t->save_path[sizeof(t->save_path) - 1] = '\0';
 }
 
 void dfs_build_self_survey(DfsSurvey *s) {
