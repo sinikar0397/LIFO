@@ -155,6 +155,7 @@ People* people_create_people(char name[], char id[], char pw[], char type[], cha
     newPeople->age  = age;
     newPeople->status = AVAILABLE; // 기본 매칭 가능 상태 (팀원 변경 반영)
     newPeople->blocked_cnt = 0;
+    newPeople->dfs_extended = 0;   // 세분화 1회 제한 플래그(세션 전용)
     return newPeople;
 }
 

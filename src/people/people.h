@@ -82,6 +82,9 @@ typedef struct People {
 	MatchStatus status;
 	char blocked_ids[MAX_BLOCKED][MAX_ID_LEN];
     int blocked_cnt;
+	// 세분화 1회 제한용 세션 플래그. 직렬화하지 않으며, 로그인 시 0으로
+	// 초기화됨(people_create_people). 재설문하면 다시 0으로 풀린다.
+	int dfs_extended;
 } People;
 
 
