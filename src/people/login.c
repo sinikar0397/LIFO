@@ -70,12 +70,18 @@ void login_compact_database() {
 		if (login_is_hash_empty(HashTable[i]) || HashTable[i].offset < 0)
 			continue;
 		People *p = people_read_people(DATA_PATH_PEOPLE, HashTable[i].offset);
-		if (p == NULL)
-			continue;
-		int off = people_save_people(p, tmp);
-		if (off >= 0)
+		// 읽기 실패(깨진 레코드/잘못된 offset) 또는 새 파일 기록 실패 시,
+		// 그 슬롯을 비운다. 그대로 두면 압축 후 옛 offset이 엉뚱한 위치를
+		// 가리켜 잘못된 계정을 읽게 되므로 차라리 없는 id로 처리한다.
+		int off = (p != NULL) ? people_save_people(p, tmp) : -1;
+		if (off >= 0) {
 			HashTable[i].offset = off;
-		people_delete_people(p);
+		} else {
+			HashTable[i] = login_create_empty_hash();
+		}
+		if (p != NULL) {
+			people_delete_people(p);
+		}
 	}
 
 	// data.jsonl을 압축본으로 교체하고 해시테이블 저장
