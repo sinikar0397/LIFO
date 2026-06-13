@@ -20,15 +20,16 @@ int main(int argc, char **argv) {
 
 		switch (ui->next_state) {
 		case LOGIN:
-			p = showLogin(ui);
+			p = display_showLogin(ui);
 			break;
 		case HOME:
-			showHome(ui, p);
+			display_showHome(ui, p);
 			break;
 		case DFS:
-			showSurvey(ui, p);
+			display_showSurvey(ui, p);
 			break;
 		case BFS:
+			display_showBFS(ui, p);
 			break;
 		case MST:
 			break;
