@@ -212,14 +212,26 @@ void createProposal(MatchingInfo infos[], int u, int v) {
 	infos[v].person->status = PROPOSED;
 }
 
-void confirmMatch(MatchingInfo infos[], int u, int v) {
+void acceptMatch(MatchingInfo infos[], int u, int v) {
 	if (infos == NULL || u < 0 || v < 0)
 		return;
 
-	infos[u].match_idx = v;
-	infos[v].match_idx = u;
-	infos[u].person->status = MATCHED;
-	infos[v].person->status = MATCHED;
+	if (infos[u].match_idx = v && infos[v].match_idx == u) {
+		if (infos[v].person->status == ACCEPTED) {
+			infos[u].person->status = MATCHED;
+			infos[v].person->status = MATCHED;
+		}
+		else if (infos[v].person->status == PROPOSED) {
+			infos[u].person->status = ACCEPTED;
+		}
+		else {
+			printf("Error: User %d is not PROPOSED or ACCEPTED\n", v);
+		}
+	}
+	else {
+		printf("서로 PROPOSED되지 않은 상대끼리 acceptMatch를 시도했습니다. \n");
+		return;
+	}
 }
 
 void rejectMatch(MatchingInfo infos[], int u, int v) {
@@ -404,7 +416,7 @@ void unblockUser(People *a, People *b) {
 int bfs_loadPeopleFromDatabase(People *people[]) {
 	FILE *fp = fopen(PEOPLE_DATA_PATH, "r");
 	if (fp == NULL) {
-		printf("파일 못 열어씅ㅁ 경로 ㅈ됨");
+		printf("파일 열기 실패: 경로 이슈\n");
 		return 0;
 	}
 	char line[1024];

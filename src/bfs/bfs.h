@@ -105,10 +105,11 @@ void makePrefLists(MatchingInfo infos[], int n);
 void createProposal(MatchingInfo infos[], int u, int v);
 
 /*
- * u와 v의 추천을 최종 수락 처리
- * 두 사용자 상태를 MATCHED로 변경
+ * u가 추천받은 v를 수락
+ * v가 PROPOSED이면 u를 ACCEPTED로 변경
+ * v가 ACCEPTED임녀 u, v를 모두 MATCHED로 변경
  */
-void confirmMatch(MatchingInfo infos[], int u, int v);
+void acceptMatch(MatchingInfo infos[], int u, int v);
 
 /*
  * u와 v의 추천을 거절 처리

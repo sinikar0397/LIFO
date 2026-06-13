@@ -1389,7 +1389,7 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 					strcpy(status_msg, "수락할 제안이 없습니다.");
 					status_color = COLOR_SUPERPINK;
 				} else {
-					confirmMatch(infos, me_idx, matched_idx);
+					acceptMatch(infos, me_idx, matched_idx);
 					strcpy(status_msg, "매칭이 성사되었습니다!");
 					status_color = COLOR_GREEN;
 				}

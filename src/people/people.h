@@ -40,6 +40,7 @@ typedef struct Password {
  * PROPOSED  : 추천 쌍으로 선정되었지만 아직 양쪽 수락 전
  * MATCHED   : 양쪽이 수락하여 최종 매칭된 상태
  * PAUSED    : 매칭 추천을 일시 중단한 상태
+ * ACCEPTED  : 매칭을 수락했으나 상대가 아직 대기 중인 상태
  * DELETED   : 탈퇴 또는 삭제된 사용자
  */
 typedef enum MatchStatus {
@@ -47,6 +48,7 @@ typedef enum MatchStatus {
 	PROPOSED,
 	MATCHED,
 	PAUSED,
+	ACCEPTED,
 	DELETED
 } MatchStatus;
 
