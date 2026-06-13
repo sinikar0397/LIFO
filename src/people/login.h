@@ -141,6 +141,12 @@ void login_add_people_to_hashtable(People* P);
 
 /*
 @brief
+기존 계정 정보를 새 데이터로 저장하고 Hashtable offset을 최신 위치로 갱신함
+*/
+int login_update_account(People* P);
+
+/*
+@brief
 자체 I/O를 기반으로 객체 정보를 만들고 People 객체를 생성함
 
 해시테이블에 관련 정보를 추가하고, 해시테이블 바이너리 파일과 사람 객체 바이너리 파일에도 업데이트함

@@ -56,12 +56,12 @@ static void dfsui_drawText(SDL_Ui *ui, const char *text, TTF_Font *font,
 }
 
 static void dfsui_drawSidebar(SDL_Ui *ui, int active) {
-	const char *labels[5] = {"홈", "매칭", "설문", "커플", "프로필"};
-	int ny[5] = {150, 212, 274, 336, 398};
+	const char *labels[4] = {"홈", "매칭", "설문", "프로필"};
+	int ny[4] = {150, 212, 274, 336};
 	dfsui_drawRect(ui, 0, 0, 260, WINDOW_HEIGHT, COLOR_WHITEPINK);
 	dfsui_drawText(ui, "LIFO", ui->font_bbsig, COLOR_SUPERPINK, 110, 44,
 				   MIDTOP, 0);
-	for (int i = 0; i < 5; i++) {
+	for (int i = 0; i < 4; i++) {
 		int hover = dfsui_inRect(ui->mx, ui->my, 30, ny[i], 200, 52);
 		if (i == active || hover) {
 			dfsui_drawRound(ui, 30, ny[i], 200, 52, 14, COLOR_PINK);
@@ -81,9 +81,9 @@ static void dfsui_drawSidebar(SDL_Ui *ui, int active) {
 }
 
 static int dfsui_handleSidebarClick(SDL_Ui *ui, int active) {
-	int ny[4] = {150, 212, 274, 336};
-	MainStateEnum states[4] = {HOME, BFS, DFS, MST};
-	for (int i = 0; i < 4; i++) {
+	int ny[3] = {150, 212, 274};
+	MainStateEnum states[3] = {HOME, BFS, DFS};
+	for (int i = 0; i < 3; i++) {
 		if (dfsui_inRect(ui->mx, ui->my, 30, ny[i], 200, 52)) {
 			if (i == active) {
 				return 0;
@@ -512,6 +512,7 @@ static void dfsui_showSurveyResult(SDL_Ui *ui, People *me, DfsSurvey *self_s,
 						self_names[0][DFS_NAME_LEN - 1] = '\0';
 						strncpy(me->type, nc, MAX_TYPE_LEN - 1);
 						me->type[MAX_TYPE_LEN - 1] = '\0';
+						login_update_account(me);
 					}
 				}
 			}
@@ -597,12 +598,14 @@ void display_showDFS(SDL_Ui *ui, People *me) {
 	}
 	strncpy(me->type, self_codes[0], MAX_TYPE_LEN - 1);
 	me->type[MAX_TYPE_LEN - 1] = '\0';
+	login_update_account(me);
 
 	if (!dfsui_runSurvey(ui, ideal_s, ideal_codes, ideal_names)) {
 		goto done;
 	}
 	strncpy(me->love_type, ideal_codes[0], MAX_TYPE_LEN - 1);
 	me->love_type[MAX_TYPE_LEN - 1] = '\0';
+	login_update_account(me);
 
 	dfsui_showSurveyResult(ui, me, self_s, self_codes, self_names, ideal_s,
 						   ideal_codes, ideal_names);

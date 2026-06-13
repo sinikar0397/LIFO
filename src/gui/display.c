@@ -2,7 +2,7 @@
 
 enum Focus { FOCUS_NONE, FOCUS_ID, FOCUS_PW };
 
-static char g_mst_partner_id[MAX_ID_LEN] = "";
+char g_mst_partner_id[MAX_ID_LEN] = "";
 
 static void display_copyText(char *dst, size_t dst_size, const char *src) {
 	if (dst_size == 0) {
@@ -1004,9 +1004,9 @@ void display_showHome(SDL_Ui *ui, People *me) {
 		(ObjectParam){.text = {"LIFO", ui->font_bbsig, COLOR_SUPERPINK}});
 
 	// 네비게이션 항목 (0:홈 이 현재 화면)
-	enum { NAV_HOME, NAV_BFS, NAV_DFS, NAV_MST, NAV_PROFILE, NAV_CNT };
-	char *nav_labels[NAV_CNT] = {"홈", "매칭", "설문", "커플", "프로필"};
-	int nav_y[NAV_CNT] = {150, 212, 274, 336, 398};
+	enum { NAV_HOME, NAV_BFS, NAV_DFS, NAV_PROFILE, NAV_CNT };
+	char *nav_labels[NAV_CNT] = {"홈", "매칭", "설문", "프로필"};
+	int nav_y[NAV_CNT] = {150, 212, 274, 336};
 	Object nav_box[NAV_CNT + 1];
 	Object nav_txt[NAV_CNT + 1];
 	for (int i = 0; i < NAV_CNT; i++) {
@@ -1109,11 +1109,11 @@ void display_showHome(SDL_Ui *ui, People *me) {
 					   (ObjectParam){.box = {card_w - 4, 92, COLOR_WHITE, 14}});
 	Object t_record = gui_initObject(
 		ui, TEXT, card2_x + 28, 484, TOPLEFT,
-		(ObjectParam){.text = {"커플 공간", ui->font_normal,
+		(ObjectParam){.text = {"개발자에게 커피 사주기", ui->font_normal,
 							   COLOR_DURTYPINK}});
 	Object t_recordsub = gui_initObject(
 		ui, TEXT, card2_x + 26, 522, TOPLEFT,
-		(ObjectParam){.text = {"공유 캘린더와 버킷리스트", ui->font_small,
+		(ObjectParam){.text = {"개발자를 응원해주세요", ui->font_small,
 							   COLOR_GRAY}});
 
 	while (!ui->quit) {
@@ -1154,12 +1154,6 @@ void display_showHome(SDL_Ui *ui, People *me) {
 			} else if (gui_isInObject(&survey_border, ui->mx, ui->my) ||
 					   gui_isInObject(&nav_box[NAV_DFS], ui->mx, ui->my)) {
 				ui->next_state = DFS;
-				break;
-			} else if (gui_isInObject(&record_border, ui->mx, ui->my)) {
-				ui->next_state = MST;
-				break;
-			} else if (gui_isInObject(&nav_box[NAV_MST], ui->mx, ui->my)) {
-				ui->next_state = MST;
 				break;
 			} else if (gui_isInObject(&nav_box[NAV_PROFILE], ui->mx, ui->my)) {
 				// ui->next_state = PROFILE;
@@ -1294,9 +1288,9 @@ void display_showBFS(SDL_Ui *ui, People *me) {
 		(ObjectParam){.text = {"LIFO", ui->font_bbsig, COLOR_SUPERPINK}});
 
 	// 사이드바
-	enum { NAV_HOME, NAV_BFS, NAV_DFS, NAV_MST, NAV_PROFILE, NAV_CNT };
-	char *nav_labels[NAV_CNT] = {"홈", "매칭", "설문", "커플", "프로필"};
-	int nav_y[NAV_CNT] = {150, 212, 274, 336, 398};
+	enum { NAV_HOME, NAV_BFS, NAV_DFS, NAV_PROFILE, NAV_CNT };
+	char *nav_labels[NAV_CNT] = {"홈", "매칭", "설문", "프로필"};
+	int nav_y[NAV_CNT] = {150, 212, 274, 336};
 	Object nav_box[NAV_CNT + 1];
 	Object nav_txt[NAV_CNT + 1];
 	for (int i = 0; i < NAV_CNT; i++) {
@@ -1396,7 +1390,7 @@ void display_showBFS(SDL_Ui *ui, People *me) {
 			(ObjectParam){.text = {" ", ui->font_small, COLOR_GRAY}});
 		j_action[i] = gui_initObject(
 			ui, TEXT, j_x + 20, prpl_y[i] + 72, TOPLEFT,
-			(ObjectParam){.text = {"수락하고 커플 공간 열기", ui->font_small,
+			(ObjectParam){.text = {"매칭 수락하기", ui->font_small,
 								   COLOR_SUPERPINK}});
 		j_cancel[i] = gui_initObject(
 			ui, TEXT, j_x + matchbox_w - 130, prpl_y[i] + 72, TOPLEFT,
@@ -1438,7 +1432,7 @@ void display_showBFS(SDL_Ui *ui, People *me) {
 				snprintf(info, sizeof(info), "%s", accepted_partner_id);
 			}
 			gui_setText(&j_info[i], info);
-			gui_setText(&j_action[i], "이미 매칭됨 · 커플 공간 열기");
+			gui_setText(&j_action[i], "매칭 완료");
 			gui_setText(&j_cancel[i], "매칭 취소");
 		}
 	}
@@ -1478,9 +1472,6 @@ void display_showBFS(SDL_Ui *ui, People *me) {
 			} else if (gui_isInObject(&nav_box[NAV_DFS], ui->mx, ui->my)) {
 				ui->next_state = DFS;
 				break;
-			} else if (gui_isInObject(&nav_box[NAV_MST], ui->mx, ui->my)) {
-				ui->next_state = MST;
-				break;
 			} else if (gui_isInObject(&nav_box[NAV_PROFILE], ui->mx, ui->my)) {
 				// ui->next_state = PROFILE;
 				//  break;
@@ -1519,7 +1510,35 @@ void display_showBFS(SDL_Ui *ui, People *me) {
 						display_copyText(g_mst_partner_id,
 										 sizeof(g_mst_partner_id),
 										 incoming_requests[i].from_id);
-						ui->next_state = MST;
+						display_copyText(accepted_partner_id,
+										 sizeof(accepted_partner_id),
+										 incoming_requests[i].from_id);
+						accepted_partner = incoming_people[i];
+						has_accepted_partner = 1;
+						incoming_count = 0;
+						if (accepted_partner != NULL) {
+							char info[128];
+							gui_setText(&j_name[0], accepted_partner->name);
+							snprintf(info, sizeof(info), "%s · %d세 · %s",
+									 accepted_partner->id,
+									 accepted_partner->age,
+									 accepted_partner->gen == GENDER_MALE
+										 ? "남성"
+										 : "여성");
+							gui_setText(&j_info[0], info);
+							snprintf(match_status, sizeof(match_status),
+									 "%s 님과 매칭됐어요.",
+									 accepted_partner->name);
+						} else {
+							gui_setText(&j_name[0], accepted_partner_id);
+							gui_setText(&j_info[0], accepted_partner_id);
+							snprintf(match_status, sizeof(match_status),
+									 "%s 님과 매칭됐어요.",
+									 accepted_partner_id);
+						}
+						gui_setText(&j_action[0], "매칭 완료");
+						gui_setText(&j_cancel[0], "매칭 취소");
+						gui_setText(&t_match_status, match_status);
 					} else {
 						strcpy(match_status, "제안을 수락하지 못했어요.");
 						gui_setText(&t_match_status, match_status);
@@ -1550,7 +1569,8 @@ void display_showBFS(SDL_Ui *ui, People *me) {
 				gui_isInObject(&j_prpl[0][0], ui->mx, ui->my)) {
 				display_copyText(g_mst_partner_id, sizeof(g_mst_partner_id),
 								 accepted_partner_id);
-				ui->next_state = MST;
+				strcpy(match_status, "이미 매칭된 상태예요.");
+				gui_setText(&t_match_status, match_status);
 				break;
 			}
 			if (ui->next_state != BFS) {
@@ -1604,8 +1624,7 @@ void display_showBFS(SDL_Ui *ui, People *me) {
 				int hover = gui_isInObject(&j_prpl[i][0], ui->mx, ui->my);
 				j_prpl[i][0].textcolor = hover ? COLOR_PINK : COLOR_SOFTPINK;
 			} else if (incoming_count == 0 && has_accepted_partner && i == 0) {
-				int hover = gui_isInObject(&j_prpl[i][0], ui->mx, ui->my);
-				j_prpl[i][0].textcolor = hover ? COLOR_PINK : COLOR_SOFTPINK;
+				j_prpl[i][0].textcolor = COLOR_SOFTPINK;
 			}
 			gui_presentObject(&j_prpl[i][0]);
 			if (i < recommend_count) {
@@ -1646,433 +1665,4 @@ void display_showBFS(SDL_Ui *ui, People *me) {
 		}
 	}
 	display_freePeopleList(loaded_people, loaded_count);
-}
-
-// ───────────────────────────────────────────────
-// 설문(DFS) 화면 — image 2 스타일
-// 즉시 모드(immediate-mode) 렌더링 헬퍼들. TEXT는 매 프레임 텍스처를 만들고
-// 바로 파괴하므로 누수가 없고, 둥근 BOX는 텍스처를 만들지 않으므로 안전하다.
-// ───────────────────────────────────────────────
-
-// 근데 읽어보니까 코드 씹창나있어서 걍 다 다시짜는게 나을수도;; 그냥 밑에
-// 참고하는 느낌으로 위에 display_showHome()양식 맞춰서 다시 짜세요
-
-static int s_inRect(int px, int py, int x, int y, int w, int h) {
-	return px >= x && px <= x + w && py >= y && py <= y + h;
-}
-
-// 채운 사각형(직각).
-static void s_drawRect(SDL_Ui *ui, int x, int y, int w, int h, SDL_Color c) {
-	SDL_Rect r = {x, y, w, h};
-	SDL_SetRenderDrawColor(ui->renderer, c.r, c.g, c.b, c.a);
-	SDL_RenderFillRect(ui->renderer, &r);
-}
-
-// 둥근 사각형 (텍스처 없음 → 매 프레임 호출해도 안전).
-static void s_drawRound(SDL_Ui *ui, int x, int y, int w, int h, int radius,
-						SDL_Color c) {
-	Object o = gui_initObject(ui, BOX, x, y, TOPLEFT,
-							  (ObjectParam){.box = {w, h, c, radius}});
-	gui_presentObject(&o);
-}
-
-// 즉시 모드 텍스트. wrap>0이면 그 폭으로 줄바꿈. 매 프레임 텍스처 생성/파괴.
-static void s_drawText(SDL_Ui *ui, const char *text, TTF_Font *font,
-					   SDL_Color color, int x, int y, AnchorEnum anchor,
-					   int wrap) {
-	if (text == NULL || text[0] == '\0') {
-		return;
-	}
-	SDL_Surface *s =
-		(wrap > 0) ? TTF_RenderUTF8_Blended_Wrapped(font, text, color, wrap)
-				   : TTF_RenderUTF8_Blended(font, text, color);
-	if (s == NULL) {
-		return;
-	}
-	SDL_Texture *t = SDL_CreateTextureFromSurface(ui->renderer, s);
-	SDL_Rect r = {x, y, s->w, s->h};
-	switch (anchor) {
-	case TOPLEFT:
-		break;
-	case MIDTOP:
-		r.x -= r.w / 2;
-		break;
-	case CENTER:
-		r.x -= r.w / 2;
-		r.y -= r.h / 2;
-		break;
-	case MIDBOTTOM:
-		r.x -= r.w / 2;
-		r.y -= r.h;
-		break;
-	}
-	SDL_RenderCopy(ui->renderer, t, NULL, &r);
-	SDL_DestroyTexture(t);
-	SDL_FreeSurface(s);
-}
-
-// 공통 사이드바를 그린다. active: 현재 활성 메뉴 index (설문=2).
-static void s_drawSidebar(SDL_Ui *ui, int active) {
-	const char *labels[5] = {"홈", "매칭", "설문", "커플", "프로필"};
-	int ny[5] = {150, 212, 274, 336, 398};
-	s_drawRect(ui, 0, 0, 260, WINDOW_HEIGHT, COLOR_WHITEPINK);
-	s_drawText(ui, "LIFO", ui->font_bbsig, COLOR_SUPERPINK, 110, 44, MIDTOP,
-			   0);
-	for (int i = 0; i < 5; i++) {
-		int hover = s_inRect(ui->mx, ui->my, 30, ny[i], 200, 52);
-		if (i == active) {
-			s_drawRound(ui, 30, ny[i], 200, 52, 14, COLOR_PINK);
-		} else if (hover) {
-			s_drawRound(ui, 30, ny[i], 200, 52, 14, COLOR_PINK);
-		}
-		SDL_Color tc = (i == active || hover) ? COLOR_WHITE : COLOR_DURTYPINK;
-		s_drawText(ui, labels[i], ui->font_normal, tc, 70, ny[i] + 13, TOPLEFT,
-				   0);
-	}
-	int logout_y = WINDOW_HEIGHT - 82;
-	int logout_hover = s_inRect(ui->mx, ui->my, 30, logout_y, 200, 52);
-	if (logout_hover) {
-		s_drawRound(ui, 30, logout_y, 200, 52, 14, COLOR_PINK);
-	}
-	s_drawText(ui, "로그아웃", ui->font_normal,
-			   logout_hover ? COLOR_WHITE : COLOR_DURTYPINK, 70,
-			   logout_y + 13, TOPLEFT, 0);
-}
-
-static int s_handleSidebarClick(SDL_Ui *ui, int active) {
-	int ny[4] = {150, 212, 274, 336};
-	MainStateEnum states[4] = {HOME, BFS, DFS, MST};
-	for (int i = 0; i < 4; i++) {
-		if (s_inRect(ui->mx, ui->my, 30, ny[i], 200, 52)) {
-			if (i == active) {
-				return 0;
-			}
-			ui->next_state = states[i];
-			return 1;
-		}
-	}
-	if (s_inRect(ui->mx, ui->my, 30, WINDOW_HEIGHT - 82, 200, 52)) {
-		ui->next_state = LOGIN;
-		return 1;
-	}
-	return 0;
-}
-
-#define SV_MAIN_X 300
-
-// 라벨 + 입력 박스를 그린다 (즉시 모드).
-static void s_drawInput(SDL_Ui *ui, int x, int y, int w, int h, int focused,
-						const char *label, const char *buf,
-						const char *placeholder) {
-	s_drawText(ui, label, ui->font_small, COLOR_DURTYPINK, x, y - 28, TOPLEFT,
-			   0);
-	s_drawRound(ui, x, y, w, h, 12, focused ? COLOR_SUPERPINK : COLOR_PINK);
-	s_drawRound(ui, x + 2, y + 2, w - 4, h - 4, 10, COLOR_WHITEPINK);
-	if (buf[0] == '\0' && !focused) {
-		s_drawText(ui, placeholder, ui->font_small, COLOR_WHITEGRAY, x + 16,
-				   y + 16, TOPLEFT, w - 32);
-	} else {
-		char disp[DFS_Q_LEN + 4];
-		snprintf(disp, sizeof(disp), "%s%s", buf, focused ? "_" : "");
-		s_drawText(ui, disp, ui->font_small, COLOR_GRAY, x + 16, y + 16,
-				   TOPLEFT, w - 32);
-	}
-}
-
-static void s_appendText(char *buf, size_t buf_size, const char *text) {
-	if (buf == NULL || text == NULL) {
-		return;
-	}
-	if (strlen(buf) + strlen(text) < buf_size - 1) {
-		strcat(buf, text);
-	}
-}
-
-static void s_openMstSpace(MstCoupleSpace *space, People *me,
-						   const char partner_buf[], int *opened,
-						   char status[], size_t status_size) {
-	if (partner_buf[0] == '\0') {
-		snprintf(status, status_size, "수락된 매칭이 있어야 사용할 수 있어요.");
-		return;
-	}
-
-	int existed = mst_load_space(space, me->id, partner_buf);
-	if (!existed) {
-		mst_init_space(space, me->id, partner_buf);
-		mst_save_space(space);
-	}
-	display_copyText(g_mst_partner_id, sizeof(g_mst_partner_id), partner_buf);
-	*opened = 1;
-	snprintf(status, status_size, existed ? "커플 공간을 불러왔어요."
-										  : "새 커플 공간을 만들었어요.");
-}
-
-void display_showMST(SDL_Ui *ui, People *me) {
-	if (me == NULL) {
-		ui->next_state = HOME;
-		return;
-	}
-
-	enum {
-		MST_FOCUS_NONE,
-		MST_FOCUS_EVENT_DATE,
-		MST_FOCUS_EVENT_TITLE,
-		MST_FOCUS_BUCKET
-	};
-
-	MstCoupleSpace space;
-	char partner_buf[MAX_ID_LEN] = "";
-	char event_date[MST_DATE_LEN] = "";
-	char event_title[MST_TEXT_LEN] = "";
-	char bucket_title[MST_TEXT_LEN] = "";
-	char status[160] = "";
-	int focus = MST_FOCUS_EVENT_DATE;
-	int opened = 0;
-
-	mst_init_space(&space, me->id, "");
-	if (g_mst_partner_id[0] != '\0' &&
-		match_store_has_accepted_match(me->id, g_mst_partner_id)) {
-		display_copyText(partner_buf, sizeof(partner_buf), g_mst_partner_id);
-	} else if (match_store_find_accepted_partner(me->id, partner_buf,
-												 sizeof(partner_buf))) {
-		display_copyText(g_mst_partner_id, sizeof(g_mst_partner_id),
-						 partner_buf);
-	} else {
-		g_mst_partner_id[0] = '\0';
-	}
-
-	if (partner_buf[0] != '\0') {
-		s_openMstSpace(&space, me, partner_buf, &opened, status,
-					   sizeof(status));
-	} else {
-		strcpy(status, "아직 수락된 매칭이 없어요. 매칭 화면에서 제안을 수락해주세요.");
-		focus = MST_FOCUS_NONE;
-	}
-
-	const int event_x = SV_MAIN_X;
-	const int bucket_x = 790;
-	const int panel_y = 248;
-	const int panel_w = 450;
-	const int panel_h = 390;
-	const int input_y = 332;
-	const int add_y = 408;
-	const int list_y = 490;
-
-	while (!ui->quit) {
-		if (ui->next_state != MST) {
-			break;
-		}
-
-		SDL_Event event;
-		SDL_PumpEvents();
-		while (SDL_PollEvent(&event)) {
-			switch (event.type) {
-			case SDL_QUIT:
-				ui->quit = true;
-				break;
-			case SDL_MOUSEBUTTONDOWN:
-				ui->is_mouse_down = true;
-				ui->mx = event.button.x;
-				ui->my = event.button.y;
-				break;
-			case SDL_MOUSEMOTION:
-				ui->mx = event.motion.x;
-				ui->my = event.motion.y;
-				break;
-			case SDL_TEXTINPUT:
-				if (focus == MST_FOCUS_EVENT_DATE) {
-					s_appendText(event_date, sizeof(event_date),
-								 event.text.text);
-				} else if (focus == MST_FOCUS_EVENT_TITLE) {
-					s_appendText(event_title, sizeof(event_title),
-								 event.text.text);
-				} else if (focus == MST_FOCUS_BUCKET) {
-					s_appendText(bucket_title, sizeof(bucket_title),
-								 event.text.text);
-				}
-				break;
-			case SDL_KEYDOWN:
-				if (event.key.keysym.sym == SDLK_BACKSPACE) {
-					if (focus == MST_FOCUS_EVENT_DATE) {
-						gui_utf8Backspace(event_date);
-					} else if (focus == MST_FOCUS_EVENT_TITLE) {
-						gui_utf8Backspace(event_title);
-					} else if (focus == MST_FOCUS_BUCKET) {
-						gui_utf8Backspace(bucket_title);
-					}
-				} else if (event.key.keysym.sym == SDLK_TAB) {
-					focus = (focus == MST_FOCUS_NONE ||
-							 focus >= MST_FOCUS_BUCKET)
-								? MST_FOCUS_EVENT_DATE
-								: focus + 1;
-				} else if (event.key.keysym.sym == SDLK_RETURN) {
-					if (focus == MST_FOCUS_EVENT_DATE ||
-						focus == MST_FOCUS_EVENT_TITLE) {
-						if (!opened) {
-							strcpy(status,
-								   "수락된 매칭이 있어야 사용할 수 있어요.");
-						} else if (mst_add_event(&space, event_date,
-												 event_title)) {
-							mst_save_space(&space);
-							event_date[0] = '\0';
-							event_title[0] = '\0';
-							strcpy(status, "일정을 추가했어요.");
-						} else {
-							strcpy(status, "날짜와 일정 제목을 모두 입력해주세요.");
-						}
-					} else if (focus == MST_FOCUS_BUCKET) {
-						if (!opened) {
-							strcpy(status,
-								   "수락된 매칭이 있어야 사용할 수 있어요.");
-						} else if (mst_add_bucket_item(&space, bucket_title)) {
-							mst_save_space(&space);
-							bucket_title[0] = '\0';
-							strcpy(status, "버킷리스트를 추가했어요.");
-						} else {
-							strcpy(status, "버킷리스트 내용을 입력해주세요.");
-						}
-					}
-				} else if (event.key.keysym.sym == SDLK_ESCAPE) {
-					ui->next_state = HOME;
-				}
-				break;
-			}
-		}
-
-		if (ui->is_mouse_down) {
-			if (s_handleSidebarClick(ui, 3)) {
-				break;
-			}
-
-			if (s_inRect(ui->mx, ui->my, event_x + 28, input_y, 130, 52)) {
-				focus = MST_FOCUS_EVENT_DATE;
-			} else if (s_inRect(ui->mx, ui->my, event_x + 172, input_y, 220,
-								52)) {
-				focus = MST_FOCUS_EVENT_TITLE;
-			} else if (s_inRect(ui->mx, ui->my, event_x + 28, add_y, 170, 52)) {
-				if (!opened) {
-					strcpy(status, "수락된 매칭이 있어야 사용할 수 있어요.");
-				} else if (mst_add_event(&space, event_date, event_title)) {
-					mst_save_space(&space);
-					event_date[0] = '\0';
-					event_title[0] = '\0';
-					strcpy(status, "일정을 추가했어요.");
-				} else {
-					strcpy(status, "날짜와 일정 제목을 모두 입력해주세요.");
-				}
-			} else if (s_inRect(ui->mx, ui->my, bucket_x + 28, input_y, 260,
-								52)) {
-				focus = MST_FOCUS_BUCKET;
-			} else if (s_inRect(ui->mx, ui->my, bucket_x + 28, add_y, 170,
-								52)) {
-				if (!opened) {
-					strcpy(status, "수락된 매칭이 있어야 사용할 수 있어요.");
-				} else if (mst_add_bucket_item(&space, bucket_title)) {
-					mst_save_space(&space);
-					bucket_title[0] = '\0';
-					strcpy(status, "버킷리스트를 추가했어요.");
-				} else {
-					strcpy(status, "버킷리스트 내용을 입력해주세요.");
-				}
-			} else {
-				for (int i = 0; i < space.bucket_count && i < 5; i++) {
-					if (s_inRect(ui->mx, ui->my, bucket_x + 28,
-								 list_y + i * 34, 380, 28)) {
-						mst_toggle_bucket_item(&space, i);
-						mst_save_space(&space);
-						strcpy(status, "버킷리스트 상태를 바꿨어요.");
-						break;
-					}
-				}
-			}
-		}
-
-		SDL_SetRenderDrawColor(ui->renderer, 255, 255, 255, 255);
-		SDL_RenderClear(ui->renderer);
-		s_drawSidebar(ui, 3);
-
-		s_drawText(ui, "커플 공간", ui->font_big, COLOR_BLACK, SV_MAIN_X, 36,
-				   TOPLEFT, 0);
-		s_drawText(ui, "수락된 매칭 상대와 일정과 버킷리스트를 관리해요.",
-				   ui->font_small, COLOR_GRAY, SV_MAIN_X + 2, 92, TOPLEFT, 0);
-
-		s_drawRound(ui, SV_MAIN_X, 138, 660, 76, 18, COLOR_WHITEPINK);
-		s_drawText(ui, "매칭 상대", ui->font_small, COLOR_DURTYPINK,
-				   SV_MAIN_X + 24, 154, TOPLEFT, 0);
-		s_drawText(ui, opened ? partner_buf : "수락된 매칭 없음",
-				   ui->font_normal, opened ? COLOR_SUPERPINK : COLOR_GRAY,
-				   SV_MAIN_X + 24, 182, TOPLEFT, 0);
-		if (!opened) {
-			s_drawText(ui, "매칭 화면에서 요청을 수락하면 자동으로 표시돼요.",
-					   ui->font_small, COLOR_GRAY, SV_MAIN_X + 260, 184,
-					   TOPLEFT, 360);
-		}
-		s_drawText(ui, status, ui->font_small, COLOR_SUPERPINK, SV_MAIN_X,
-				   214, TOPLEFT, 0);
-
-		s_drawRound(ui, event_x, panel_y, panel_w, panel_h, 20,
-					COLOR_WHITEPINK);
-		s_drawText(ui, "공유 캘린더", ui->font_normal, COLOR_SUPERPINK,
-				   event_x + 28, panel_y + 24, TOPLEFT, 0);
-		s_drawInput(ui, event_x + 28, input_y, 130, 52,
-					focus == MST_FOCUS_EVENT_DATE, "날짜", event_date,
-					"06/13");
-		s_drawInput(ui, event_x + 172, input_y, 220, 52,
-					focus == MST_FOCUS_EVENT_TITLE, "일정", event_title,
-					"영화 보기");
-		int event_hover = s_inRect(ui->mx, ui->my, event_x + 28, add_y, 170,
-								   52);
-		s_drawRound(ui, event_x + 28, add_y, 170, 52, 14,
-					event_hover ? COLOR_DURTYPINK : COLOR_SUPERPINK);
-		s_drawText(ui, "일정 추가", ui->font_small, COLOR_WHITE,
-				   event_x + 113, add_y + 26, CENTER, 0);
-
-		if (space.event_count == 0) {
-			s_drawText(ui, "아직 등록된 일정이 없어요.", ui->font_small,
-					   COLOR_GRAY, event_x + 28, list_y, TOPLEFT, panel_w - 56);
-		}
-		for (int i = 0; i < space.event_count && i < 5; i++) {
-			char line[160];
-			snprintf(line, sizeof(line), "%s  %s", space.events[i].date,
-					 space.events[i].title);
-			s_drawText(ui, line, ui->font_small, COLOR_DURTYPINK,
-					   event_x + 28, list_y + i * 34, TOPLEFT, panel_w - 56);
-		}
-
-		s_drawRound(ui, bucket_x, panel_y, panel_w, panel_h, 20,
-					COLOR_WHITEVIOLET);
-		s_drawText(ui, "버킷리스트", ui->font_normal, COLOR_VIOLET,
-				   bucket_x + 28, panel_y + 24, TOPLEFT, 0);
-		s_drawInput(ui, bucket_x + 28, input_y, 260, 52,
-					focus == MST_FOCUS_BUCKET, "하고 싶은 것", bucket_title,
-					"한강 피크닉");
-		int bucket_hover = s_inRect(ui->mx, ui->my, bucket_x + 28, add_y, 170,
-									52);
-		s_drawRound(ui, bucket_x + 28, add_y, 170, 52, 14,
-					bucket_hover ? COLOR_DURTYPINK : COLOR_VIOLET);
-		s_drawText(ui, "버킷 추가", ui->font_small, COLOR_WHITE,
-				   bucket_x + 113, add_y + 26, CENTER, 0);
-
-		if (space.bucket_count == 0) {
-			s_drawText(ui, "아직 등록된 버킷리스트가 없어요.", ui->font_small,
-					   COLOR_GRAY, bucket_x + 28, list_y, TOPLEFT,
-					   panel_w - 56);
-		}
-		for (int i = 0; i < space.bucket_count && i < 5; i++) {
-			char line[160];
-			int hover = s_inRect(ui->mx, ui->my, bucket_x + 28,
-								 list_y + i * 34, 380, 28);
-			snprintf(line, sizeof(line), "%s %s",
-					 space.buckets[i].done ? "[x]" : "[ ]",
-					 space.buckets[i].title);
-			s_drawText(ui, line, ui->font_small,
-					   hover ? COLOR_SUPERPINK : COLOR_SOFTVIOLET,
-					   bucket_x + 28, list_y + i * 34, TOPLEFT, panel_w - 56);
-		}
-
-		SDL_RenderPresent(ui->renderer);
-		ui->is_mouse_down = false;
-		ui->is_mouse_up = false;
-		ui->is_mouse_move = false;
-	}
 }

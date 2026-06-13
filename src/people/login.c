@@ -155,6 +155,35 @@ void login_add_people_to_hashtable(People *P) {
 	login_add_hash_to_hashtable(hash, P->id);
 }
 
+int login_update_account(People *P) {
+	if (P == NULL) {
+		return 0;
+	}
+
+	IdHash hashed_id = login_hash_ID(P->id);
+	ll h1 = login_hash_string(P->id, PRIME_HASHING1, EXPON);
+	ll h2 = login_hash_string(P->id, PRIME_HASHING2, EXPON);
+
+	int idx = h1;
+	int cnt = 0;
+	while (cnt++ <= HASH_SIZE) {
+		if (login_is_hash_empty(HashTable[idx])) {
+			return 0;
+		}
+		if (login_is_hash_same(HashTable[idx], hashed_id)) {
+			int offset = people_save_people(P, DATA_PATH_PEOPLE);
+			if (offset < 0) {
+				return 0;
+			}
+			HashTable[idx].offset = offset;
+			login_update_hashtable(idx);
+			return 1;
+		}
+		idx = (idx + h2) % HASH_SIZE;
+	}
+	return 0;
+}
+
 People *login_sign_in_account() {
 	char name[MAX_NAME_LEN];
 	char id[MAX_ID_LEN];
