@@ -9,6 +9,7 @@
 #define MAX_PW_LEN 40
 #define MAX_TYPE_LEN 20
 #define MAX_PATH_LEN 50
+#define MAX_BLOCKED 50
 
 #define LEFTROTATE(x, c) (((x) << (c)) | ((x) >> (32 - (c))))
 
@@ -66,6 +67,8 @@ typedef struct People {
 	enum Gender gen;
 	int age;
 	MatchStatus status;
+	char blocked_ids[MAX_BLOCKED][MAX_ID_LEN];
+    int blocked_cnt;
 } People;
 
 /*

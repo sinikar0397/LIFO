@@ -146,6 +146,7 @@ People* people_create_people(char name[], char id[], char pw[], char type[], cha
     newPeople->love_type[MAX_TYPE_LEN - 1] = '\0';
     newPeople->gen  = gen;
     newPeople->age  = age;
+    newPeople->blocked_cnt = 0;
     return newPeople;
 }
 

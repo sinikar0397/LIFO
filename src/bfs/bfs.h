@@ -135,4 +135,22 @@ int stableMatching(MatchingInfo infos[], int n, int proposers[],
 				   int proposer_cnt, int rank_table[][MAX_PEOPLE],
 				   Pair result[]);
 
+/*
+ * a가 b를 차단했는지 확인하는 함수
+ * a가 b를 차단했다면 1, 아니면 0을 반환
+ */
+int isBlocked(People *a, People *b);
+
+/*
+ * a가 b를 차단한다
+ * a와 b 두 사람 사이 매칭이 이루어지지 않게 만든다
+ */
+void blockUser(People *a, People *b);
+
+/*
+ * a가 b를 차단 해제한다
+ * a도 b를, b도 a를 차단하지 않아야 매칭이 된다
+ */
+void unblockUser(People *a, People *b);
+
 #endif // MATCHING_H
