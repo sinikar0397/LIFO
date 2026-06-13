@@ -2,9 +2,6 @@
 
 #define MST_MAIN_X 300
 
-// display.h에 extern으로 선언된 전역의 실제 정의 (display.c 분리 중 누락되어 추가).
-char g_mst_partner_id[MAX_ID_LEN] = "";
-
 static void mstui_copyText(char *dst, size_t dst_size, const char *src) {
 	if (dst_size == 0) {
 		return;
