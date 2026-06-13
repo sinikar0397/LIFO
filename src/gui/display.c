@@ -863,9 +863,9 @@ void display_showHome(SDL_Ui *ui, People *me) {
 			(ObjectParam){.text = {" ", ui->font_normal, COLOR_DURTYPINK}});
 		gui_setText(&nav_txt[i], nav_labels[i]);
 	}
-	nav_box[NAV_CNT] = gui_initObject(
-		ui, BOX, NAV_X, WINDOW_HEIGHT - 30, MIDBOTTOM,
-		(ObjectParam){.box = {NAV_W, NAV_H, COLOR_PINK, 14}});
+	nav_box[NAV_CNT] =
+		gui_initObject(ui, BOX, NAV_X, WINDOW_HEIGHT - 30, MIDBOTTOM,
+					   (ObjectParam){.box = {NAV_W, NAV_H, COLOR_PINK, 14}});
 	nav_txt[NAV_CNT] = gui_initObject(
 		ui, TEXT, NAV_TEXT_X, WINDOW_HEIGHT - 30 - NAV_H / 2, CENTER,
 		(ObjectParam){.text = {"로그아웃", ui->font_normal, COLOR_DURTYPINK}});
@@ -1115,9 +1115,9 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 			(ObjectParam){.text = {" ", ui->font_normal, COLOR_DURTYPINK}});
 		gui_setText(&nav_txt[i], nav_labels[i]);
 	}
-	nav_box[NAV_CNT] = gui_initObject(
-		ui, BOX, NAV_X, WINDOW_HEIGHT - 30, MIDBOTTOM,
-		(ObjectParam){.box = {NAV_W, NAV_H, COLOR_PINK, 14}});
+	nav_box[NAV_CNT] =
+		gui_initObject(ui, BOX, NAV_X, WINDOW_HEIGHT - 30, MIDBOTTOM,
+					   (ObjectParam){.box = {NAV_W, NAV_H, COLOR_PINK, 14}});
 	nav_txt[NAV_CNT] = gui_initObject(
 		ui, TEXT, NAV_TEXT_X, WINDOW_HEIGHT - 30 - NAV_H / 2, CENTER,
 		(ObjectParam){.text = {"로그아웃", ui->font_normal, COLOR_DURTYPINK}});
@@ -1186,15 +1186,15 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 		ui, TEXT, BTN_X + BTN_W / 2, btn_y_accept + BTN_H / 2, CENTER,
 		(ObjectParam){.text = {"수락", ui->font_normal, COLOR_WHITE}});
 
-	Object btn_chat_border =
-		gui_initObject(ui, BOX, BTN_X, btn_y_chat, TOPLEFT,
-					   (ObjectParam){.box = {BTN_W, BTN_H, COLOR_PINK, 16}});
-	Object btn_chat_fill = gui_initObject(
-		ui, BOX, BTN_X + 2, btn_y_chat + 2, TOPLEFT,
-		(ObjectParam){.box = {BTN_W - 4, BTN_H - 4, COLOR_WHITEPINK, 14}});
-	Object t_chat = gui_initObject(
-		ui, TEXT, BTN_X + BTN_W / 2, btn_y_chat + BTN_H / 2, CENTER,
-		(ObjectParam){.text = {"채팅", ui->font_normal, COLOR_DURTYPINK}});
+	// Object btn_chat_border =
+	// 	gui_initObject(ui, BOX, BTN_X, btn_y_chat, TOPLEFT,
+	// 				   (ObjectParam){.box = {BTN_W, BTN_H, COLOR_PINK, 16}});
+	// Object btn_chat_fill = gui_initObject(
+	// 	ui, BOX, BTN_X + 2, btn_y_chat + 2, TOPLEFT,
+	// 	(ObjectParam){.box = {BTN_W - 4, BTN_H - 4, COLOR_WHITEPINK, 14}});
+	// Object t_chat = gui_initObject(
+	// 	ui, TEXT, BTN_X + BTN_W / 2, btn_y_chat + BTN_H / 2, CENTER,
+	// 	(ObjectParam){.text = {"채팅", ui->font_normal, COLOR_DURTYPINK}});
 
 	Object btn_reject_border = gui_initObject(
 		ui, BOX, BTN_X, btn_y_reject, TOPLEFT,
@@ -1324,10 +1324,6 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 							strcpy(status_msg,
 								   "현재 매칭 가능한 상대가 없습니다.");
 							status_color = COLOR_GRAY;
-						} else {
-							strcpy(status_msg, "매칭 상대를 찾았습니다! 수락 "
-											   "또는 거절을 선택하세요.");
-							status_color = COLOR_GREEN;
 						}
 					}
 				}
@@ -1349,10 +1345,10 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 			}
 
 			// ── 채팅 (미구현 안내) ──
-			else if (gui_isInObject(&btn_chat_border, ui->mx, ui->my)) {
-				strcpy(status_msg, "채팅 기능은 준비 중입니다.");
-				status_color = COLOR_GRAY;
-			}
+			// else if (gui_isInObject(&btn_chat_border, ui->mx, ui->my)) {
+			// 	strcpy(status_msg, "채팅 기능은 준비 중입니다.");
+			// 	status_color = COLOR_GRAY;
+			// }
 
 			// ── 거절 ──
 			else if (gui_isInObject(&btn_reject_border, ui->mx, ui->my)) {
@@ -1379,9 +1375,9 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 			gui_isInObject(&btn_accept_border, ui->mx, ui->my)
 				? COLOR_DURTYPINK
 				: COLOR_SUPERPINK;
-		btn_chat_fill.textcolor =
-			gui_isInObject(&btn_chat_border, ui->mx, ui->my) ? COLOR_SOFTPINK
-															 : COLOR_WHITEPINK;
+		// btn_chat_fill.textcolor =
+		// 	gui_isInObject(&btn_chat_border, ui->mx, ui->my) ? COLOR_SOFTPINK
+		// 													 : COLOR_WHITEPINK;
 		btn_reject_fill.textcolor =
 			gui_isInObject(&btn_reject_border, ui->mx, ui->my) ? COLOR_SOFTPINK
 															   : COLOR_WHITE;
@@ -1474,9 +1470,9 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 		gui_presentObject(&btn_accept_fill);
 		gui_presentObject(&t_accept);
 
-		gui_presentObject(&btn_chat_border);
-		gui_presentObject(&btn_chat_fill);
-		gui_presentObject(&t_chat);
+		// gui_presentObject(&btn_chat_border);
+		// gui_presentObject(&btn_chat_fill);
+		// gui_presentObject(&t_chat);
 
 		gui_presentObject(&btn_reject_border);
 		gui_presentObject(&btn_reject_fill);
