@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
 			display_showHome(ui, p);
 			break;
 		case DFS:
-			display_showSurvey(ui, p);
+			display_showDFS(ui, p);
 			break;
 		case BFS:
 			display_showBFS(ui, p);
