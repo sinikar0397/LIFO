@@ -1121,17 +1121,38 @@ void display_showBFS(SDL_Ui *ui, People *me) {
 	int matchbox_w = (RIGHT - LEFT - 20) / 2;
 	int match_x2 = matchbox_w + LEFT + 20;
 	Object chuchon_border = gui_initObject(
-		ui, BOX, LEFT, 130, TOPLEFT,
-		(ObjectParam){.box = {matchbox_w, 540, COLOR_SUPERPINK, 22}});
+		ui, BOX, LEFT, 150, TOPLEFT,
+		(ObjectParam){.box = {matchbox_w, 520, COLOR_SUPERPINK, 22}});
 	Object chuchon_fill = gui_initObject(
-		ui, BOX, LEFT + 2, 130 + 2, TOPLEFT,
-		(ObjectParam){.box = {matchbox_w - 4, 540 - 4, COLOR_WHITEPINK, 22}});
+		ui, BOX, LEFT + 2, 150 + 2, TOPLEFT,
+		(ObjectParam){.box = {matchbox_w - 4, 520 - 4, COLOR_WHITEPINK, 22}});
 	Object jean_border = gui_initObject(
-		ui, BOX, match_x2, 130, TOPLEFT,
-		(ObjectParam){.box = {matchbox_w, 540, COLOR_SUPERPINK, 22}});
+		ui, BOX, match_x2, 150, TOPLEFT,
+		(ObjectParam){.box = {matchbox_w, 520, COLOR_SUPERPINK, 22}});
 	Object jean_fill = gui_initObject(
-		ui, BOX, match_x2 + 2, 130 + 2, TOPLEFT,
-		(ObjectParam){.box = {matchbox_w - 4, 540 - 4, COLOR_WHITEPINK, 20}});
+		ui, BOX, match_x2 + 2, 150 + 2, TOPLEFT,
+		(ObjectParam){.box = {matchbox_w - 4, 520 - 4, COLOR_WHITEPINK, 20}});
+	Object chuchon_text =
+		gui_initObject(ui, TEXT, LEFT + 15, 122, TOPLEFT,
+					   (ObjectParam){.text = {"알고리즘 추천 상대",
+											  ui->font_normal, COLOR_BLACK}});
+	Object jean_text =
+		gui_initObject(ui, TEXT, match_x2 + 15, 122, TOPLEFT,
+					   (ObjectParam){.text = {"나에게 온 제안", ui->font_normal,
+											  COLOR_BLACK}});
+
+	int c_x = LEFT + 15, j_x = match_x2 + 15;
+	int prpl_y[4] = {180, 300, 420, 540};
+	Object c_prpl[4][5];
+	Object j_prpl[4][5];
+	for (int i = 0; i < 4; i++) {
+		c_prpl[i][0] = gui_initObject(
+			ui, BOX, c_x, prpl_y[i], TOPLEFT,
+			(ObjectParam){.box = {matchbox_w - 30, 100, COLOR_SOFTPINK, 15}});
+		j_prpl[i][0] = gui_initObject(
+			ui, BOX, j_x, prpl_y[i], TOPLEFT,
+			(ObjectParam){.box = {matchbox_w - 30, 100, COLOR_SOFTPINK, 15}});
+	}
 
 	while (!ui->quit) {
 		SDL_Event event;
@@ -1209,6 +1230,13 @@ void display_showBFS(SDL_Ui *ui, People *me) {
 
 		gui_presentObject(&jean_fill);
 		gui_presentObject(&chuchon_fill);
+
+		gui_presentObject(&jean_text);
+		gui_presentObject(&chuchon_text);
+		for (int i = 0; i < 4; i++) {
+			gui_presentObject(&c_prpl[i][0]);
+			gui_presentObject(&j_prpl[i][0]);
+		}
 
 		SDL_RenderPresent(ui->renderer);
 
