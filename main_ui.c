@@ -40,13 +40,12 @@ int main(int argc, char **argv) {
 			display_showHome(ui, p);
 			break;
 		case DFS:
-			display_showSurvey(ui, p);
 			break;
 		case BFS:
 			display_showBFS(ui, p, infos, n);
 			break;
 		case MST:
-			display_showMST(ui, p);
+			// display_showMST(ui, p);
 			break;
 		}
 	}
