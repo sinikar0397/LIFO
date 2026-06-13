@@ -134,5 +134,16 @@ void rejectMatch(MatchingInfo infos[], int u, int v);
 int stableMatching(MatchingInfo infos[], int n, int proposers[],
 				   int proposer_cnt, int rank_table[][MAX_PEOPLE],
 				   Pair result[]);
+/*
+ * a와 b 두 사람 사이 매칭이 이루어지지 않게 만든다
+ * 즉, a가 b를 차단하거나 b가 a를 차단한다
+ */
+void makeHate(People *a, People *b);
+
+/*
+ * a와 b 두 사람의 매칭이 다시 가능하게 만든다
+ * a가 b를 차단 해제하거나 b가 a를 차단 해제한다
+ */
+void makeNotHate(People *a, People *b);
 
 #endif // MATCHING_H

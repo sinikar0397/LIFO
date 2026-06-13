@@ -5,7 +5,6 @@
 // compat(People *a, People *b) 함수 있어야 함!!
 // dfs에서 구현 후 헤더로 불러와야 됨
 
-
 // 큐 구현
 typedef struct Queue {
 	int total_size;
@@ -316,4 +315,8 @@ int stableMatching(MatchingInfo infos[], int n, int proposers[], int proposer_cn
 		createProposal(infos, result[i].p1, result[i].p2);
 	}
 	return result_cnt;
+}
+
+void makeHate(People *a, People *b) {
+
 }
