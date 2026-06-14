@@ -81,9 +81,9 @@ static void dfsui_drawSidebar(SDL_Ui *ui, int active) {
 }
 
 static int dfsui_handleSidebarClick(SDL_Ui *ui, int active) {
-	int ny[3] = {150, 150 + 65, 150 + 65 * 2};
-	MainStateEnum states[3] = {HOME, BFS, DFS};
-	for (int i = 0; i < 3; i++) {
+	int ny[4] = {150, 150 + 65, 150 + 65 * 2, 150 + 65 * 3};
+	MainStateEnum states[4] = {HOME, BFS, DFS, PROFILE};
+	for (int i = 0; i < 4; i++) {
 		if (dfsui_inRect(ui->mx, ui->my, 40, ny[i], 170, 51)) {
 			if (i == active) {
 				return 0;
