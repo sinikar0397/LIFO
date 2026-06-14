@@ -1278,13 +1278,14 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n, People 
 	initMatchingInfos(infos, people, new_n);
 
 	int me_idx = -1;
-	for (int i = 0; i < n; i++) {
+	for (int i = 0; i < new_n; i++) {
 		if (infos[i].person != NULL &&
 			strcmp(infos[i].person->id, me->id) == 0) {
 			me_idx = i;
 			break;
 		}
 	}
+	People *cur = (me_idx != -1) ? infos[me_idx].person : me;
 	// printf("%d\n", me_idx);
 
 	// stableMatching 결과 저장용
@@ -1295,7 +1296,7 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n, People 
 	SDL_Color status_color = COLOR_GRAY;
 
 	// ── PROPOSED 상태로 진입 시, 기존 상대를 바로 복원 ──
-	if (me->status == PROPOSED && me_idx != -1) {
+	if (cur->status == PROPOSED && me_idx != -1) {
 		matched_idx = infos[me_idx].match_idx;
 		strcpy(status_msg, "상대가 추천되었습니다. 수락 또는 거절해 주세요.");
 		status_color = COLOR_DURTYPINK;
@@ -1350,17 +1351,17 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n, People 
 				if (me_idx == -1) {
 					strcpy(status_msg, "내 계정을 찾을 수 없습니다.");
 					status_color = COLOR_SUPERPINK;
-				} else if (me->status == MATCHED) {
+				} else if (cur->status == MATCHED) {
 					strcpy(status_msg, "이미 매칭된 상태입니다.");
 					status_color = COLOR_SUPERPINK;
-				} else if (me->status == PROPOSED) {
+				} else if (cur->status == PROPOSED) {
 					strcpy(status_msg, "이미 추천된 상대가 있습니다. 수락 또는 "
 									   "거절해 주세요.");
 					status_color = COLOR_SUPERPINK;
-				} else if (me->status == UNSWORDMASTER) {
+				} else if (cur->status == UNSWORDMASTER) {
 					strcpy(status_msg, "성격 유형 검사를 먼저 진행해주세요.");
 					status_color = COLOR_SUPERPINK;
-				} else if (me->status == AVAILABLE) {
+				} else if (cur->status == AVAILABLE) {
 					int proposers[MAX_PEOPLE];
 					int proposer_cnt;
 					if (me->gen == GENDER_MALE) {
@@ -1419,12 +1420,12 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n, People 
 				if (matched_idx == -1) {
 					strcpy(status_msg, "먼저 매칭을 실행해주세요.");
 					status_color = COLOR_SUPERPINK;
-				} else if (me->status != PROPOSED) {
+				} else if (cur->status != PROPOSED) {
 					strcpy(status_msg, "수락할 제안이 없습니다.");
 					status_color = COLOR_SUPERPINK;
 				} else {
 					acceptMatch(infos, me_idx, matched_idx);
-					if (me->status == MATCHED) {
+					if (cur->status == MATCHED) {
 						strcpy(status_msg, "매칭이 성사되었습니다!");
 						status_color = COLOR_GREEN;
 					} else {
@@ -1447,7 +1448,7 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n, People 
 				if (matched_idx == -1) {
 					strcpy(status_msg, "먼저 매칭을 실행해주세요.");
 					status_color = COLOR_SUPERPINK;
-				} else if (me->status != PROPOSED) {
+				} else if (cur->status != PROPOSED) {
 					strcpy(status_msg, "거절할 제안이 없습니다.");
 					status_color = COLOR_SUPERPINK;
 				} else {
@@ -1467,8 +1468,8 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n, People 
 		// ── hide_run 계산 (버튼 hover 색상 갱신보다 먼저) ──
 		int hide_run =
 			(matched_idx >= 0 && infos[matched_idx].person != NULL) ||
-			me->status == PROPOSED || me->status == ACCEPTED ||
-			me->status == MATCHED;
+			cur->status == PROPOSED || cur->status == ACCEPTED ||
+			cur->status == MATCHED;
 
 		// ── 버튼 hover 색상 갱신 ──
 		btn_accept_fill.textcolor =

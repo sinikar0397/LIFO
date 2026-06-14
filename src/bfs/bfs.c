@@ -255,6 +255,8 @@ void rejectMatch(MatchingInfo infos[], int u, int v) {
 
 	infos[u].match_idx = -1;
 	infos[v].match_idx = -1;
+	infos[u].person->lover[0] = '\0';
+	infos[v].person->lover[0] = '\0';
 
 	if (infos[u].person->status != DELETED) {
 		infos[u].person->status = AVAILABLE;
