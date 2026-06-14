@@ -1132,7 +1132,7 @@ void display_showHome(SDL_Ui *ui, People *me) {
 	}
 }
 
-void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
+void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n, People *people[]) {
 	if (me == NULL) {
 		ui->quit = true;
 		return;
@@ -1274,6 +1274,9 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 
 	// ── 매칭 상태 ──
 	// me의 index를 infos에서 찾기
+	int new_n = bfs_loadPeopleFromDatabase(people);
+	initMatchingInfos(infos, people, new_n);
+
 	int me_idx = -1;
 	for (int i = 0; i < n; i++) {
 		if (infos[i].person != NULL &&

@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
 			display_showDFS(ui, p);
 			break;
 		case BFS:
-			display_showBFS(ui, p, infos, n);
+			display_showBFS(ui, p, infos, n, people);
 			break;
 		case MST:
 			// display_showMST(ui, p);
