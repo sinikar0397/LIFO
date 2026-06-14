@@ -216,7 +216,7 @@ void acceptMatch(MatchingInfo infos[], int u, int v) {
 	if (infos == NULL || u < 0 || v < 0)
 		return;
 
-	if (infos[u].match_idx = v && infos[v].match_idx == u) {
+	if (infos[u].match_idx == v && infos[v].match_idx == u) {
 		if (infos[v].person->status == ACCEPTED) {
 			infos[u].person->status = MATCHED;
 			infos[v].person->status = MATCHED;
