@@ -2,6 +2,32 @@
 
 char g_mst_partner_id[MAX_ID_LEN] = "";
 
+// 프로필 아바타 색상 팔레트 (홈·매칭·프로필 화면 공용, 인덱스 일치 필수)
+#define AVATAR_PALETTE_N 8
+static SDL_Color display_avatar_color(int idx) {
+	SDL_Color pal[AVATAR_PALETTE_N] = {
+		COLOR_PINK,	   COLOR_SUPERPINK, COLOR_DURTYPINK, COLOR_SOFTVIOLET,
+		COLOR_VIOLET,  COLOR_BLUE,		COLOR_GREEN,	 COLOR_YELLOW};
+	if (idx < 0 || idx >= AVATAR_PALETTE_N)
+		idx = 0;
+	return pal[idx];
+}
+
+// 이름의 첫 글자(UTF-8 1글자)를 out에 복사한다. out은 최소 5바이트.
+static void display_avatar_initial(const char *name, char *out) {
+	out[0] = '\0';
+	if (name == NULL || name[0] == '\0')
+		return;
+	unsigned char c0 = (unsigned char)name[0];
+	int len = (c0 < 0x80)			? 1
+			  : ((c0 & 0xE0) == 0xC0) ? 2
+			  : ((c0 & 0xF0) == 0xE0) ? 3
+			  : ((c0 & 0xF8) == 0xF0) ? 4
+									  : 1;
+	strncpy(out, name, len);
+	out[len] = '\0';
+}
+
 int display_countChars(const char *pw_buf) {
 	int count = 0;
 	int i = 0;
@@ -887,6 +913,15 @@ void display_showHome(SDL_Ui *ui, People *me) {
 	Object avatar =
 		gui_initObject(ui, BOX, LEFT + 75, 150 + profile_card.dstrect.h / 2,
 					   CENTER, (ObjectParam){.box = {90, 90, COLOR_PINK, 22}});
+	avatar.textcolor = display_avatar_color(me->avatar);
+	Object t_avatar = gui_initObject(
+		ui, TEXT, avatar.dstrect.x + 45, avatar.dstrect.y + 45, CENTER,
+		(ObjectParam){.text = {" ", ui->font_big, COLOR_WHITE}});
+	{
+		char ini[5];
+		display_avatar_initial(me->name, ini);
+		gui_setText(&t_avatar, ini[0] ? ini : " ");
+	}
 
 	Object t_name = gui_initObject(
 		ui, TEXT, LEFT + 150, 190, TOPLEFT,
@@ -1095,6 +1130,7 @@ void display_showHome(SDL_Ui *ui, People *me) {
 
 		gui_presentObject(&profile_card);
 		gui_presentObject(&avatar);
+		gui_presentObject(&t_avatar);
 		gui_presentObject(&t_name);
 		gui_presentObject(&t_info1);
 		gui_presentObject(&t_info2);
@@ -1199,10 +1235,13 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n, People 
 		ui, BOX, CARD_X + 2, CARD_Y + 2, TOPLEFT,
 		(ObjectParam){.box = {CARD_W - 4, CARD_H - 4, COLOR_WHITE, 24}});
 
-	// 아바타 (카드 상단 중앙)
+	// 아바타 (카드 상단 중앙) — 색상/이니셜은 매칭된 상대에 맞춰 매 프레임 갱신
 	Object avatar =
 		gui_initObject(ui, BOX, CARD_X + CARD_W / 2, CARD_Y + 170, CENTER,
 					   (ObjectParam){.box = {300, 300, COLOR_PINK, 26}});
+	Object t_avatar = gui_initObject(
+		ui, TEXT, avatar.dstrect.x + 150, avatar.dstrect.y + 150, CENTER,
+		(ObjectParam){.text = {" ", ui->font_bbig, COLOR_WHITE}});
 
 	// 카드 내 텍스트 오브젝트들 (내용은 루프마다 setText로 갱신)
 	Object t_card_name =
@@ -1505,6 +1544,14 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n, People 
 		if (matched_idx >= 0 && infos[matched_idx].person != NULL) {
 			People *partner = infos[matched_idx].person;
 
+			// 아바타 (색상 + 이니셜)
+			avatar.textcolor = display_avatar_color(partner->avatar);
+			{
+				char ini[5];
+				display_avatar_initial(partner->name, ini);
+				gui_setText(&t_avatar, ini[0] ? ini : " ");
+			}
+
 			// 이름
 			gui_setText(&t_card_name, partner->name);
 
@@ -1534,6 +1581,8 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n, People 
 			}
 			gui_setText(&t_card_lovetype, love_str);
 		} else {
+			avatar.textcolor = COLOR_PINK;
+			gui_setText(&t_avatar, " ");
 			gui_setText(&t_card_name, "상대를 찾는 중...");
 			gui_setText(&t_card_age, " ");
 			gui_setText(&t_card_type, " ");
@@ -1564,6 +1613,7 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n, People 
 		gui_presentObject(&card_border);
 		gui_presentObject(&card_fill);
 		gui_presentObject(&avatar);
+		gui_presentObject(&t_avatar);
 		gui_presentObject(&t_card_name);
 		gui_presentObject(&t_card_age);
 		gui_presentObject(&t_card_type);
@@ -1662,11 +1712,8 @@ void display_showProfile(SDL_Ui *ui, People *me) {
 		(ObjectParam){.box = {card_w - 4, card_h - 4, COLOR_WHITE, 22}});
 
 	// ── 아바타 (색상 프리셋 + 이름 이니셜) ──
-	// avatar = 색상 팔레트 인덱스 (0 = 기본 핑크)
-	const int AV_PALETTE_N = 8;
-	SDL_Color av_palette[8] = {COLOR_PINK,		COLOR_SUPERPINK, COLOR_DURTYPINK,
-							   COLOR_SOFTVIOLET, COLOR_VIOLET,	 COLOR_BLUE,
-							   COLOR_GREEN,		COLOR_YELLOW};
+	// avatar = 색상 팔레트 인덱스 (0 = 기본 핑크). 색상은 display_avatar_color 공용.
+	const int AV_PALETTE_N = AVATAR_PALETTE_N;
 	int sel_avatar = me->avatar;
 	if (sel_avatar < 0 || sel_avatar >= AV_PALETTE_N)
 		sel_avatar = 0;
@@ -1692,7 +1739,7 @@ void display_showProfile(SDL_Ui *ui, People *me) {
 	for (int k = 0; k < AV_PALETTE_N; k++)
 		thumb[k] = gui_initObject(
 			ui, BOX, th_x[k], TH_Y, TOPLEFT,
-			(ObjectParam){.box = {TH_SZ, TH_SZ, av_palette[k], 12}});
+			(ObjectParam){.box = {TH_SZ, TH_SZ, display_avatar_color(k), 12}});
 	// 선택 강조용 테두리
 	Object thumb_sel = gui_initObject(
 		ui, BOX, 0, 0, TOPLEFT,
@@ -1921,19 +1968,10 @@ void display_showProfile(SDL_Ui *ui, People *me) {
 		}
 
 		// 아바타 색상 + 이니셜 갱신 (이름 첫 글자, UTF-8)
-		avatar_box.textcolor = av_palette[sel_avatar];
+		avatar_box.textcolor = display_avatar_color(sel_avatar);
 		{
-			char initial[5] = "";
-			if (name_buf[0]) {
-				unsigned char c0 = (unsigned char)name_buf[0];
-				int len = (c0 < 0x80)			? 1
-						  : ((c0 & 0xE0) == 0xC0) ? 2
-						  : ((c0 & 0xF0) == 0xE0) ? 3
-						  : ((c0 & 0xF8) == 0xF0) ? 4
-												  : 1;
-				strncpy(initial, name_buf, len);
-				initial[len] = '\0';
-			}
+			char initial[5];
+			display_avatar_initial(name_buf, initial);
 			gui_setText(&t_initial, initial[0] ? initial : " ");
 		}
 
