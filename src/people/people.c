@@ -138,6 +138,7 @@ People* people_create_people(
 
 	strncpy(newPeople->name, name, MAX_NAME_LEN - 1);
 	strncpy(newPeople->id, id, MAX_ID_LEN - 1);
+	newPeople->lover[0] = '\0';
 	newPeople->pw = people_hash_password(pw);
 	strncpy(newPeople->type, type, MAX_TYPE_LEN - 1);
 	strncpy(newPeople->love_type, love_type, MAX_TYPE_LEN - 1);
@@ -195,6 +196,11 @@ void people_set_people_love_lang(People *P, char love_lang[]) {
 void people_set_people_id(People *P, char id[]) {
 	strncpy(P->id, id, MAX_ID_LEN - 1);
 	P->id[MAX_ID_LEN - 1] = '\0';
+}
+
+void people_set_people_lover(People *P, char lover[]) {
+	strncpy(P->lover, lover, MAX_ID_LEN - 1);
+	P->lover[MAX_ID_LEN - 1] = '\0';
 }
 
 void people_set_people_pw(People *P, char pw[]) {
@@ -259,11 +265,13 @@ People *people_read_people(const char path[], int offset) {
 
 	char name[MAX_NAME_LEN];
 	char id[MAX_ID_LEN];
+	char lover[MAX_ID_LEN];
 	Password pw;
 	char type[MAX_TYPE_LEN];
 	char love_type[MAX_TYPE_LEN];
 	strcpy(name, cJSON_GetObjectItem(root, "name")->valuestring);
 	strcpy(id, cJSON_GetObjectItem(root, "id")->valuestring);
+	strcpy(lover, cJSON_GetObjectItem(root, "lover")->valuestring);
 	strcpy(type, cJSON_GetObjectItem(root, "type")->valuestring);
 	strcpy(love_type, cJSON_GetObjectItem(root, "love_type")->valuestring);
 	char *pw_hex = cJSON_GetObjectItem(root, "pw")->valuestring;
@@ -313,6 +321,7 @@ int people_save_people(People *P, const char path[]) {
 
 	cJSON_AddStringToObject(root, "name", P->name);
 	cJSON_AddStringToObject(root, "id", P->id);
+	cJSON_AddStringToObject(root, "lover", P->lover);
 
 	char pw_hex[33];
 	for (int i = 0; i < 16; i++)
@@ -444,11 +453,13 @@ People **people_read_all_people(int *count) {
 		// People 생성 (people_read_people과 동일한 파싱)
 		char name[MAX_NAME_LEN];
 		char id[MAX_ID_LEN];
+		char lover[MAX_ID_LEN];
 		char type[MAX_TYPE_LEN];
 		char love_type[MAX_TYPE_LEN];
 
 		strcpy(name, cJSON_GetObjectItem(root, "name")->valuestring);
 		strcpy(id, id_item->valuestring);
+		strcpy(lover, cJSON_GetObjectItem(root, "lover")->valuestring);
 		strcpy(type, cJSON_GetObjectItem(root, "type")->valuestring);
 		strcpy(love_type, cJSON_GetObjectItem(root, "love_type")->valuestring);
 

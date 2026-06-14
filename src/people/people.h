@@ -71,6 +71,7 @@ typedef enum MatchStatus {
 typedef struct People {
 	char name[MAX_NAME_LEN];
 	char id[MAX_ID_LEN];
+	char lover[MAX_ID_LEN]; // 좋아하는 사람 id
 	Password pw;
 	char type[MAX_TYPE_LEN];
 	char love_type[MAX_TYPE_LEN];
@@ -162,6 +163,12 @@ void people_set_people_name(People *P, char name[]);
 People의 id에 대한 setter
 */
 void people_set_people_id(People *P, char id[]);
+
+/*
+@brief
+People의 lover에 대한 setter
+*/
+void people_set_people_lover(People *P, char lover[]);
 
 /*
 @brief
