@@ -142,14 +142,18 @@ People* people_create_people(
 	newPeople->pw = people_hash_password(pw);
 	strncpy(newPeople->type, type, MAX_TYPE_LEN - 1);
 	strncpy(newPeople->love_type, love_type, MAX_TYPE_LEN - 1);
+	strncpy(newPeople->attach, attach, MAX_TYPE_LEN - 1);
+	strncpy(newPeople->love_attach, love_attach, MAX_TYPE_LEN - 1);
+	strncpy(newPeople->lang, lang, MAX_TYPE_LEN - 1);
+	strncpy(newPeople->love_lang, love_lang, MAX_TYPE_LEN - 1);
 	newPeople->name[MAX_NAME_LEN - 1] = '\0';
 	newPeople->id[MAX_ID_LEN - 1] = '\0';
 	newPeople->type[MAX_TYPE_LEN - 1] = '\0';
 	newPeople->love_type[MAX_TYPE_LEN - 1] = '\0';
-	newPeople->attach[0] = '\0'; // 애착 유형은 설문 전까지 미설정
-	newPeople->love_attach[0] = '\0';
-	newPeople->lang[0] = '\0'; // 사랑의 언어도 설문 전까지 미설정
-	newPeople->love_lang[0] = '\0';
+	newPeople->attach[MAX_TYPE_LEN - 1] = '\0';
+	newPeople->love_attach[MAX_TYPE_LEN - 1] = '\0';
+	newPeople->lang[MAX_TYPE_LEN - 1] = '\0';
+	newPeople->love_lang[MAX_TYPE_LEN - 1] = '\0';
 	newPeople->gen = gen;
 	newPeople->age = age;
 	newPeople->status = UNSWORDMASTER; // 기본 매칭 가능 상태 (팀원 변경 반영)
@@ -493,6 +497,7 @@ People **people_read_all_people(int *count) {
             name, id, "\0",
             type, love_type, attach_item->valuestring, love_attach_item->valuestring, lang_item->valuestring, love_lang_item->valuestring,
             gen, age);
+		printf("%s", p->attach);
         people_set_people_pw_hashed(p, pw);
         people_set_people_status(p, status);
         people_set_people_block(p, blocked_cnt, blocked_ids);
