@@ -655,8 +655,8 @@ People *display_showSignup(SDL_Ui *ui) {
 				} else {
 					// 모든 항목 검증 통과 → 계정 생성
 					People *new_acc = people_create_people(
-						name_buf, id_buf, pw_buf, "",
-						"", // type, love_type: 추후 DFS 화면에서 입력
+						name_buf, id_buf, pw_buf,
+						"", "", "", "", "", "", // type, love_type: 추후 DFS 화면에서 입력
 						(enum Gender)gender, age_val);
 					login_add_people_to_hashtable(new_acc);
 					return new_acc;

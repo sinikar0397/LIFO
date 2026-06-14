@@ -131,7 +131,19 @@ int people_is_same_password(Password p1, Password p2){
     ) == 0;
 }
 
-People* people_create_people(char name[], char id[], char pw[], char type[], char love_type[], enum Gender gen, int age){
+People* people_create_people(
+    char name[],
+    char id[],
+    char pw[],
+    char type[],
+    char love_type[],
+    char attach[],
+    char love_attach[],
+    char lang[],
+    char love_lang[],
+    enum Gender gen,
+    int age
+){
     People* newPeople = (People*)malloc(sizeof(People));
     if (newPeople == NULL){
         printf("[ERROR] file : people.c, function : people_create_people.     Can't malloc structure.\n");
@@ -214,8 +226,16 @@ void people_set_people_pw_hashed(  People* P, Password pw){
 void people_set_people_gen( People* P, enum Gender gen){
     P->gen = gen;
 }
+
 void people_set_people_age( People* P, int age){
     P->age = age;
+}
+
+void people_set_people_block(People* P, int blocked_cnt, char blocked_ids[][MAX_ID_LEN]){
+    P->blocked_cnt = blocked_cnt;
+    for (int i = 0 ; i < blocked_cnt ; i++){
+        strcpy(P->blocked_ids[i], blocked_ids[i]);
+    }
 }
 
 char* people_read_text_from_file(const char path[], int offset){
@@ -264,23 +284,34 @@ People* people_read_people(const char path[], int offset){
     enum Gender gen  = cJSON_GetObjectItem(root, "gen" )->valueint;
     int         age  = cJSON_GetObjectItem(root, "age" )->valueint;
 
-    People* resultPeople = people_create_people(name, id, "\0", type, love_type, gen, age);
-    people_set_people_pw_hashed(resultPeople, pw);
-
     // 애착 유형은 구버전 데이터엔 없을 수 있으니 키가 있을 때만 설정 (없으면 "")
     cJSON* attach_item      = cJSON_GetObjectItem(root, "attach");
     cJSON* love_attach_item = cJSON_GetObjectItem(root, "love_attach");
-    if (cJSON_IsString(attach_item) && attach_item->valuestring != NULL)
-        people_set_people_attach(resultPeople, attach_item->valuestring);
-    if (cJSON_IsString(love_attach_item) && love_attach_item->valuestring != NULL)
-        people_set_people_love_attach(resultPeople, love_attach_item->valuestring);
 
     cJSON* lang_item      = cJSON_GetObjectItem(root, "lang");
     cJSON* love_lang_item = cJSON_GetObjectItem(root, "love_lang");
-    if (cJSON_IsString(lang_item) && lang_item->valuestring != NULL)
-        people_set_people_lang(resultPeople, lang_item->valuestring);
-    if (cJSON_IsString(love_lang_item) && love_lang_item->valuestring != NULL)
-        people_set_people_love_lang(resultPeople, love_lang_item->valuestring);
+
+    MatchStatus status      = cJSON_GetObjectItem(root, "status")->valueint;
+    int         blocked_cnt = cJSON_GetObjectItem(root, "blocked_cnt")->valueint;
+
+    cJSON *blocked = cJSON_GetObjectItem(root, "blocked_ids");
+    char blocked_ids[MAX_BLOCKED][MAX_ID_LEN];
+    for (int i = 0 ; i < blocked_cnt ; i++){
+        strncpy(
+            blocked_ids[i],
+            cJSON_GetArrayItem(blocked, i)->valuestring,
+            MAX_ID_LEN - 1
+        );
+        blocked_ids[i][MAX_ID_LEN - 1] = '\0';
+    }
+
+    People* resultPeople = people_create_people(
+        name, id, "\0",
+        type, love_type, attach_item->valuestring, love_attach_item->valuestring, lang_item->valuestring, love_lang_item->valuestring,
+        gen, age);
+    people_set_people_pw_hashed(resultPeople, pw);
+    people_set_people_status(resultPeople, status);
+    people_set_people_block(resultPeople, blocked_cnt, blocked_ids);
 
     cJSON_Delete(root);
     free(text);
@@ -309,6 +340,18 @@ int people_save_people(People* P, const char path[]){
     cJSON_AddStringToObject(root, "love_lang", P->love_lang);
     cJSON_AddNumberToObject(root, "gen", P->gen);
     cJSON_AddNumberToObject(root, "age", P->age);
+    cJSON_AddNumberToObject(root, "status", P->status);
+    cJSON_AddNumberToObject(root, "blocked_cnt", P->blocked_cnt);
+
+    cJSON *blocked = cJSON_CreateArray();
+
+    for (int i = 0; i < P->blocked_cnt; i++) {
+        cJSON_AddItemToArray(
+            blocked,
+            cJSON_CreateString(P->blocked_ids[i])
+        );
+    }
+    cJSON_AddItemToObject(root, "blocked_ids", blocked);
 
     char* json_string = cJSON_PrintUnformatted(root);
 
@@ -424,22 +467,33 @@ People** people_read_all_people(int* count) {
         enum Gender gen = cJSON_GetObjectItem(root, "gen")->valueint;
         int age         = cJSON_GetObjectItem(root, "age")->valueint;
 
-        People* p = people_create_people(name, id, "\0", type, love_type, gen, age);
-        people_set_people_pw_hashed(p, pw);
-
         cJSON* attach_item      = cJSON_GetObjectItem(root, "attach");
         cJSON* love_attach_item = cJSON_GetObjectItem(root, "love_attach");
-        if (cJSON_IsString(attach_item) && attach_item->valuestring != NULL)
-            people_set_people_attach(p, attach_item->valuestring);
-        if (cJSON_IsString(love_attach_item) && love_attach_item->valuestring != NULL)
-            people_set_people_love_attach(p, love_attach_item->valuestring);
 
         cJSON* lang_item      = cJSON_GetObjectItem(root, "lang");
         cJSON* love_lang_item = cJSON_GetObjectItem(root, "love_lang");
-        if (cJSON_IsString(lang_item) && lang_item->valuestring != NULL)
-            people_set_people_lang(p, lang_item->valuestring);
-        if (cJSON_IsString(love_lang_item) && love_lang_item->valuestring != NULL)
-            people_set_people_love_lang(p, love_lang_item->valuestring);
+
+        MatchStatus status      = cJSON_GetObjectItem(root, "status")->valueint;
+        int         blocked_cnt = cJSON_GetObjectItem(root, "blocked_cnt")->valueint;
+
+        cJSON *blocked = cJSON_GetObjectItem(root, "blocked_ids");
+        char blocked_ids[MAX_BLOCKED][MAX_ID_LEN];
+        for (int i = 0 ; i < blocked_cnt ; i++){
+            strncpy(
+                blocked_ids[i],
+                cJSON_GetArrayItem(blocked, i)->valuestring,
+                MAX_ID_LEN - 1
+            );
+            blocked_ids[i][MAX_ID_LEN - 1] = '\0';
+        }
+
+        People* p = people_create_people(
+            name, id, "\0",
+            type, love_type, attach_item->valuestring, love_attach_item->valuestring, lang_item->valuestring, love_lang_item->valuestring,
+            gen, age);
+        people_set_people_pw_hashed(p, pw);
+        people_set_people_status(p, status);
+        people_set_people_block(p, blocked_cnt, blocked_ids);
 
         cJSON_Delete(root);
         free(lines[i]);

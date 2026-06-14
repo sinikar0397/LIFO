@@ -1,4 +1,6 @@
-{"name":"김주환","id":"sinikar","pw":"d2ee42613d7d4f2ca836cd837af125a4","type":"DTF","love_type":"DTF","attach":"AX","love_attach":"AS","lang":"LQ","love_lang":"LW","gen":0,"age":19}
-{"name":"f","id":"f","pw":"5f2339e44b30e0cce957d5ca1b1c8f71","type":"","love_type":"","attach":"","love_attach":"","lang":"","love_lang":"","gen":0,"age":26}
-{"name":"r","id":"r","pw":"a7d9188f0608279d660560f9eb64f30b","type":"","love_type":"","attach":"","love_attach":"","lang":"","love_lang":"","gen":1,"age":13}
-{"name":"doyun","id":"doyun","pw":"ab20c75680ab0197e15cd88da3121bd9","type":"","love_type":"","attach":"","love_attach":"","lang":"","love_lang":"","gen":0,"age":18}
+{"name":"김주환","id":"sinikar","pw":"d2ee42613d7d4f2ca836cd837af125a4","type":"","love_type":"","attach":"","love_attach":"","lang":"","love_lang":"","gen":0,"age":19,"status":0,"blocked_cnt":0,"blocked_ids":[]}
+{"name":"ryd","id":"yedam","pw":"fc303a169a25c9512de25e0da1fc8c64","type":"","love_type":"","attach":"","love_attach":"","lang":"","love_lang":"","gen":1,"age":19,"status":0,"blocked_cnt":0,"blocked_ids":[]}
+{"name":"김주환","id":"sinikar","pw":"d2ee42613d7d4f2ca836cd837af125a4","type":"SEC","love_type":"","attach":"FA","love_attach":"","lang":"LA","love_lang":"","gen":0,"age":19,"status":0,"blocked_cnt":0,"blocked_ids":[]}
+{"name":"김주환","id":"sinikar","pw":"d2ee42613d7d4f2ca836cd837af125a4","type":"SEC","love_type":"SEC","attach":"FA","love_attach":"FA","lang":"LA","love_lang":"LA","gen":0,"age":19,"status":0,"blocked_cnt":0,"blocked_ids":[]}
+{"name":"ryd","id":"yedam","pw":"fc303a169a25c9512de25e0da1fc8c64","type":"SEC","love_type":"","attach":"FA","love_attach":"","lang":"LA","love_lang":"","gen":1,"age":19,"status":0,"blocked_cnt":0,"blocked_ids":[]}
+{"name":"ryd","id":"yedam","pw":"fc303a169a25c9512de25e0da1fc8c64","type":"SEC","love_type":"SEC","attach":"FA","love_attach":"FA","lang":"LA","love_lang":"LA","gen":1,"age":19,"status":0,"blocked_cnt":0,"blocked_ids":[]}

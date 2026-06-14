@@ -138,8 +138,19 @@ People에 대한 생성자
 
 비밀번호의 경우, 암호화하지 않은 단순 문자열을 입력하면 됨
 */
-People *people_create_people(char name[], char id[], char pw[], char type[],
-							 char love_type[], enum Gender gen, int age);
+People* people_create_people(
+    char name[],
+    char id[],
+    char pw[],
+    char type[],
+    char love_type[],
+    char attach[],
+    char love_attach[],
+    char lang[],
+    char love_lang[],
+    enum Gender gen,
+    int age
+);
 
 /*
 @brief
@@ -222,6 +233,12 @@ void people_set_people_gen(People *P, enum Gender gen);
 People의 나이에 대한 setter
 */
 void people_set_people_age(People *P, int age);
+
+/*
+@brief
+People의 차단 목록에 대한 Setter
+*/
+void people_set_people_block(People* P, int blocked_cnt, char blocked_ids[][MAX_ID_LEN]);
 
 /*
 @brief

@@ -16,9 +16,8 @@ int main(int argc, char **argv) {
 	People *people[MAX_PEOPLE] = {0};
 	MatchingInfo *infos =
 		(MatchingInfo *)calloc(MAX_PEOPLE, sizeof(MatchingInfo));
+		
 	login_init();
-
-
 	gui_initUi(ui);
 	int n = 0;
 

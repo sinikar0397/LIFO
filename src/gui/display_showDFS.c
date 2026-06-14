@@ -1006,7 +1006,7 @@ static int dfsui_resultExtend(SDL_Ui *ui, People *me, DfsSurvey *self_s,
 		}
 	}
 
-	login_update_account(me);
+	login_add_people_to_hashtable(me);
 	dfs_matching_reload(); // 세분화가 매칭 유사도에 반영되도록 캐시 무효화
 	return 1;
 }
@@ -1220,7 +1220,7 @@ static int dfsui_runDfsSurveys(SDL_Ui *ui, People *me, DfsSurvey *self_s,
 	if (self_s->n_trees > 2) {
 		people_set_people_lang(me, self_codes[2]); // 사랑의 언어 결과 저장
 	}
-	login_update_account(me);
+	login_add_people_to_hashtable(me);
 
 	if (!dfsui_runSurvey(ui, ideal_s, ideal_codes, ideal_names)) {
 		return 0;
@@ -1234,7 +1234,7 @@ static int dfsui_runDfsSurveys(SDL_Ui *ui, People *me, DfsSurvey *self_s,
 		people_set_people_love_lang(me, ideal_codes[2]); // 이상형 사랑의 언어
 	}
 	me->dfs_extended = 0; // 새 설문이므로 세분화 1회 권한을 다시 부여
-	login_update_account(me);
+	login_add_people_to_hashtable(me);
 	return 1;
 }
 
