@@ -146,6 +146,7 @@ void display_showMST(SDL_Ui *ui, People *me) {
 	int focus = MST_FOCUS_NONE;
 	int view = MST_VIEW_HOME;
 	int opened = 0;
+	int breakup =0;
 
 	mst_init_space(&space, me->id, "");
 	if (g_mst_partner_id[0] != '\0' &&
@@ -303,7 +304,36 @@ void display_showMST(SDL_Ui *ui, People *me) {
 			else if (mstui_inRect(ui->mx, ui->my, 30, WINDOW_HEIGHT - 82, 200, 52)) {
 				ui->next_state = LOGIN;
 				break;
-			} 
+			} else if (view == MST_VIEW_HOME && breakup && mstui_inRect(ui->mx, ui->my, MST_MAIN_X + 600, 258, 132, 42)) {
+				breakup = 0;
+				strcpy(status, "잘 선택했어요");
+			}else if (view == MST_VIEW_HOME && mstui_inRect(ui->mx, ui->my, MST_MAIN_X + 740, 258, 132, 42)) {
+				if (!opened) {
+					strcpy(status, "파기할 관계가 없어요.");
+				} else if (!breakup) {
+					breakup = 1;
+					strcpy(status, "진짜로 헤어지기?");
+				} else {
+					match_store_cancel_match(me->id, partner_buf);
+					people_set_people_status(me, AVAILABLE);
+					me->lover[0] = '\0';
+					login_add_people_to_hashtable(me);
+					People *partner = login_get_account(partner_buf);
+					if (partner != NULL) {
+						people_set_people_status(partner, AVAILABLE);
+						partner->lover[0] = '\0';
+						login_add_people_to_hashtable(partner);
+						people_delete_people(partner);
+					}
+					g_mst_partner_id[0] = '\0';
+					partner_buf[0] = '\0';
+					partner_name[0] = '\0';
+					opened = 0;
+					breakup = 0;
+					ui->next_state = HOME;
+					break;
+				}
+			}
 			else if (view == MST_VIEW_HOME &&  mstui_inRect(ui->mx, ui->my, MST_MAIN_X, home_card_y,
 									home_card_w, home_card_h)) {
 				view = MST_VIEW_CALENDAR;
@@ -407,6 +437,16 @@ void display_showMST(SDL_Ui *ui, People *me) {
 			mstui_drawText(ui, couple_line, ui->font_big, COLOR_DURTYPINK, MST_MAIN_X + 450, 154, CENTER, 0);
 			mstui_drawText(ui, id_line, ui->font_small, COLOR_GRAY, MST_MAIN_X + 450, 180, CENTER, 0);
 			mstui_drawText(ui, "D+1", ui->font_normal, COLOR_SUPERPINK, MST_MAIN_X+450, 230, CENTER, 0);
+			if (breakup) {
+				mstui_drawRound(ui, MST_MAIN_X + 600, 258, 132, 42, 12, COLOR_SOFTPINK);
+				mstui_drawText(ui, "아니요", ui->font_small, COLOR_SUPERPINK, MST_MAIN_X + 666, 279, CENTER, 0);
+				mstui_drawRound(ui, MST_MAIN_X + 740, 258, 132, 42, 12, COLOR_SUPERPINK);
+				mstui_drawText(ui, "진짜", ui->font_small, COLOR_WHITE,
+							MST_MAIN_X + 806, 279, CENTER, 0);
+			} else {
+				mstui_drawRound(ui, MST_MAIN_X + 740, 258, 132, 42, 12, COLOR_SOFTPINK);
+				mstui_drawText(ui, "헤어지기", ui->font_small, COLOR_SUPERPINK, MST_MAIN_X + 806, 279, CENTER, 0);
+			}
 			mstui_drawText(ui, status, ui->font_small, COLOR_SUPERPINK, MST_MAIN_X + 28, 292, TOPLEFT, 0);
 
 			int cal_hover =mstui_inRect(ui->mx, ui->my, MST_MAIN_X, home_card_y, home_card_w, home_card_h);
