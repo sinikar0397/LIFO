@@ -497,7 +497,6 @@ People **people_read_all_people(int *count) {
             name, id, "\0",
             type, love_type, attach_item->valuestring, love_attach_item->valuestring, lang_item->valuestring, love_lang_item->valuestring,
             gen, age);
-		printf("%s", p->attach);
         people_set_people_pw_hashed(p, pw);
         people_set_people_status(p, status);
         people_set_people_block(p, blocked_cnt, blocked_ids);

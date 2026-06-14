@@ -414,29 +414,16 @@ void unblockUser(People *a, People *b) {
 }
 
 int bfs_loadPeopleFromDatabase(People *people[]) {
-	FILE *fp = fopen(PEOPLE_DATA_PATH, "r");
-	if (fp == NULL) {
-		printf("파일 열기 실패: 경로 이슈\n");
-		return 0;
-	}
-	char line[1024];
-	int n = 0;
-
-	while (n < MAX_PEOPLE) {
-		int offset = ftell(fp);
-		if (fgets(line, sizeof(line), fp) == NULL) {
-			break;
-		}
-		if (line[0] == '\n' || line[0] == '\0') {
-			continue;
-		}
-		people[n] = people_read_people(PEOPLE_DATA_PATH, offset);
-		if (people[n] != NULL) {
-			n++;
-		}
+	int result;
+	People** total_people = people_read_all_people(&result);
+	if (result > MAX_PEOPLE){
+		result = MAX_PEOPLE;
 	}
 
-	fclose(fp);
-	// printf("Loaded %d people from %s\n", n, PEOPLE_DATA_PATH);
-	return n;
+	for (int i = 0 ; i < result ; i++){
+		people[i] = total_people[i];
+	}
+
+	people_delete_all_people(total_people, result);
+	return result;
 }
