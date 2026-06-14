@@ -77,6 +77,14 @@ void initMatchingInfos(MatchingInfo infos[], People *people[], int n) {
 	for (int i = 0; i < n; i++) {
 		initMatchingInfo(&infos[i], people[i]);
 	}
+	for(int i = 0 ; i < n ; i++){
+		for(int j = 0 ; j < n ; j++){
+			if (strcmp(infos[i].person->lover, infos[j].person->id) == 0){
+				infos[i].match_idx = j;
+				break;
+			}
+		}
+	}
 }
 
 void changeStatus(MatchingInfo infos[], int idx, MatchStatus status) {
@@ -210,6 +218,11 @@ void createProposal(MatchingInfo infos[], int u, int v) {
 	infos[v].match_idx = u;
 	infos[u].person->status = PROPOSED;
 	infos[v].person->status = PROPOSED;
+
+	strcpy(infos[u].person->lover, infos[v].person->id);
+	strcpy(infos[v].person->lover, infos[u].person->id);
+	login_add_people_to_hashtable(infos[u].person);
+	login_add_people_to_hashtable(infos[v].person);
 }
 
 void acceptMatch(MatchingInfo infos[], int u, int v) {
@@ -423,6 +436,7 @@ int bfs_loadPeopleFromDatabase(People *people[]) {
 	for (int i = 0 ; i < result ; i++){
 		people[i] = total_people[i];
 	}
+
 
 	people_delete_all_people(total_people, result);
 	return result;

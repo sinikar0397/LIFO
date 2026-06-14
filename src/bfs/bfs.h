@@ -1,6 +1,7 @@
 #ifndef MATCHING_H
 #define MATCHING_H
 #include "../people/people.h"
+#include "../people/login.h"
 
 #define MAX_PEOPLE 5000
 #define PEOPLE_DATA_PATH "./database/peoples/data.jsonl"

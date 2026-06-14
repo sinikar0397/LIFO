@@ -1327,13 +1327,19 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 		if (ui->is_mouse_up) {
 			// todo if()if()DFS;
 
-			if (gui_isInObject(&nav_box[NAV_HOME], ui->mx, ui->my)) {
-				ui->next_state = HOME;
+			if (gui_isInObject(&nav_box[NAV_BFS], ui->mx, ui->my)) {
+				ui->next_state = BFS;
 				break;
 			} else if (gui_isInObject(&nav_box[NAV_DFS], ui->mx, ui->my)) {
 				ui->next_state = DFS;
 				break;
-			} // 네비 더 짜기
+			} else if (gui_isInObject(&nav_box[NAV_PROFILE], ui->mx, ui->my)) {
+				// ui->next_state = PROFILE;
+				//  break;
+			} else if (gui_isInObject(&nav_box[NAV_CNT], ui->mx, ui->my)) {
+				ui->next_state = LOGIN;
+				break;
+			}
 
 			// ── 매칭 실행 ──
 			else if (gui_isInObject(&btn_run, ui->mx, ui->my) &&
@@ -1355,8 +1361,8 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 					int proposers[MAX_PEOPLE];
 					int proposer_cnt;
 					if (me->gen == GENDER_MALE) {
-						proposers[0] = me_idx;
-						proposer_cnt = 1;
+						proposer_cnt = 
+							collectUser(infos, n, GENDER_FEMALE, proposers);
 					} else {
 						// 여성인 경우 AVAILABLE 남성 전체를 proposer로
 						proposer_cnt =
@@ -1373,6 +1379,16 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 							stableMatching(infos, n, proposers, proposer_cnt,
 										   rank_table, result);
 						free(rank_table);
+						printf("data at matching\n");
+						for (int i = 0 ; i < n ; i++){
+							printf("%s\n", infos[i].person->id);
+						}
+						for (int i = 0 ; i < proposer_cnt ; i++){
+							printf("%d\n", proposers[i]);
+						}
+						for (int i = 0 ; i < result_cnt ; i++){
+							printf("%d %d\n", result[i].p1, result[i].p2);
+						}
 
 						// me가 포함된 쌍 찾기
 						matched_idx = -1;

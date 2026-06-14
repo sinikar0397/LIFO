@@ -22,7 +22,6 @@ int main(int argc, char **argv) {
 	int n = 0;
 
 	if (infos == NULL) {
-		free(infos);
 		return 1;
 	}
 
@@ -36,6 +35,10 @@ int main(int argc, char **argv) {
 			p = display_showLogin(ui);
 			n = bfs_loadPeopleFromDatabase(people);
 			initMatchingInfos(infos, people, n);
+			for (int i = 0 ; i < n ; i++){
+				printf("%s\n", infos[i].person->id);
+			}
+			printf("%d\n", n);
 			break;
 		case HOME:
 			display_showHome(ui, p);
