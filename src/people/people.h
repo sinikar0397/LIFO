@@ -10,7 +10,6 @@
 #define MAX_TYPE_LEN 20
 #define MAX_PATH_LEN 50
 #define MAX_BLOCKED 50
-#define MAX_DATA_LINES 128
 
 
 /*

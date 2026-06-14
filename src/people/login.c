@@ -54,80 +54,24 @@ int login_load_hashtable() {
 
 	return count == HASH_SIZE;
 }
-// @brief newTable에 hash를 삽입함 (open addressing, login_add_hash_to_hashtable과 동일한 방식)
-//
-// HashTable(전역)이 아닌 newTable 기준으로 빈 슬롯을 찾아 삽입한다.
-// id는 hash1/hash2 계산이 아니라 probe 시작 위치(h1, h2) 계산에만 사용된다.
-static void login_insert_into_table(IdHash *newTable, IdHash hash, char id[]) {
-	ll h1 = login_hash_string(id, PRIME_HASHING1, EXPON);
-	ll h2 = login_hash_string(id, PRIME_HASHING2, EXPON);
  
-	int idx = h1;
-	int cnt = 0;
-	while (cnt++ <= HASH_SIZE) {
-		if (login_is_hash_empty(newTable[idx])) {
-			newTable[idx] = hash;
-			return;
-		}
-		idx = (idx + h2) % HASH_SIZE;
-	}
-	printf("[ERROR] file : login.c, function : login_insert_into_table.     "
-		   "Saving failed. HashTable is full(almost, probably.). Check The "
-		   "Hash Table.\n");
-}
- 
-void login_compact_database() {
-	const char *tmp = "./database/peoples/data.tmp";
- 
-	// 임시 파일 비우기
-	FILE *fp = fopen(tmp, "w");
-	if (fp == NULL)
-		return;
+void login_compact_database(){
+	int num_of_people = 0;
+	People** total_people = people_read_all_people(&num_of_people);
+	
+	FILE* fp = fopen(DATA_PATH_PEOPLE, "w"); //기존 데이터 다 밀어버리기
 	fclose(fp);
- 
-	// 새 해시테이블을 힙에 할당하고 모두 빈 슬롯으로 초기화
-	IdHash *newTable = (IdHash *)malloc(sizeof(IdHash) * HASH_SIZE);
-	if (newTable == NULL) {
-		printf("[ERROR] file : login.c, function : login_compact_database.     "
-			   "Can't malloc new hash table.\n");
-		remove(tmp);
-		return;
-	}
+	login_create_empty_hashtable();
 	for (int i = 0; i < HASH_SIZE; i++)
-		newTable[i] = login_create_empty_hash();
- 
-	// 기존 해시테이블이 가리키는 살아있는 레코드만 한 명씩 임시 파일로 옮기고,
-	// 새 해시테이블에 처음 가입하는 것처럼 다시 삽입한다.
-	// (probe 체인이 끊기지 않도록 테이블 전체를 재구성)
-	for (int i = 0; i < HASH_SIZE; i++) {
-		if (login_is_hash_empty(HashTable[i]) || HashTable[i].offset < 0)
-			continue;
- 
-		People *p = people_read_people(DATA_PATH_PEOPLE, HashTable[i].offset);
-		// 읽기 실패(깨진 레코드/잘못된 offset) 시, 해당 레코드는 그냥 버린다.
-		// newTable에 추가하지 않으므로 결과적으로 없는 계정으로 처리된다.
-		if (p == NULL)
-			continue;
- 
-		int off = people_save_people(p, tmp);
-		if (off >= 0) {
-			IdHash hash = login_hash_ID(p->id);
-			hash.offset = off;
-			login_insert_into_table(newTable, hash, p->id);
-		}
-		// off < 0 (새 파일 기록 실패)인 경우도 newTable에 추가하지 않고 버린다.
- 
-		people_delete_people(p);
-	}
- 
-	// 새 해시테이블로 교체
-	memcpy(HashTable, newTable, sizeof(IdHash) * HASH_SIZE);
-	free(newTable);
- 
-	// data.jsonl을 압축본으로 교체하고 해시테이블 저장
-	remove(DATA_PATH_PEOPLE);
-	rename(tmp, DATA_PATH_PEOPLE);
+		HashTable[i] = login_create_empty_hash();
+
+
+	for (int i = 0 ; i < num_of_people ; i++)
+		login_add_people_to_hashtable(total_people[i]);
+	
 	login_save_hashtable();
+	
+	people_delete_all_people(total_people, num_of_people);
 }
 
 void login_init() {
@@ -138,7 +82,6 @@ void login_init() {
 
 	for (int i = 0; i < HASH_SIZE; i++)
 		HashTable[i] = login_create_empty_hash();
-
 	login_create_empty_hashtable();
 }
 

@@ -362,7 +362,7 @@ People** people_read_all_people(int* count) {
     }
 
     // 1. 전체 파일을 줄 단위로 메모리에 적재
-    int line_capacity = MAX_DATA_LINES;
+    int line_capacity = 16;
     int line_cnt = 0;
     char** lines = (char**)malloc(sizeof(char*) * line_capacity);
 
@@ -381,7 +381,7 @@ People** people_read_all_people(int* count) {
     TempIdSet* seen = (TempIdSet*)calloc(TEMP_SET_SIZE, sizeof(TempIdSet));
 
     // 3. 결과 배열 준비
-    int capacity = MAX_DATA_LINES;
+    int capacity = 16;
     int cnt = 0;
     People** result = (People**)malloc(sizeof(People*) * capacity);
 
@@ -464,16 +464,6 @@ void people_delete_all_people(People** people, int count) {
     }
     free(people);
 }
-
-
-
-
-
-
-
-
-
-
 
 
 
