@@ -156,6 +156,7 @@ People* people_create_people(
 	newPeople->love_lang[MAX_TYPE_LEN - 1] = '\0';
 	newPeople->gen = gen;
 	newPeople->age = age;
+	newPeople->avatar = 0; // 기본 프로필 사진(색상 박스)
 	newPeople->status = UNSWORDMASTER; // 기본 매칭 가능 상태 (팀원 변경 반영)
 	newPeople->blocked_cnt = 0;
 	newPeople->dfs_extended = 0; // 세분화 1회 제한 플래그(세션 전용)
@@ -223,6 +224,10 @@ void people_set_people_gen( People* P, enum Gender gen){
 
 void people_set_people_age( People* P, int age){
     P->age = age;
+}
+
+void people_set_people_avatar(People *P, int avatar) {
+    P->avatar = avatar;
 }
 
 void people_set_people_block(People* P, int blocked_cnt, char blocked_ids[][MAX_ID_LEN]){
@@ -315,6 +320,10 @@ People *people_read_people(const char path[], int offset) {
     people_set_people_status(resultPeople, status);
     people_set_people_block(resultPeople, blocked_cnt, blocked_ids);
 
+    // 프로필 사진은 구버전 데이터엔 없을 수 있으니 키가 있을 때만 설정 (없으면 0)
+    cJSON* avatar_item = cJSON_GetObjectItem(root, "avatar");
+    people_set_people_avatar(resultPeople, avatar_item ? avatar_item->valueint : 0);
+
 	cJSON_Delete(root);
 	free(text);
 
@@ -343,6 +352,7 @@ int people_save_people(People *P, const char path[]) {
     cJSON_AddStringToObject(root, "love_lang", P->love_lang);
     cJSON_AddNumberToObject(root, "gen", P->gen);
     cJSON_AddNumberToObject(root, "age", P->age);
+    cJSON_AddNumberToObject(root, "avatar", P->avatar);
     cJSON_AddNumberToObject(root, "status", P->status);
     cJSON_AddNumberToObject(root, "blocked_cnt", P->blocked_cnt);
 
@@ -502,6 +512,9 @@ People **people_read_all_people(int *count) {
 		people_set_people_lover(p, lover);
         people_set_people_status(p, status);
         people_set_people_block(p, blocked_cnt, blocked_ids);
+
+        cJSON* avatar_item = cJSON_GetObjectItem(root, "avatar");
+        people_set_people_avatar(p, avatar_item ? avatar_item->valueint : 0);
 
 		cJSON_Delete(root);
 		free(lines[i]);
