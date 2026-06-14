@@ -1430,6 +1430,11 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n, People 
 					if (cur->status == MATCHED) {
 						strcpy(status_msg, "매칭이 성사되었습니다!");
 						status_color = COLOR_GREEN;
+						people_set_people_lover(me, cur->lover);
+						people_set_people_status(me, MATCHED);
+						strncpy(g_mst_partner_id, cur->lover, MAX_ID_LEN - 1);
+						g_mst_partner_id[MAX_ID_LEN - 1] = '\0';
+						ui->next_state = MST;
 					} else {
 						// 내가 ACCEPTED, 상대 응답 대기 중
 						strcpy(status_msg,
