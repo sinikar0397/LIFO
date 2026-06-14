@@ -1039,8 +1039,8 @@ void display_showHome(SDL_Ui *ui, People *me) {
 				display_showCodex(ui, me);
 				ui->is_mouse_down = false;
 			} else if (gui_isInObject(&nav_box[NAV_PROFILE], ui->mx, ui->my)) {
-				// ui->next_state = PROFILE;
-				//  break;
+				ui->next_state = PROFILE;
+				break;
 			} else if (gui_isInObject(&nav_box[NAV_CNT], ui->mx, ui->my)) {
 				ui->next_state = LOGIN;
 				break;
@@ -1278,13 +1278,14 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n, People 
 	initMatchingInfos(infos, people, new_n);
 
 	int me_idx = -1;
-	for (int i = 0; i < n; i++) {
+	for (int i = 0; i < new_n; i++) {
 		if (infos[i].person != NULL &&
 			strcmp(infos[i].person->id, me->id) == 0) {
 			me_idx = i;
 			break;
 		}
 	}
+	People *cur = (me_idx != -1) ? infos[me_idx].person : me;
 	// printf("%d\n", me_idx);
 
 	// stableMatching 결과 저장용
@@ -1295,7 +1296,7 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n, People 
 	SDL_Color status_color = COLOR_GRAY;
 
 	// ── PROPOSED 상태로 진입 시, 기존 상대를 바로 복원 ──
-	if (me->status == PROPOSED && me_idx != -1) {
+	if (cur->status == PROPOSED && me_idx != -1) {
 		matched_idx = infos[me_idx].match_idx;
 		strcpy(status_msg, "상대가 추천되었습니다. 수락 또는 거절해 주세요.");
 		status_color = COLOR_DURTYPINK;
@@ -1329,16 +1330,18 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n, People 
 
 		if (ui->is_mouse_up) {
 			// todo if()if()DFS;
-
-			if (gui_isInObject(&nav_box[NAV_BFS], ui->mx, ui->my)) {
+			if (gui_isInObject(&nav_box[NAV_HOME], ui->mx, ui->my)) {
+				ui->next_state = HOME;
+				break;
+			}else if (gui_isInObject(&nav_box[NAV_BFS], ui->mx, ui->my)) {
 				ui->next_state = BFS;
 				break;
 			} else if (gui_isInObject(&nav_box[NAV_DFS], ui->mx, ui->my)) {
 				ui->next_state = DFS;
 				break;
 			} else if (gui_isInObject(&nav_box[NAV_PROFILE], ui->mx, ui->my)) {
-				// ui->next_state = PROFILE;
-				//  break;
+				ui->next_state = PROFILE;
+				break;
 			} else if (gui_isInObject(&nav_box[NAV_CNT], ui->mx, ui->my)) {
 				ui->next_state = LOGIN;
 				break;
@@ -1350,17 +1353,17 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n, People 
 				if (me_idx == -1) {
 					strcpy(status_msg, "내 계정을 찾을 수 없습니다.");
 					status_color = COLOR_SUPERPINK;
-				} else if (me->status == MATCHED) {
+				} else if (cur->status == MATCHED) {
 					strcpy(status_msg, "이미 매칭된 상태입니다.");
 					status_color = COLOR_SUPERPINK;
-				} else if (me->status == PROPOSED) {
+				} else if (cur->status == PROPOSED) {
 					strcpy(status_msg, "이미 추천된 상대가 있습니다. 수락 또는 "
 									   "거절해 주세요.");
 					status_color = COLOR_SUPERPINK;
-				} else if (me->status == UNSWORDMASTER) {
+				} else if (cur->status == UNSWORDMASTER) {
 					strcpy(status_msg, "성격 유형 검사를 먼저 진행해주세요.");
 					status_color = COLOR_SUPERPINK;
-				} else if (me->status == AVAILABLE) {
+				} else if (cur->status == AVAILABLE) {
 					int proposers[MAX_PEOPLE];
 					int proposer_cnt;
 					if (me->gen == GENDER_MALE) {
@@ -1382,16 +1385,16 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n, People 
 							stableMatching(infos, n, proposers, proposer_cnt,
 										   rank_table, result);
 						free(rank_table);
-						printf("data at matching\n");
-						for (int i = 0 ; i < n ; i++){
-							printf("%s\n", infos[i].person->id);
-						}
-						for (int i = 0 ; i < proposer_cnt ; i++){
-							printf("%d\n", proposers[i]);
-						}
-						for (int i = 0 ; i < result_cnt ; i++){
-							printf("%d %d\n", result[i].p1, result[i].p2);
-						}
+						// printf("data at matching\n");
+						// for (int i = 0 ; i < n ; i++){
+						// 	printf("%s\n", infos[i].person->id);
+						// }
+						// for (int i = 0 ; i < proposer_cnt ; i++){
+						// 	printf("%d\n", proposers[i]);
+						// }
+						// for (int i = 0 ; i < result_cnt ; i++){
+						// 	printf("%d %d\n", result[i].p1, result[i].p2);
+						// }
 
 						// me가 포함된 쌍 찾기
 						matched_idx = -1;
@@ -1419,12 +1422,12 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n, People 
 				if (matched_idx == -1) {
 					strcpy(status_msg, "먼저 매칭을 실행해주세요.");
 					status_color = COLOR_SUPERPINK;
-				} else if (me->status != PROPOSED) {
+				} else if (cur->status != PROPOSED) {
 					strcpy(status_msg, "수락할 제안이 없습니다.");
 					status_color = COLOR_SUPERPINK;
 				} else {
 					acceptMatch(infos, me_idx, matched_idx);
-					if (me->status == MATCHED) {
+					if (cur->status == MATCHED) {
 						strcpy(status_msg, "매칭이 성사되었습니다!");
 						status_color = COLOR_GREEN;
 					} else {
@@ -1447,7 +1450,7 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n, People 
 				if (matched_idx == -1) {
 					strcpy(status_msg, "먼저 매칭을 실행해주세요.");
 					status_color = COLOR_SUPERPINK;
-				} else if (me->status != PROPOSED) {
+				} else if (cur->status != PROPOSED) {
 					strcpy(status_msg, "거절할 제안이 없습니다.");
 					status_color = COLOR_SUPERPINK;
 				} else {
@@ -1467,8 +1470,8 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n, People 
 		// ── hide_run 계산 (버튼 hover 색상 갱신보다 먼저) ──
 		int hide_run =
 			(matched_idx >= 0 && infos[matched_idx].person != NULL) ||
-			me->status == PROPOSED || me->status == ACCEPTED ||
-			me->status == MATCHED;
+			cur->status == PROPOSED || cur->status == ACCEPTED ||
+			cur->status == MATCHED;
 
 		// ── 버튼 hover 색상 갱신 ──
 		btn_accept_fill.textcolor =
@@ -1597,5 +1600,415 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n, People 
 		if (ui->next_state != BFS) {
 			break;
 		}
+	}
+}
+
+void display_showProfile(SDL_Ui *ui, People *me) {
+	if (me == NULL) {
+		ui->quit = true;
+		return;
+	}
+
+	const int SIDEBAR_W = 250;
+	const int LEFT = 280;
+	const int RIGHT = 1250;
+	const int NAV_X = 125;
+	const int NAV_W = SIDEBAR_W - 80;
+	const int NAV_H = 51;
+	const int NAV_TEXT_X = 72;
+
+	// ── 사이드바 ──
+	Object sidebar = gui_initObject(
+		ui, BOX, 0, 0, TOPLEFT,
+		(ObjectParam){.box = {SIDEBAR_W, WINDOW_HEIGHT, COLOR_WHITEPINK, 0}});
+	Object t_logo = gui_initObject(
+		ui, TEXT, 110, 44, MIDTOP,
+		(ObjectParam){.text = {"LIFO", ui->font_bbsig, COLOR_SUPERPINK}});
+
+	enum { NAV_HOME, NAV_BFS, NAV_DFS, NAV_PROFILE, NAV_CNT };
+	char *nav_labels[NAV_CNT] = {"홈", "매칭", "설문", "프로필"};
+	int nav_y[NAV_CNT] = {150, 150 + 65, 150 + 65 * 2, 150 + 65 * 3};
+	Object nav_box[NAV_CNT + 1];
+	Object nav_txt[NAV_CNT + 1];
+	for (int i = 0; i < NAV_CNT; i++) {
+		nav_box[i] =
+			gui_initObject(ui, BOX, NAV_X, nav_y[i], MIDTOP,
+						   (ObjectParam){.box = {NAV_W, NAV_H, COLOR_PINK, 14}});
+		nav_txt[i] = gui_initObject(
+			ui, TEXT, NAV_TEXT_X, nav_y[i] + NAV_H / 2, CENTER,
+			(ObjectParam){.text = {" ", ui->font_normal, COLOR_DURTYPINK}});
+		gui_setText(&nav_txt[i], nav_labels[i]);
+	}
+	nav_box[NAV_CNT] =
+		gui_initObject(ui, BOX, NAV_X, WINDOW_HEIGHT - 30, MIDBOTTOM,
+					   (ObjectParam){.box = {NAV_W, NAV_H, COLOR_PINK, 14}});
+	nav_txt[NAV_CNT] = gui_initObject(
+		ui, TEXT, NAV_TEXT_X, WINDOW_HEIGHT - 30 - NAV_H / 2, CENTER,
+		(ObjectParam){.text = {"로그아웃", ui->font_normal, COLOR_DURTYPINK}});
+
+	// ── 제목 ──
+	Object t_title =
+		gui_initObject(ui, TEXT, LEFT, 36, TOPLEFT,
+					   (ObjectParam){.text = {"내 프로필", ui->font_big,
+											  COLOR_BLACK}});
+
+	// ── 카드 ──
+	const int card_x = LEFT, card_y = 110, card_w = 920, card_h = 560;
+	Object card_border =
+		gui_initObject(ui, BOX, card_x, card_y, TOPLEFT,
+					   (ObjectParam){.box = {card_w, card_h, COLOR_SOFTPINK, 24}});
+	Object card_fill = gui_initObject(
+		ui, BOX, card_x + 2, card_y + 2, TOPLEFT,
+		(ObjectParam){.box = {card_w - 4, card_h - 4, COLOR_WHITE, 22}});
+
+	// ── 아바타 (색상 프리셋 + 이름 이니셜) ──
+	// avatar = 색상 팔레트 인덱스 (0 = 기본 핑크)
+	const int AV_PALETTE_N = 8;
+	SDL_Color av_palette[8] = {COLOR_PINK,		COLOR_SUPERPINK, COLOR_DURTYPINK,
+							   COLOR_SOFTVIOLET, COLOR_VIOLET,	 COLOR_BLUE,
+							   COLOR_GREEN,		COLOR_YELLOW};
+	int sel_avatar = me->avatar;
+	if (sel_avatar < 0 || sel_avatar >= AV_PALETTE_N)
+		sel_avatar = 0;
+
+	const int AV_X = card_x + 50, AV_Y = card_y + 40, AV_SZ = 140;
+	Object avatar_box =
+		gui_initObject(ui, BOX, AV_X, AV_Y, TOPLEFT,
+					   (ObjectParam){.box = {AV_SZ, AV_SZ, COLOR_PINK, 28}});
+	// 이름 첫 글자(이니셜)를 아바타 위에 표시 (매 프레임 갱신)
+	Object t_initial =
+		gui_initObject(ui, TEXT, AV_X + AV_SZ / 2, AV_Y + AV_SZ / 2, CENTER,
+					   (ObjectParam){.text = {" ", ui->font_bbsig, COLOR_WHITE}});
+
+	// ── 색상 선택 썸네일 (입력칸 아래에 배치하여 겹침 방지) ──
+	Object t_avlabel = gui_initObject(
+		ui, TEXT, card_x + 50, card_y + 258, TOPLEFT,
+		(ObjectParam){.text = {"프로필 색상", ui->font_small, COLOR_DURTYPINK}});
+	const int TH_SZ = 44, TH_GAP = 8, TH_Y = card_y + 284;
+	int th_x[8];
+	for (int k = 0; k < AV_PALETTE_N; k++)
+		th_x[k] = card_x + 50 + k * (TH_SZ + TH_GAP);
+	Object thumb[8];
+	for (int k = 0; k < AV_PALETTE_N; k++)
+		thumb[k] = gui_initObject(
+			ui, BOX, th_x[k], TH_Y, TOPLEFT,
+			(ObjectParam){.box = {TH_SZ, TH_SZ, av_palette[k], 12}});
+	// 선택 강조용 테두리
+	Object thumb_sel = gui_initObject(
+		ui, BOX, 0, 0, TOPLEFT,
+		(ObjectParam){.box = {TH_SZ + 8, TH_SZ + 8, COLOR_BLACK, 14}});
+
+	// ── 편집 가능한 입력 필드 (이름 / 나이) ──
+	enum ProfileFocus { PF_NONE, PF_NAME, PF_AGE } focus = PF_NONE;
+	char name_buf[MAX_NAME_LEN] = "";
+	char age_buf[8] = "";
+	strncpy(name_buf, me->name, MAX_NAME_LEN - 1);
+	snprintf(age_buf, sizeof(age_buf), "%d", me->age);
+
+	const int FX = card_x + 230; // 필드 시작 x
+	Object t_id = gui_initObject(
+		ui, TEXT, FX, card_y + 50, TOPLEFT,
+		(ObjectParam){.text = {" ", ui->font_small, COLOR_GRAY}});
+	{
+		char id_disp[MAX_ID_LEN + 2];
+		snprintf(id_disp, sizeof(id_disp), "@%s", me->id);
+		gui_setText(&t_id, id_disp);
+	}
+
+	Object t_namelabel = gui_initObject(
+		ui, TEXT, FX, card_y + 86, TOPLEFT,
+		(ObjectParam){.text = {"이름", ui->font_small, COLOR_DURTYPINK}});
+	Object name_border =
+		gui_initObject(ui, BOX, FX, card_y + 110, TOPLEFT,
+					   (ObjectParam){.box = {300, 50, COLOR_PINK, 12}});
+	Object name_fill =
+		gui_initObject(ui, BOX, FX + 2, card_y + 112, TOPLEFT,
+					   (ObjectParam){.box = {296, 46, COLOR_WHITEPINK, 10}});
+	Object t_nameval = gui_initObject(
+		ui, TEXT, FX + 16, card_y + 122, TOPLEFT,
+		(ObjectParam){.text = {" ", ui->font_normal, COLOR_GRAY}});
+
+	Object t_agelabel = gui_initObject(
+		ui, TEXT, FX, card_y + 176, TOPLEFT,
+		(ObjectParam){.text = {"나이", ui->font_small, COLOR_DURTYPINK}});
+	Object age_border =
+		gui_initObject(ui, BOX, FX, card_y + 200, TOPLEFT,
+					   (ObjectParam){.box = {140, 50, COLOR_PINK, 12}});
+	Object age_fill =
+		gui_initObject(ui, BOX, FX + 2, card_y + 202, TOPLEFT,
+					   (ObjectParam){.box = {136, 46, COLOR_WHITEPINK, 10}});
+	Object t_ageval = gui_initObject(
+		ui, TEXT, FX + 16, card_y + 212, TOPLEFT,
+		(ObjectParam){.text = {" ", ui->font_normal, COLOR_GRAY}});
+
+	// 성별 (읽기 전용)
+	Object t_gender = gui_initObject(
+		ui, TEXT, FX + 160, card_y + 212, TOPLEFT,
+		(ObjectParam){.text = {" ", ui->font_normal, COLOR_GRAY}});
+	gui_setText(&t_gender, me->gen == GENDER_MALE ? "남성" : "여성");
+
+	// ── 저장 버튼 ──
+	const int SAVE_X = card_x + card_w - 240, SAVE_Y = card_y + 110;
+	Object save_btn =
+		gui_initObject(ui, BOX, SAVE_X, SAVE_Y, TOPLEFT,
+					   (ObjectParam){.box = {200, 54, COLOR_SUPERPINK, 14}});
+	Object t_save = gui_initObject(
+		ui, TEXT, SAVE_X + 100, SAVE_Y + 27, CENTER,
+		(ObjectParam){.text = {"저장", ui->font_normal, COLOR_WHITE}});
+
+	// ── 성향 정보 (읽기 전용) ──
+	char *trait_labels[7] = {"내 유형",		"이상형 유형",   "내 애착 유형",
+							 "이상형 애착",	"내 사랑의 언어", "이상형 사랑의 언어",
+							 "차단한 사용자"};
+	char trait_vals[7][64];
+	snprintf(trait_vals[0], 64, "%s", dfs_type_name(me->type));
+	snprintf(trait_vals[1], 64, "%s", dfs_type_name(me->love_type));
+	snprintf(trait_vals[2], 64, "%s", dfs_type_name(me->attach));
+	snprintf(trait_vals[3], 64, "%s", dfs_type_name(me->love_attach));
+	snprintf(trait_vals[4], 64, "%s", dfs_type_name(me->lang));
+	snprintf(trait_vals[5], 64, "%s", dfs_type_name(me->love_lang));
+	snprintf(trait_vals[6], 64, "%d명", me->blocked_cnt);
+
+	const int ROW_Y0 = card_y + 346, ROW_GAP = 30;
+	Object trait_label[7];
+	Object trait_val[7];
+	for (int i = 0; i < 7; i++) {
+		trait_label[i] = gui_initObject(
+			ui, TEXT, card_x + 50, ROW_Y0 + ROW_GAP * i, TOPLEFT,
+			(ObjectParam){.text = {" ", ui->font_normal, COLOR_DURTYPINK}});
+		gui_setText(&trait_label[i], trait_labels[i]);
+		trait_val[i] = gui_initObject(
+			ui, TEXT, card_x + 320, ROW_Y0 + ROW_GAP * i, TOPLEFT,
+			(ObjectParam){.text = {" ", ui->font_normal, COLOR_GRAY}});
+		gui_setText(&trait_val[i], trait_vals[i]);
+	}
+
+	Object t_status =
+		gui_initObject(ui, TEXT, SAVE_X, SAVE_Y + 64, TOPLEFT,
+					   (ObjectParam){.text = {" ", ui->font_small, COLOR_GRAY}});
+	char status[128] = " ";
+	SDL_Color status_color = COLOR_GRAY;
+
+	while (!ui->quit) {
+		if (ui->next_state != PROFILE) {
+			break;
+		}
+
+		SDL_Event event;
+		SDL_PumpEvents();
+		while (SDL_PollEvent(&event)) {
+			switch (event.type) {
+			case SDL_QUIT:
+				ui->quit = true;
+				break;
+			case SDL_MOUSEBUTTONUP:
+				ui->is_mouse_up = true;
+				ui->mx = event.button.x;
+				ui->my = event.button.y;
+				break;
+			case SDL_MOUSEBUTTONDOWN:
+				ui->is_mouse_down = true;
+				ui->mx = event.button.x;
+				ui->my = event.button.y;
+				break;
+			case SDL_MOUSEMOTION:
+				ui->is_mouse_move = true;
+				ui->mx = event.motion.x;
+				ui->my = event.motion.y;
+				break;
+			case SDL_TEXTINPUT:
+				if (focus == PF_NAME) {
+					if (strlen(name_buf) + strlen(event.text.text) <
+						MAX_NAME_LEN - 1)
+						strcat(name_buf, event.text.text);
+				} else if (focus == PF_AGE) {
+					if (strlen(age_buf) < 3 && event.text.text[0] >= '0' &&
+						event.text.text[0] <= '9')
+						strcat(age_buf, event.text.text);
+				}
+				break;
+			case SDL_KEYDOWN:
+				if (event.key.keysym.sym == SDLK_BACKSPACE) {
+					if (focus == PF_NAME) {
+						gui_utf8Backspace(name_buf);
+					} else if (focus == PF_AGE) {
+						if (strlen(age_buf) > 0)
+							age_buf[strlen(age_buf) - 1] = '\0';
+					}
+				}
+				if (event.key.keysym.sym == SDLK_TAB) {
+					focus = (focus == PF_NAME) ? PF_AGE : PF_NAME;
+				}
+				break;
+			}
+		}
+
+		if (ui->is_mouse_down) {
+			if (gui_isInObject(&nav_box[NAV_HOME], ui->mx, ui->my)) {
+				ui->next_state = HOME;
+				break;
+			} else if (gui_isInObject(&nav_box[NAV_BFS], ui->mx, ui->my)) {
+				ui->next_state = BFS;
+				break;
+			} else if (gui_isInObject(&nav_box[NAV_DFS], ui->mx, ui->my)) {
+				ui->next_state = DFS;
+				break;
+			} else if (gui_isInObject(&nav_box[NAV_CNT], ui->mx, ui->my)) {
+				ui->next_state = LOGIN;
+				break;
+			} else if (gui_isInObject(&name_border, ui->mx, ui->my)) {
+				focus = PF_NAME;
+			} else if (gui_isInObject(&age_border, ui->mx, ui->my)) {
+				focus = PF_AGE;
+			} else if (gui_isInObject(&save_btn, ui->mx, ui->my)) {
+				focus = PF_NONE;
+				int age_val = atoi(age_buf);
+				if (strlen(name_buf) == 0) {
+					strcpy(status, "이름을 입력해주세요.");
+					status_color = COLOR_SUPERPINK;
+				} else if (strlen(age_buf) == 0 || age_val <= 0 ||
+						   age_val > 150) {
+					strcpy(status, "올바른 나이를 입력해주세요.");
+					status_color = COLOR_SUPERPINK;
+				} else {
+					people_set_people_name(me, name_buf);
+					people_set_people_age(me, age_val);
+					people_set_people_avatar(me, sel_avatar);
+					login_add_people_to_hashtable(me);
+					strcpy(status, "저장되었습니다.");
+					status_color = COLOR_GREEN;
+				}
+			} else {
+				int hit_thumb = 0;
+				for (int k = 0; k < AV_PALETTE_N; k++) {
+					if (gui_isInObject(&thumb[k], ui->mx, ui->my)) {
+						sel_avatar = k;
+						focus = PF_NONE;
+						hit_thumb = 1;
+						break;
+					}
+				}
+				if (!hit_thumb)
+					focus = PF_NONE;
+			}
+		}
+
+		// 포커스 색상
+		name_border.textcolor =
+			(focus == PF_NAME) ? COLOR_SUPERPINK : COLOR_PINK;
+		age_border.textcolor = (focus == PF_AGE) ? COLOR_SUPERPINK : COLOR_PINK;
+		save_btn.textcolor = gui_isInObject(&save_btn, ui->mx, ui->my)
+								 ? COLOR_DURTYPINK
+								 : COLOR_SUPERPINK;
+
+		// 이름 표시
+		{
+			char disp[MAX_NAME_LEN + 4];
+			snprintf(disp, sizeof(disp), "%s%s", name_buf,
+					 focus == PF_NAME ? "_" : "");
+			if (disp[0] == '\0')
+				strcpy(disp, " ");
+			gui_setText(&t_nameval, disp);
+		}
+		// 나이 표시
+		{
+			char disp[16];
+			snprintf(disp, sizeof(disp), "%s%s", age_buf,
+					 focus == PF_AGE ? "_" : "");
+			if (disp[0] == '\0')
+				strcpy(disp, " ");
+			gui_setText(&t_ageval, disp);
+		}
+
+		// 아바타 색상 + 이니셜 갱신 (이름 첫 글자, UTF-8)
+		avatar_box.textcolor = av_palette[sel_avatar];
+		{
+			char initial[5] = "";
+			if (name_buf[0]) {
+				unsigned char c0 = (unsigned char)name_buf[0];
+				int len = (c0 < 0x80)			? 1
+						  : ((c0 & 0xE0) == 0xC0) ? 2
+						  : ((c0 & 0xF0) == 0xE0) ? 3
+						  : ((c0 & 0xF8) == 0xF0) ? 4
+												  : 1;
+				strncpy(initial, name_buf, len);
+				initial[len] = '\0';
+			}
+			gui_setText(&t_initial, initial[0] ? initial : " ");
+		}
+
+		// 사이드바 텍스트 색상
+		for (int i = 0; i <= NAV_CNT; i++) {
+			int active = (i == NAV_PROFILE);
+			int hover = gui_isInObject(&nav_box[i], ui->mx, ui->my);
+			SDL_Color want = (active || hover) ? COLOR_WHITE : COLOR_DURTYPINK;
+			if (want.r != nav_txt[i].textcolor.r ||
+				want.g != nav_txt[i].textcolor.g ||
+				want.b != nav_txt[i].textcolor.b) {
+				gui_setColorText(&nav_txt[i], want);
+			}
+		}
+
+		gui_setColorText(&t_status, status_color);
+		gui_setText(&t_status, status[0] ? status : " ");
+
+		// ── 렌더링 ──
+		SDL_SetRenderDrawColor(ui->renderer, 255, 255, 255, 255);
+		SDL_RenderClear(ui->renderer);
+
+		gui_presentObject(&sidebar);
+		gui_presentObject(&t_logo);
+		for (int i = 0; i <= NAV_CNT; i++) {
+			int active = (i == NAV_PROFILE);
+			int hover = gui_isInObject(&nav_box[i], ui->mx, ui->my);
+			if (active || hover) {
+				gui_presentObject(&nav_box[i]);
+			}
+			gui_presentObject(&nav_txt[i]);
+		}
+
+		gui_presentObject(&t_title);
+		gui_presentObject(&card_border);
+		gui_presentObject(&card_fill);
+
+		// 큰 아바타 (선택 색상 + 이름 이니셜)
+		gui_presentObject(&avatar_box);
+		gui_presentObject(&t_initial);
+
+		// 색상 선택 썸네일
+		gui_presentObject(&t_avlabel);
+		gui_moveObject(&thumb_sel, th_x[sel_avatar] - 4, TH_Y - 4);
+		gui_presentObject(&thumb_sel); // 선택 강조 테두리
+		for (int k = 0; k < AV_PALETTE_N; k++)
+			gui_presentObject(&thumb[k]);
+
+		gui_presentObject(&t_id);
+
+		gui_presentObject(&t_namelabel);
+		gui_presentObject(&name_border);
+		gui_presentObject(&name_fill);
+		gui_presentObject(&t_nameval);
+
+		gui_presentObject(&t_agelabel);
+		gui_presentObject(&age_border);
+		gui_presentObject(&age_fill);
+		gui_presentObject(&t_ageval);
+		gui_presentObject(&t_gender);
+
+		gui_presentObject(&save_btn);
+		gui_presentObject(&t_save);
+
+		for (int i = 0; i < 7; i++) {
+			gui_presentObject(&trait_label[i]);
+			gui_presentObject(&trait_val[i]);
+		}
+
+		gui_presentObject(&t_status);
+
+		SDL_RenderPresent(ui->renderer);
+
+		ui->is_mouse_up = false;
+		ui->is_mouse_down = false;
+		ui->is_mouse_move = false;
 	}
 }

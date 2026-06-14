@@ -81,6 +81,7 @@ typedef struct People {
 	char love_lang[MAX_TYPE_LEN]; // 이상형의 사랑의 언어, 미설정 시 ""
 	enum Gender gen;
 	int age;
+	int avatar; // 프로필 사진 (0=기본 색상, 1~4=image/N.png)
 	MatchStatus status;
 	char blocked_ids[MAX_BLOCKED][MAX_ID_LEN];
 	int blocked_cnt;
@@ -239,6 +240,14 @@ void people_set_people_gen(People *P, enum Gender gen);
 People의 나이에 대한 setter
 */
 void people_set_people_age(People *P, int age);
+
+/*
+@brief
+People의 프로필 사진(avatar)에 대한 setter
+
+0이면 기본 색상, 1~4면 image/N.png
+*/
+void people_set_people_avatar(People *P, int avatar);
 
 /*
 @brief

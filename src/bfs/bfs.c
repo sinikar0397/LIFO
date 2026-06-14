@@ -240,6 +240,8 @@ void acceptMatch(MatchingInfo infos[], int u, int v) {
 		else {
 			printf("Error: User %d is not PROPOSED or ACCEPTED\n", v);
 		}
+		login_add_people_to_hashtable(infos[u].person);
+		login_add_people_to_hashtable(infos[v].person);
 	}
 	else {
 		printf("서로 PROPOSED되지 않은 상대끼리 acceptMatch를 시도했습니다. \n");
@@ -253,6 +255,8 @@ void rejectMatch(MatchingInfo infos[], int u, int v) {
 
 	infos[u].match_idx = -1;
 	infos[v].match_idx = -1;
+	infos[u].person->lover[0] = '\0';
+	infos[v].person->lover[0] = '\0';
 
 	if (infos[u].person->status != DELETED) {
 		infos[u].person->status = AVAILABLE;
@@ -260,6 +264,9 @@ void rejectMatch(MatchingInfo infos[], int u, int v) {
 	if (infos[v].person->status != DELETED) {
 		infos[v].person->status = AVAILABLE;
 	}
+	blockUser(infos[u].person, infos[v].person);
+	login_add_people_to_hashtable(infos[u].person);
+	login_add_people_to_hashtable(infos[v].person);
 }
 
 int stableMatching(MatchingInfo infos[], int n, int proposers[],
@@ -411,6 +418,8 @@ void blockUser(People *a, People *b) {
 
 	strcpy(a->blocked_ids[a->blocked_cnt], b->id);
 	a->blocked_cnt++;
+	login_add_people_to_hashtable(a);
+	login_add_people_to_hashtable(b);
 	return;
 }
 
@@ -424,6 +433,7 @@ void unblockUser(People *a, People *b) {
 			return;
 		}
 	}
+	login_add_people_to_hashtable(a);
 }
 
 int bfs_loadPeopleFromDatabase(People *people[]) {
@@ -437,7 +447,5 @@ int bfs_loadPeopleFromDatabase(People *people[]) {
 		people[i] = total_people[i];
 	}
 
-
-	people_delete_all_people(total_people, result);
 	return result;
 }

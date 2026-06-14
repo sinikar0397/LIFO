@@ -70,6 +70,9 @@ int main(int argc, char **argv) {
 		case MST:
 			display_showMST(ui, p);
 			break;
+		case PROFILE:
+			display_showProfile(ui, p);
+			break;
 		}
 	}
 
