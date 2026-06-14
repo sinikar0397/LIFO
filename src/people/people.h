@@ -11,7 +11,6 @@
 #define MAX_PATH_LEN 50
 #define MAX_BLOCKED 50
 
-
 /*
 @brief
 
@@ -52,6 +51,7 @@ typedef struct Password {
  * DELETED   : 탈퇴 또는 삭제된 사용자
  */
 typedef enum MatchStatus {
+	UNSWORDMASTER,
 	AVAILABLE,
 	PROPOSED,
 	MATCHED,
@@ -74,20 +74,19 @@ typedef struct People {
 	Password pw;
 	char type[MAX_TYPE_LEN];
 	char love_type[MAX_TYPE_LEN];
-	char attach[MAX_TYPE_LEN];	   // 내 애착 유형 (AS/AV/AX/FA), 미설정 시 ""
+	char attach[MAX_TYPE_LEN]; // 내 애착 유형 (AS/AV/AX/FA), 미설정 시 ""
 	char love_attach[MAX_TYPE_LEN]; // 이상형의 애착 유형, 미설정 시 ""
-	char lang[MAX_TYPE_LEN];	   // 내 사랑의 언어 (LW/LT/LQ/LA), 미설정 시 ""
-	char love_lang[MAX_TYPE_LEN];  // 이상형의 사랑의 언어, 미설정 시 ""
+	char lang[MAX_TYPE_LEN]; // 내 사랑의 언어 (LW/LT/LQ/LA), 미설정 시 ""
+	char love_lang[MAX_TYPE_LEN]; // 이상형의 사랑의 언어, 미설정 시 ""
 	enum Gender gen;
 	int age;
 	MatchStatus status;
 	char blocked_ids[MAX_BLOCKED][MAX_ID_LEN];
-    int blocked_cnt;
+	int blocked_cnt;
 	// 세분화 1회 제한용 세션 플래그. 직렬화하지 않으며, 로그인 시 0으로
 	// 초기화됨(people_create_people). 재설문하면 다시 0으로 풀린다.
 	int dfs_extended;
 } People;
-
 
 /*
 @brief
@@ -97,8 +96,8 @@ typedef struct People {
 별도로 저장 안하고, 함수 내에서만 이용할 예정
 */
 typedef struct {
-    char id[MAX_ID_LEN];
-    int used;
+	char id[MAX_ID_LEN];
+	int used;
 } TempIdSet;
 
 /*
@@ -165,7 +164,7 @@ void people_set_people_pw(People *P, char pw[]);
 @brief
 People의 status에 대한 setter
 */
-void people_set_people_status(People* P, MatchStatus status);
+void people_set_people_status(People *P, MatchStatus status);
 
 /*
 @brief
@@ -276,8 +275,7 @@ int people_save_people(People *P, const char path[]);
 
 사람 모두 읽어오기를 위한 해쉬함수
 */
-static unsigned long people_simple_hash(const char* s);
-
+static unsigned long people_simple_hash(const char *s);
 
 /*
 @brief
@@ -286,7 +284,7 @@ static unsigned long people_simple_hash(const char* s);
 
 id가 있으면 1을 반환하고, 없으면 추가한 후 0을 반환
 */
-static int people_temp_set_contains_or_add(TempIdSet* set, const char* id);
+static int people_temp_set_contains_or_add(TempIdSet *set, const char *id);
 
 /*
 @brief
@@ -295,9 +293,10 @@ data.jsonl에 있는 모든 사람을 중복 없이 읽어주는 함수
 
 @param count 총 사람수(int pointer 넣으면, 저장해서 반환해줌)
 
-@return 전체 People array. 아래에 people array free하는 함수 넣어놨으니 이용할 것.
+@return 전체 People array. 아래에 people array free하는 함수 넣어놨으니 이용할
+것.
 */
-People** people_read_all_people(int* count);
+People **people_read_all_people(int *count);
 
 /*
 @brief
@@ -306,7 +305,7 @@ people array 깔끔하게 free해주는 함수.
 @param people people array
 @param count people array에 있는 사람 수
 */
-void people_delete_all_people(People** people, int count);
+void people_delete_all_people(People **people, int count);
 
 void people_print_people(People *P);
 void people_delete_people(People *P);
