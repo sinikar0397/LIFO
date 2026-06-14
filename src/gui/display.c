@@ -1330,8 +1330,10 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n, People 
 
 		if (ui->is_mouse_up) {
 			// todo if()if()DFS;
-
-			if (gui_isInObject(&nav_box[NAV_BFS], ui->mx, ui->my)) {
+			if (gui_isInObject(&nav_box[NAV_HOME], ui->mx, ui->my)) {
+				ui->next_state = HOME;
+				break;
+			}else if (gui_isInObject(&nav_box[NAV_BFS], ui->mx, ui->my)) {
 				ui->next_state = BFS;
 				break;
 			} else if (gui_isInObject(&nav_box[NAV_DFS], ui->mx, ui->my)) {
@@ -1383,16 +1385,16 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n, People 
 							stableMatching(infos, n, proposers, proposer_cnt,
 										   rank_table, result);
 						free(rank_table);
-						printf("data at matching\n");
-						for (int i = 0 ; i < n ; i++){
-							printf("%s\n", infos[i].person->id);
-						}
-						for (int i = 0 ; i < proposer_cnt ; i++){
-							printf("%d\n", proposers[i]);
-						}
-						for (int i = 0 ; i < result_cnt ; i++){
-							printf("%d %d\n", result[i].p1, result[i].p2);
-						}
+						// printf("data at matching\n");
+						// for (int i = 0 ; i < n ; i++){
+						// 	printf("%s\n", infos[i].person->id);
+						// }
+						// for (int i = 0 ; i < proposer_cnt ; i++){
+						// 	printf("%d\n", proposers[i]);
+						// }
+						// for (int i = 0 ; i < result_cnt ; i++){
+						// 	printf("%d %d\n", result[i].p1, result[i].p2);
+						// }
 
 						// me가 포함된 쌍 찾기
 						matched_idx = -1;
