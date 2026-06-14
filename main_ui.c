@@ -53,10 +53,6 @@ int main(int argc, char **argv) {
 					ui->next_state = MST;
 				}
 			}
-			for (int i = 0 ; i < n ; i++){
-				printf("%s\n", infos[i].person->id);
-			}
-			printf("%d\n", n);
 			break;
 		case HOME:
 			display_showHome(ui, p);
