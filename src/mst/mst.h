@@ -37,7 +37,9 @@ int mst_load_space(MstCoupleSpace *space, const char owner_id[],
 				   const char partner_id[]);
 int mst_save_space(const MstCoupleSpace *space);
 int mst_add_event(MstCoupleSpace *space, const char date[], const char title[]);
+int mst_delete_event(MstCoupleSpace *space, int idx);
 int mst_add_bucket_item(MstCoupleSpace *space, const char title[]);
+int mst_delete_bucket_item(MstCoupleSpace *space, int idx);
 void mst_toggle_bucket_item(MstCoupleSpace *space, int idx);
 
 #endif // MST_H

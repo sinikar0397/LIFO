@@ -35,6 +35,24 @@ int main(int argc, char **argv) {
 			p = display_showLogin(ui);
 			n = bfs_loadPeopleFromDatabase(people);
 			initMatchingInfos(infos, people, n);
+			if (p != NULL) {
+				char partner_id[MAX_ID_LEN] = "";
+				int has_partner =
+					match_store_find_accepted_partner(p->id, partner_id,
+													  sizeof(partner_id));
+				if (!has_partner && p->status == MATCHED &&
+					p->lover[0] != '\0') {
+					strncpy(partner_id, p->lover, sizeof(partner_id) - 1);
+					partner_id[sizeof(partner_id) - 1] = '\0';
+					has_partner = 1;
+				}
+				if (has_partner) {
+					strncpy(g_mst_partner_id, partner_id,
+							sizeof(g_mst_partner_id) - 1);
+					g_mst_partner_id[sizeof(g_mst_partner_id) - 1] = '\0';
+					ui->next_state = MST;
+				}
+			}
 			for (int i = 0 ; i < n ; i++){
 				printf("%s\n", infos[i].person->id);
 			}
@@ -50,7 +68,7 @@ int main(int argc, char **argv) {
 			display_showBFS(ui, p, infos, n, people);
 			break;
 		case MST:
-			// display_showMST(ui, p);
+			display_showMST(ui, p);
 			break;
 		}
 	}

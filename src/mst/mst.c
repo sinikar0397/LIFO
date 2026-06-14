@@ -6,26 +6,28 @@
 #include <sys/stat.h>
 #endif
 
-static void mst_copy_text(char *dst, size_t dst_size, const char *src) {
+static void mst_copy_text(char *dst, size_t dst_size, const char *src){
 	if (dst_size == 0) {
 		return;
 	}
+
 	if (src == NULL) {
 		dst[0] = '\0';
 		return;
 	}
+
 	strncpy(dst, src, dst_size - 1);
 	dst[dst_size - 1] = '\0';
 }
 
 static void mst_ensure_dirs(void) {
-#ifdef _WIN32
-	_mkdir("database");
-	_mkdir("database/couples");
-#else
-	mkdir("database", 0755);
-	mkdir("database/couples", 0755);
-#endif
+	#ifdef _WIN32
+		_mkdir("database");
+		_mkdir("database/couples");
+	#else
+		mkdir("database", 0755);
+		mkdir("database/couples", 0755);
+	#endif
 }
 
 static void mst_make_safe_id(char out[], size_t out_size, const char id[]) {
@@ -39,10 +41,10 @@ static void mst_make_safe_id(char out[], size_t out_size, const char id[]) {
 	}
 	for (size_t i = 0; id[i] != '\0' && j + 1 < out_size; i++) {
 		char ch = id[i];
-		if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
-			(ch >= '0' && ch <= '9') || ch == '_' || ch == '-') {
+		if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch == '_' || ch == '-') {
 			out[j++] = ch;
-		} else {
+		}
+		else {
 			out[j++] = '_';
 		}
 	}
@@ -62,12 +64,10 @@ static void mst_build_paths(MstCoupleSpace *space) {
 	mst_make_safe_id(a, sizeof(a), first);
 	mst_make_safe_id(b, sizeof(b), second);
 	snprintf(space->couple_key, sizeof(space->couple_key), "%s_%s", a, b);
-	snprintf(space->save_path, sizeof(space->save_path),
-			 "database/couples/%s.json", space->couple_key);
+	snprintf(space->save_path, sizeof(space->save_path), "database/couples/%s.json", space->couple_key);
 }
 
-void mst_init_space(MstCoupleSpace *space, const char owner_id[],
-					const char partner_id[]) {
+void mst_init_space(MstCoupleSpace *space, const char owner_id[], const char partner_id[]) {
 	memset(space, 0, sizeof(*space));
 	mst_copy_text(space->owner_id, sizeof(space->owner_id), owner_id);
 	mst_copy_text(space->partner_id, sizeof(space->partner_id), partner_id);
@@ -77,8 +77,7 @@ void mst_init_space(MstCoupleSpace *space, const char owner_id[],
 	mst_build_paths(space);
 }
 
-int mst_load_space(MstCoupleSpace *space, const char owner_id[],
-				   const char partner_id[]) {
+int mst_load_space(MstCoupleSpace *space, const char owner_id[], const char partner_id[]) {
 	mst_init_space(space, owner_id, partner_id);
 	mst_ensure_dirs();
 
@@ -204,6 +203,17 @@ int mst_add_event(MstCoupleSpace *space, const char date[], const char title[]) 
 	return 1;
 }
 
+int mst_delete_event(MstCoupleSpace *space, int idx) {
+	if (idx < 0 || idx >= space->event_count) {
+		return 0;
+	}
+	for (int i = idx; i + 1 < space->event_count; i++) {
+		space->events[i] = space->events[i + 1];
+	}
+	space->event_count--;
+	return 1;
+}
+
 int mst_add_bucket_item(MstCoupleSpace *space, const char title[]) {
 	if (space->bucket_count >= MST_MAX_BUCKETS || title == NULL ||
 		title[0] == '\0') {
@@ -212,6 +222,17 @@ int mst_add_bucket_item(MstCoupleSpace *space, const char title[]) {
 	MstBucketItem *bucket = &space->buckets[space->bucket_count++];
 	mst_copy_text(bucket->title, sizeof(bucket->title), title);
 	bucket->done = 0;
+	return 1;
+}
+
+int mst_delete_bucket_item(MstCoupleSpace *space, int idx) {
+	if (idx < 0 || idx >= space->bucket_count) {
+		return 0;
+	}
+	for (int i = idx; i + 1 < space->bucket_count; i++) {
+		space->buckets[i] = space->buckets[i + 1];
+	}
+	space->bucket_count--;
 	return 1;
 }
 
