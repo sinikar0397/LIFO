@@ -311,6 +311,7 @@ People *people_read_people(const char path[], int offset) {
         type, love_type, attach_item->valuestring, love_attach_item->valuestring, lang_item->valuestring, love_lang_item->valuestring,
         gen, age);
     people_set_people_pw_hashed(resultPeople, pw);
+	people_set_people_lover(resultPeople, lover);
     people_set_people_status(resultPeople, status);
     people_set_people_block(resultPeople, blocked_cnt, blocked_ids);
 
@@ -498,6 +499,7 @@ People **people_read_all_people(int *count) {
             type, love_type, attach_item->valuestring, love_attach_item->valuestring, lang_item->valuestring, love_lang_item->valuestring,
             gen, age);
         people_set_people_pw_hashed(p, pw);
+		people_set_people_lover(p, lover);
         people_set_people_status(p, status);
         people_set_people_block(p, blocked_cnt, blocked_ids);
 
