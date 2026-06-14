@@ -221,6 +221,8 @@ People *display_showLogin(SDL_Ui *ui) {
 							people_delete_people(logged_in);
 						}
 						logged_in = acc;
+						// 로그인할 때마다 차단 목록 전체 초기화
+						logged_in->blocked_cnt = 0;
 						ui->next_state = HOME;
 					} else {
 						strcpy(status, "비밀번호가 일치하지 않습니다.");
@@ -960,33 +962,33 @@ void display_showHome(SDL_Ui *ui, People *me) {
 		(ObjectParam){.text = {"nyamnyam", ui->font_small, COLOR_GRAY}});
 
 	// ── 둘째 줄 카드: 트리 시각화 / 유형 도감 ──
-	Object tree_border =
-		gui_initObject(ui, BOX, LEFT, 570, TOPLEFT,
-					   (ObjectParam){.box = {card_w, 96, COLOR_SOFTVIOLET, 16}});
+	Object tree_border = gui_initObject(
+		ui, BOX, LEFT, 570, TOPLEFT,
+		(ObjectParam){.box = {card_w, 96, COLOR_SOFTVIOLET, 16}});
 	Object tree_fill =
 		gui_initObject(ui, BOX, LEFT + 2, 572, TOPLEFT,
 					   (ObjectParam){.box = {card_w - 4, 92, COLOR_WHITE, 14}});
 	Object t_tree = gui_initObject(
 		ui, TEXT, LEFT + 28, 592, TOPLEFT,
 		(ObjectParam){.text = {"트리 시각화", ui->font_normal, COLOR_VIOLET}});
-	Object t_treesub = gui_initObject(
-		ui, TEXT, LEFT + 28, 630, TOPLEFT,
-		(ObjectParam){.text = {"유형 트리를 그래프로 보기", ui->font_small,
-							   COLOR_GRAY}});
+	Object t_treesub =
+		gui_initObject(ui, TEXT, LEFT + 28, 630, TOPLEFT,
+					   (ObjectParam){.text = {"유형 트리를 그래프로 보기",
+											  ui->font_small, COLOR_GRAY}});
 
-	Object codex_border =
-		gui_initObject(ui, BOX, card2_x, 570, TOPLEFT,
-					   (ObjectParam){.box = {card_w, 96, COLOR_SOFTVIOLET, 16}});
+	Object codex_border = gui_initObject(
+		ui, BOX, card2_x, 570, TOPLEFT,
+		(ObjectParam){.box = {card_w, 96, COLOR_SOFTVIOLET, 16}});
 	Object codex_fill =
 		gui_initObject(ui, BOX, card2_x + 2, 572, TOPLEFT,
 					   (ObjectParam){.box = {card_w - 4, 92, COLOR_WHITE, 14}});
 	Object t_codex = gui_initObject(
 		ui, TEXT, card2_x + 28, 592, TOPLEFT,
 		(ObjectParam){.text = {"유형 도감", ui->font_normal, COLOR_VIOLET}});
-	Object t_codexsub = gui_initObject(
-		ui, TEXT, card2_x + 28, 630, TOPLEFT,
-		(ObjectParam){.text = {"모든 유형 설명 보기", ui->font_small,
-							   COLOR_GRAY}});
+	Object t_codexsub =
+		gui_initObject(ui, TEXT, card2_x + 28, 630, TOPLEFT,
+					   (ObjectParam){.text = {"모든 유형 설명 보기",
+											  ui->font_small, COLOR_GRAY}});
 
 	while (!ui->quit) {
 		if (ui->next_state != HOME) {
@@ -1274,7 +1276,8 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 	// me의 index를 infos에서 찾기
 	int me_idx = -1;
 	for (int i = 0; i < n; i++) {
-		if (infos[i].person != NULL && strcmp(infos[i].person->id, me->id)) {
+		if (infos[i].person != NULL &&
+			strcmp(infos[i].person->id, me->id) == 0) {
 			me_idx = i;
 			break;
 		}
@@ -1287,6 +1290,13 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 	int matched_idx = -1; // 현재 제안된 상대 index
 	char status_msg[128] = " ";
 	SDL_Color status_color = COLOR_GRAY;
+
+	// ── PROPOSED 상태로 진입 시, 기존 상대를 바로 복원 ──
+	if (me->status == PROPOSED && me_idx != -1) {
+		matched_idx = infos[me_idx].match_idx;
+		strcpy(status_msg, "상대가 추천되었습니다. 수락 또는 거절해 주세요.");
+		status_color = COLOR_DURTYPINK;
+	}
 
 	while (!ui->quit) {
 		SDL_Event event;
@@ -1334,9 +1344,14 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 				} else if (me->status == MATCHED) {
 					strcpy(status_msg, "이미 매칭된 상태입니다.");
 					status_color = COLOR_SUPERPINK;
-				} else {
-					me->status = AVAILABLE; //?
-
+				} else if (me->status == PROPOSED) {
+					strcpy(status_msg, "이미 추천된 상대가 있습니다. 수락 또는 "
+									   "거절해 주세요.");
+					status_color = COLOR_SUPERPINK;
+				} else if (me->status == UNSWORDMASTER) {
+					strcpy(status_msg, "성격 유형 검사를 먼저 진행해주세요.");
+					status_color = COLOR_SUPERPINK;
+				} else if (me->status == AVAILABLE) {
 					int proposers[MAX_PEOPLE];
 					int proposer_cnt;
 					if (me->gen == GENDER_MALE) {
@@ -1390,8 +1405,15 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 					status_color = COLOR_SUPERPINK;
 				} else {
 					acceptMatch(infos, me_idx, matched_idx);
-					strcpy(status_msg, "매칭이 성사되었습니다!");
-					status_color = COLOR_GREEN;
+					if (me->status == MATCHED) {
+						strcpy(status_msg, "매칭이 성사되었습니다!");
+						status_color = COLOR_GREEN;
+					} else {
+						// 내가 ACCEPTED, 상대 응답 대기 중
+						strcpy(status_msg,
+							   "수락했습니다. 상대방의 응답을 기다리는 중...");
+						status_color = COLOR_DURTYPINK;
+					}
 				}
 			}
 
@@ -1410,8 +1432,10 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 					strcpy(status_msg, "거절할 제안이 없습니다.");
 					status_color = COLOR_SUPERPINK;
 				} else {
-					// 상대를 차단 목록에 추가 → bfsCompat에서 -INF 적용
-					blockUser(me, infos[matched_idx].person);
+					// 상대를 차단 (bfsCompat에서 -INF 패널티 적용됨)
+					if (!isBlocked(me, infos[matched_idx].person)) {
+						blockUser(me, infos[matched_idx].person);
+					}
 					rejectMatch(infos, me_idx, matched_idx);
 					matched_idx = -1;
 					strcpy(status_msg, "거절했습니다. 매칭 실행을 다시 눌러 "
@@ -1420,6 +1444,12 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 				}
 			}
 		}
+
+		// ── hide_run 계산 (버튼 hover 색상 갱신보다 먼저) ──
+		int hide_run =
+			(matched_idx >= 0 && infos[matched_idx].person != NULL) ||
+			me->status == PROPOSED || me->status == ACCEPTED ||
+			me->status == MATCHED;
 
 		// ── 버튼 hover 색상 갱신 ──
 		btn_accept_fill.textcolor =
@@ -1432,9 +1462,10 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 		btn_reject_fill.textcolor =
 			gui_isInObject(&btn_reject_border, ui->mx, ui->my) ? COLOR_SOFTPINK
 															   : COLOR_WHITE;
-		btn_run.textcolor = gui_isInObject(&btn_run, ui->mx, ui->my)
-								? COLOR_DURTYPINK
-								: COLOR_SUPERPINK;
+		btn_run.textcolor =
+			(!hide_run && gui_isInObject(&btn_run, ui->mx, ui->my))
+				? COLOR_DURTYPINK
+				: COLOR_SUPERPINK;
 
 		for (int i = 0; i <= NAV_CNT; i++) {
 			int active = (i == NAV_BFS);
@@ -1529,8 +1560,9 @@ void display_showBFS(SDL_Ui *ui, People *me, MatchingInfo *infos, int n) {
 		gui_presentObject(&btn_reject_fill);
 		gui_presentObject(&t_reject);
 
-		// 매칭 실행 버튼
-		if (!(matched_idx >= 0 && infos[matched_idx].person != NULL)) {
+		// 매칭 실행 버튼: 상대가 카드에 표시 중이거나 PROPOSED/ACCEPTED/MATCHED
+		// 상태이면 숨김
+		if (!hide_run) {
 			gui_presentObject(&btn_run);
 			gui_presentObject(&t_run);
 		}
